@@ -5,6 +5,21 @@
 (define (denom x)
   (let ((g (gcd (car x) (cdr x))))
     (/ (cdr x) g)))
+(define (add-rat x y)
+  (make-rat (+ (* (numer x) (denom y))
+               (* (numer y) (denom x)))
+            (* (denom x) (denom y))))
+(define (sub-rat x y)
+  (make-rat (- (* (numer x) (denom y))
+               (* (numer y) (denom x)))
+            (* (denom x) (denom y))))
+(define (mul-rat x y)
+  (make-rat (* (numer x) (numer y))
+            (* (denom x) (denom y))))
+(define (div-rat x y)
+  (make-rat (* (numer x) (denom y))
+            (* (denom x) (numer y))))
+
 
 ;It works because the set of all subsets is simply the set of all subsets of the cdr of the set union the set of the one missing element union any those subsets... 
 ;=========2.2.3 Sequences as Conventional Interfaces ==========
@@ -856,3 +871,4 @@
 ;  to our code. It would extend the existing objects... 
 ;  I prefer the message passing approach for this situation. 
 ;===========2.5 Systems with Generic Operations===============
+
