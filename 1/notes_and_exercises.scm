@@ -804,21 +804,19 @@
 ;  just the naming of the rows and columns.
 ;a.
 ;Exercise 2.74
-;Since there is a 1-1 correspondence between division and personnel-file, we can assume there exists a <operation>, personnel-file table.
-;We assume furthermore that each individual division has a get-record method. Thus, we get:
+;a) I am assuming that the individual divisions' files are structured such that there already exists, for each division, a get-record method. I am assuming there exists an (<operator>, personnel-file) table. The reason I am not assuming there exists an (<operator>, division) table is that this assumption would then require the additional assumption that there exists a method that takes personnel-file as argument and returns the division of that personnel-file. Since each division has exactly one personnel-file, we have a 1-1 correspondence between the two pieces of data. Indexing by personnel-file allows me to make one less assumption and have the same amount of columns. Thus, we have: ;Since there is a 1-1 correspondence between division and personnel-file, we can assume there exists a <operation>, personnel-file table.
 (define (get-record employee personnel-file)
   ((get 'get-record personnel-file) employee))
-;b.
+;b) Now, I just assume that each record is structured such that each division can implement and has implemented their own get-salary method, that takes as argument the employee's record and returns the employee's salary. Thus:
 (define (get-salary employee personnel-file)
   ((get 'get-salary personnel-file) (get-record employee personnel-file)))
-;c
+;c) I'm assuming that each individual divisions get-record method returns '() if the employee is not employed in that division, and so the method that we implemented in part a) of this question returns '() in that case, too. We have:
 (define (find-employee-record employee division-files)
   (cond ((null? division-files) '())
         ((not (null? (get-record employee (car division-files))))
          (get-record employee (car division-files)))
         (else (find-employee-record employee (cdr division-files)))))
-;d.
-;Call the newly acquired division-file new-division-file. Entries corresponding to (get-record, new-division-file) and (get-salary, new-division-file) need to be added to our (<operator>, division-file) table. That is, the newly acquired company needs to implement locally their own versions of get-record, get-salary, then we need to add these implementations to our table, and then the methods defined in a), b), c) will work.
+;d) Call the newly acquired division-file new-division-file. Entries corresponding to (get-record, new-division-file) and (get-salary, new-division-file) need to be added to our (<operator>, division-file) table. That is, the newly acquired company needs to implement locally their own versions of get-record, get-salary, then we need to add these implementations to our table, and then the methods defined in a), b), c) will work.
 ;Message Passing
 (define (make-from-real-imag x y)
   (define (dispatch op)
