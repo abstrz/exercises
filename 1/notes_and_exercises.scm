@@ -1,6 +1,823 @@
-;Lost everything before this. Didn't bother to retrieve it... Now it is gone :| (face of indifference). 
+;=============Common and simple procedures====================
+(define (inc x)
+    (+ x 1))
+(define (dec x)
+    (- x 1))
+(define (identity x)
+  x)
+(define (cube x) (* x x x))
+(define (close-enough? x y) (< (abs (- x y)) 0.001))
+(define (average x y) (/ (+ x y) 2))
+(define (logB B x)
+  (/ (log x) (log B)))
+;=============1.2.4 Exponentiation=============================
+;;recursive definition
+;(define (expt_rec b n)
+;  (if (= n 0)
+;      1
+;      (*  b (expt_rec b (- n 1)))))
+;;iterative definition
+;(define (expt_it b n)
+;  (define (expt-iter b counter product)
+;    (if (= counter 0)
+;product
+;(expt-iter b
+;   (- counter 1)
+;   (* b product))))
+;  (expt-iter b n 1))
+;;faster recursive definition
+(define (fast-exp b n)
+  (define (even? n)
+    (= (remainder n 2) 0 ))
+  (cond ((= n 0) 1)
+((even? n) (square (fast-exp b (/ n 2))))
+(else (* b (fast-exp b (- n 1))))))
+;(define (e b n)
+;(define (e-iter b n a)
+;(cond ((= n 0) a)
+;      ((even? n) (e-iter (square b) (/ n 2) a))
+;      (else (e-iter b (- n 1) (* b a)))))
+;
+;(e-iter b n 1))
+;(define (fast-mult a b)
+;(cond((= b 0) 0)
+;((even? b) (* 2 (fast-mult a (/ b 2))))
+;(else (+ a (fast-mult a (- b 1))))))
+;;Want a*(b*n) to stay constant in each iteration.  
+;(define (*-it b n)
+;  (define (fmi a b n)  
+;  (cond ((= n 0) a)
+;((even? n) (fmi a (* 2 b) (/ n 2)))
+;(else (fmi (+ a b) b (- n 1)))))
+;  (fmi 0 b n))
+;
+;;(define (fib n)
+;;  (fib-iter 1 0 0 1 n))
+;;(define (fib-iter a b p q count)
+;;  (cont ((= count 0) b)
+;;((even? count) 
+;; (fib-iter a 
+;;   b 
+;;   (+ (square p) (square q)) 
+;;   (* q (+ (* 2 p) q)) 
+;;   (/ count 2)))
+;;(else (fib-iter (+ (* b q) (* a q) (* a p)) 
+;;(+ (* b p) (* a q)) 
+;;p 
+;;q 
+;;(- count 1)))))
+;
+;1.2.6===================Example: Testing for Primality ==============================
+(define (smallest-divisor n) 
+  (find-divisor n 2))
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+((divides? test-divisor n) test-divisor)
+(else (find-divisor n (inc test-divisor)))))
+(define (divides? a b)
+  (= (remainder b a) 0))
+;
+;; \Theta(\sqrt{n}) order of growth.
+(define (prime? n)
+  (= n (smallest-divisor n)))
+;
+;; \Theta(log n)
+;(define (expmod base exp m)
+;  (cond ((= exp 0) 1)
+;((even? exp)
+; (remainder
+;   (square (expmod base (/ exp 2) m))
+;   m))
+;(else
+;  (remainder
+;    (* base (expmod base (- exp 1) m))
+;    m))))
+;(define (fermat-test n)
+;  (define (try-it a)
+;    (= (expmod a n n) a))
+;  (try-it (+ 1 (random (- n 1)))))
+;(define (fast-prime? n times)
+;  (cond ((= times 0) true)
+;((fermat-test n) (fast-prime? n (- times 1)))
+;(else false)))
+;
+;(define (timed-prime-test n)
+;  (newline)
+;  (display n)
+;  (start-prime-test n (runtime)))
+;(define (start-prime-test n start-time)
+;  (if (fast-prime? n)
+;      (report-prime (- (runtime) start-time))))
+;;prints elapsed-time
+;(define (report-prime elapsed-time)
+;  (display " *** ")
+;  (display elapsed-time))
+;
+;;check for first three odd primes in [a,b]
+;(define (iterator a b i)
+;  (cond ((<= i b)
+;  (if (and (= (remainder i 2) 1) (prime? i))
+;    (timed-prime-test i))
+;  (iterator a b (+ i 1)))
+;(else 
+;  (newline)
+;  (display "DONE!"))))
+;(define (search-for-primes a b)
+;  (iterator a b (ceiling a)))
+;
+;(define (next n)
+;  (if (= n 2)
+;      3
+;1.3===================Formuluating Abstractions with Higher-Order Procedures========================
+;(define (sum term a next b)
+;  (if (> a b)
+;      0
+;      (+ (term a) (sum term (next a) next b))))
+;Not sure of the name of the rule used here, but a crude approximation none the less. 
+(define (integral_1 f a b dx)
+  (define (add-dx x)
+    (+ x dx))
+  (* (sum f (+ a (/ dx 2.0)) add-dx b)
+     dx))
+;Exercise 1.29
+(define (integral_2 f a b n)
+  (define (add-h x) 
+    (+ x (/ (- b a ) n)))
+  (define (f-prod x)
+    ;if the x-a/h is 0 or n, then we have the extremal indices, and we pass back the function.
+    (cond ((or (= (/ (- x a) (/ (- b a ) n)) 0) (= (/ (- x a) (/ (- b a ) n)) n)) 
+   (f x))
+    ;if x-a/h is even, then we return the function times 2. If we are at the last endpoint,
+    ;then we would have already hit the first condition, so that this second condition would
+    ;never be hit, so we get the behavior we want.
+  ((= (remainder (/ (- x a) (/ (- b a ) n)) 2) 0)
+   (* 2 (f x)))
+    ;if x-a/h is odd, then we return the function times 4...
+          ((= (remainder (/ (- x a) (/ (- b a ) n)) 2) 1)
+   (* 4 (f x)))))
+  (* (/ (/ (- b a ) n) 3.0) (sum f-prod a add-h b)))
+;exercise 1.30
+;define (sum-it term a next b)
+;  (define (iter a result)
+;    (if (> a b)
+;result
+;(iter (next a) (+ result (term a)))))
+;  (iter a 0))
+;Exercise 1.31.a
+(define (product term a next b)
+  (if (> a b)
+      1
+      (* (term a) (product term (next a) next b))))
+(define (factorial n)
+  (define (inc x)
+    (+ x 1))
+  (define (identity x)
+    x)
+  (product identity 1 inc n))
+;this is an infinite product that sums to pi/4
+(define (pi/4-approx n)
+  (define (inc x)
+    (+ x 1))
+  (define (f x)
+    (* (/ (* 2 x) (- (* 2 x) 1)) (/ (* 2 x) (+ (* 2 x) 1))))
+  (/ (product-it f 1 inc n) 2.0))
+;Exercise 1.31.b:
+(define (product-it term a next b)
+  (define (iter a result)
+    (if (> a b)
+result
+(iter (next a) (* result (term a)))))
+  (iter a 1))
+;Exercise 1.32.a:
+(define (accumulate combiner null-value term a next b )
+  (if (> a b)
+      null-value
+      (combiner (term a) (accumulate combiner null-value term (next a) next b))))
+(define (sum term a next b)
+  (accumulate + 0 term a next b))
+(define (product term a next b)
+  (accumulate * 1 term a next b))
+;Exercise 1.32.b:
+(define (accumulate_it combiner null-value term a next b)
+  (define (iter a result)
+    (if (a>b)
+result
+(iter (next a) (combiner result (term a))))
+  (iter a null-value)))
+;Exercise 1.33.a
+(define (filtered-accumulate filter combiner null-value term a next b)
+  (cond ((> a b) 
+ null-value)
+        ((filter a) 
+         (combiner (term a) (filtered-accumulate filter combiner null-value term (next a) next b)))
+(else 
+  (filtered-accumulate filter combiner null-value term (next a) next b))))
+(define (sum-square-primes a b)
+  (filtered-accumulate prime? + 0 square a inc b))
+;Euclid's Algorithm for GCD
+(define (gcd a b)
+  (if (= b 0)
+      a
+      (gcd b (remainder a b))))
+;Returns a procedure which mathematically is just f(x)=gcd(x,b).
+(define (relatively-prime? b)
+  (define (gcd_1_arg x)
+    (= (gcd x b) 1))
+  gcd_1_arg)
+;Exercise 1.33.b
+(define (product-relatively-prime a b)
+  (filtered-accumulate (relatively-prime? b) * 1 identity a inc b))
+;1.3.2============Constructing Procedures Using lambda=====================
+;===============lambda syntax================ 
+;((lambda (<var_1> \dots <var_n>)
+;    <body>)
+;  <exp_1>
+;  /dots
+;  <exp_n>)
+;============================================
+;===============let syntax=================== 
+;(let ((<var_1> <exp_1>)
+;      (<var_2> <exp-2>)
+;      \dots
+;      (<var_n> <exp_n>))
+;    <body>)
+;============================================
+(define (f x y) 
+  ((lambda (a b)
+     (+ (* x (square a))
+(* y b)
+(* a b)))
+   (+ 1 (* x y))
+   (- 1 y)))
+(define (f x y)
+  (let ((a (+ 1 (* x y)))
+(b (- 1 y)))
+    (+ (* x (square a))
+       (* y b)
+       (* a b))))
+
+;Procedure that finds the root of a function
+(define (search f neg-point pos-point)
+  (let ((midpoint (average neg-point pos-point)))
+    (if (close-enough? neg-point pos-point)
+midpoint
+(let ((test-value (f midpoint)))
+  (cond ((positive? test-value) 
+(search f neg-point midpoint))
+((negative? test-value)
+ (search f midpoint pos-point))
+(else midpoint))))))
+;Extend functionality of search to check the signs of the function at the endpoints, and proceed accordingly. 
+(define (half-interval-method f a b)
+  (let ((a-value (f a))
+(b-value (f b)))
+    (cond ((and (negative? a-value) (positive? b-value))
+   (search f a b))
+  ((and (negative? b-value) (positive? a-value))
+   (search f b a))
+   (else 
+     (error "Values are not of the opposite sign" a b)))))
+(define tolerance 0.00001)
+(define (fixed-point f first-guess)
+    (define (close-enough? v1 v2)
+    (< (abs (- v1 v2)) tolerance))
+  (define (try guess)
+    (newline)
+    (display guess)
+    ;modifier so that the next guess is the average of the previous one and (f guess).
+    (let ((next (f guess)))
+      (if (close-enough? guess next)
+  next
+  (try next))))
+  (try first-guess))
+;Exercise 1.35:
+(define (golden_ratio n)
+  (fixed-point (lambda (x) (+ 1 (/ 1 x))) n))
+;Exercise 1.36;
+(define (approx_x^x n)
+  (fixed-point (lambda (x) (/ (log 1000) (log x))) n))
+;As per the requirements of this exercise, I modified
+;the fixed-point approximation to use average damping,
+;i.e., to take as the next guess an average of the function
+;value at the guess, and the guess;
+;, and the performance was much improved.
+;Exercise 1.37.a
+(define (cont-frac n d k)
+  (if (= k 0)
+      0
+      (/ (n 1) (+ (d 1) (cont-frac (lambda (i) (n (inc i))) (lambda (i) (d (inc i))) (dec k))))))
+;Exercise 1.37.b
+(define (cont-frac_it n d k)
+  (define (iter i result)
+    (if (= i 1)
+result
+(iter (dec i) (/ (n (dec i)) (+ (d (dec i)) result)))))
+  (iter k (/ (n k) (d k))))
+;Exercise 1.38
+(define (e-cf k)
+  (define (d i)
+    (cond ((= i 2) 2.0)
+  ((= (remainder i 3) 2) (* (/ 2 3) (+ i 1.0)))
+  (else 1)))
+  (cont-frac (lambda (i) 1.0) d k))
+;Exercise 1.39
+(define (tan-cf x k)
+  (define (n i)
+    (if (= i 1) 
+x
+(- (square x))))
+  (define (d i)
+    (- (* 2.0 i) 1.0))
+  (cont-frac n d k))
+;=============1.3.4 Procedures as Returned Values ==============
+(define (average-damp f)
+  (lambda (x) (average x (f x))))
+(define (deriv g)
+  (lambda (x) (/ (- (g (+ x dx)) (g x)) dx)))
+(define dx 0.00001)
+(define (newton-transform g)
+  (lambda (x) (- x (/ (g x) ((deriv g) x)))))
+(define (newtons-method g guess)
+  (fixed-point (newton-transform g) guess))
+(define (fixed-point-of-transform g transform guess)
+  (fixed-point (transform g) guess))
+;Exercise 1.40:
+(define (cubic a b c)
+  (lambda (x) (+ (cube x) (* a (square x)) (* b x) c)))
+;Exercise 1.41:
+(define (double f) 
+  (lambda (x) (f (f x))))
+;Exercise 1.42:
+(define (compose f g)
+  (lambda (x) (f (g x))))
+;Exercise 1.43:
+(define (repeated f n)
+  (if (= n 0)
+      identity 
+      (compose f (repeated f (- n 1)))))
+;Exercise 1.44
+(define (smooth f)
+  (lambda (x) (/ (+ (f (- x dx)) (f x) (f (+ x dx))) 3)))
+(define (repeated-smooth f n)
+  (repeated (smooth f) n))
+;Exercise 1.45
+(define (repeated-average-damp f n)
+  (repeated (average-damp f) n))
+(define (average-damped-root n y)
+  (fixed-point 
+    (repeated-average-damp 
+      (lambda (x) (/ y (expt x (- n 1)))) 
+      (ceiling (/ (log n) (log 2)))) 
+    1.0))
+;Exercise 1.46
+(define (iterative-improve good-enough? improve)
+  (define (f guess) 
+    (if (good-enough? guess)
+guess
+(f (improve guess))))
+  f)
+(define (sqrt-custom n) 
+  ((iterative-improve 
+     (lambda (guess) (< (abs (- (square guess) n)) 0.000001)) 
+     (lambda (guess) (average guess (/ n guess))))
+   1.0))
+(define (fixed-point-2 f) 
+  ((iterative-improve
+     (lambda (guess) (< (abs (- guess (f guess))) 0.000001))
+     (lambda (guess) (f guess))
+     )
+   2.0))
+;=============2. Building Abstractions with Data ==============
+;==2.1.1 Example: Arithmetic Operations for Rational Numbers==
+(define (add-rat x y)
+  (make-rat (+ (* (numer x) (denom y))
+               (* (numer y) (denom x)))
+            (* (denom x) (denom y))))
+(define (sub-rat x y)
+  (make-rat (- (* (numer x) (denom y))
+               (* (numer y) (denom x)))
+            (* (denom x) (denom y))))
+(define (mult-rat x y)
+  (make-rat (* (numer x) (numer y))
+            (* (denom x) (denom y))))
+ (define (div-rat x y)
+  (make-rat (* (numer x) (denom y))
+            (* (denom x) (numer y))))              
+(define (numer x) (car x))
+(define (denom x) (cdr x))
+(define (print-rat x)
+  (newline)
+  (display (numer x))
+  (display "/")
+  (display (denom x)))
+;Exercise 2.1
+(define (make-rat n d) 
+  (let ((g (gcd n d)))
+    (if (not (= d 0))
+        (if (>= (* n d) 0)
+            (cons (abs (/ n g)) (abs (/ d g)))
+            (cons (- (abs (/ n g))) (abs (/ d g))))
+        (error "Denominator cannot be zero!"))))
+;======= 2.1.2 Abstraction Barriers =======
+;Exercise 2.2
+(define (make-segment p q)
+  (cons p q))
+(define (start-segment l)
+  (car l))
+(define (end-segment l)
+  (cdr l))
+(define (make-point x y)
+  (cons x y))
+(define (x-point z)
+  (car z))
+(define (y-point z)
+  (cdr z))
+(define (midpoint-segment l)
+  (make-point
+   (average (x-point (start-segment l)) (x-point (end-segment l)))
+   (average (y-point (start-segment l)) (y-point (end-segment l)))))
+(define (print-point p)
+  (newline)
+  (display "(")
+  (display (x-point p))
+  (display ",")
+  (display (y-point p))
+  (display ")"))
+;Exercise 2.3
+;pass in two numbers that represent scalars in standard basis directions
+(define (rec1 a b)
+  (cons (make-segment (make-point (- a) 0) (make-point a 0)) (make-segment (make-point 0 (- b)) (make-point 0 b))))
+;p is a point
+(define (rec2 p)
+  (cons (make-segment (make-point 0 0) (make-point (x-point p) 0)) 
+        (make-segment (make-point 0 0) (make-point 0 (y-point p)))))
+(define (base rectangle)
+  (car rectangle))
+(define (height rectangle)
+  (cdr rectangle))
+(define (magnitude-segment l)
+  (sqrt (+ (square (- (y-point (end-segment l)) (y-point (start-segment l)))) 
+           (square (- (x-point (end-segment l)) (x-point (start-segment l)))))))
+;rec-area and rec-per take as arguments b h, which are the lengths of the base and height, respectively. 
+(define (rec-area rectangle)
+  (* (magnitude-segment (base rectangle)) (magnitude-segment (height rectangle))))
+(define (rec-per rectangle)
+  (* 2 (+ (magnitude-segment (base rectangle)) (magnitude-segment (height rectangle)))))
+;Exercise 2.4:
+(define (cons_alt x y)
+  (lambda (m) (m x y)))
+(define (car_alt z)
+  (z (lambda (p q) p)))
+(define (cdr_alt z)
+  (z (lambda (p q) q)))
+;Exercise 2.5:
+(define (cons_nonneg a b)
+  (* (expt 2 a) (expt 3 b)))
+(define (car_nonneg n)
+  (define (iter k n)
+    (if (not (= (remainder n 2) 0)) k
+        (iter (+ k 1) (/ n 2))))
+  (iter 0 n))
+(define (cdr_nonneg n)
+  (define (iter k n)
+    (if (not (= (remainder n 3) 0)) k
+        (iter (+ k 1) (/ n 3))))
+  (iter 0 n))
+;Exercise 2.6:
+(define zero (lambda (f) (lambda (x) x)))
+(define (add-1 n)
+  (lambda (f) (lambda (x) (f ((n f) x)))))
+(define one (lambda (f) (lambda (x) (f x))))
+(define two (lambda (f) (lambda (x) (f (f x)))))
+(define (add-church n m)
+  (lambda (f) (lambda (x) ((m f) ((n f) x)))))
+;2.1.4. Extended Exercise: Interval Arithmetic 
+(define (add-interval x y)
+  (make-interval (+ (lower-bound x) (lower-bound y))
+                 (+ (upper-bound x) (upper-bound y))))
+(define (mul-interval x y) 
+  (let ((a (lower-bound x))
+        (b (upper-bound x))
+        (c (lower-bound y))
+        (d (upper-bound y)))
+    (cond ((and (>= a 0) (>= b 0) (>= c 0) (>= d 0)) 
+           (make-interval (* a c) (* b d)))
+          ((and (>= a 0) (>= b 0) (< c 0) (>= d 0)) 
+           (make-interval (* b c) (* c d)))
+          ((and (< a 0) (>= b 0) (>= c 0) (>= d 0)) 
+           (make-interval (* a d) (* b d)))
+          ((and (>= a 0) (>= b 0) (< c 0) (< d 0))
+           (make-interval (* b c) (* a d)))
+          ((and (< a 0) (< b 0) (>= c 0) (>= d 0))
+           (make-interval (* a d) (* b c)))
+          ((and (< a 0) (>= b 0) (< c 0) (>= d 0))
+           (make-interval (min (* a d) (* b c)) (max (* a c) (* b d))))
+          ((and (< a 0) (< b 0) (< c 0) (>= d 0))
+           (make-interval (* a d) (* a c)))
+          ((and (< a 0) (< b 0) (< c 0) (>= d 0))
+           (make-interval (* a d) (* a c)))
+          ((and (< a 0) (>= b 0) (< c 0) (< d 0))
+           (make-interval (* b c) (* a c)))
+          ((and (< a 0) (< b 0) (< c 0) (< d 0))
+           (make-interval (* b d) (* a c))))))
+(define (div-interval x y)
+  (if (and (not (= (upper-bound y) 0)) (not (= (lower-bound y) 0))) 
+      (mul-interval
+        x
+        (make-interval (/ 1.0 (upper-bound y))
+                   (/ 1.0 (lower-bound y))))
+      (error "Second parameter to div-interval  must be an interval with non zero end points!")))
+;Exercise 2.7
+(define (make-interval a b) (cons a b))
+(define (upper-bound I) (cdr I))
+(define (lower-bound I) (car I))
+;Exercise 2.8
+(define (subtract-intervals x y)
+  (make-interval (- (lower-bound x) (lower-bound y))
+                 (- (upper-bound x) (upper-bound y))))
+(define (width I)
+  (/ (- (upper-bound I) (lower-bound I)) 2))
+;Exercise 2.9
+;Done on paper. You get that width(I +/- J) = width(I) +/- width(J)
+;Exercise 2.10
+;to modify div-interval to check if dividing by zero, which I've done.
+;Exercise 2.11
+;edits done made to mul-interval to check signs of endpoints.
+(define (make-center-width c w)
+  (make-interval (- c w) (+ c w)))
+(define (center I)
+  (/ (+ (lower-bound I) (upper-bound I)) 2))
+;Exercise 2.12
+(define (make-center-percent c p)
+  (make-interval (* c (- 1 p)) (* c (+ 1 p))))
+(define (percent I)
+  (if (not (= (center I) 0))
+      (/ (width I) (center I))
+      (error "Interval must have non-zero center!")))
+;Exercise 2.13
+;One can show that p(IJ) \approx p(I) + p(J) 
+;this insight comes from writing I= (c(I)-w(I), c(I)+w(I)), J=(c(J)-w(J), c(J)+w(J)), and noting that if
+;p(I),p(J) are small, then necessarily w(I),w(J) are small. The result follows immediately. 
+(define (par1 r1 r2)
+  (div-interval (mul-interval r1 r2)
+                (add-interval r1 r2)))
+(define (par2 r1 r2)
+  (let ((one (make-interval 1 1)))
+    (div-interval
+      one (add-interval (div-interval one r1)
+                        (div-interval one r2)))))
+;Exercise 2.14
+;It turns out that if we have I,J with p(I), p(J) \approx 0, p(I/J) \approx p(IJ) \approx p(I) + p(J)
+;Exercise 2.15
+;I think yes, because variables that represent an uncertain number each add together to increase the uncertainty
+;of the parallel resistance. This is why r1r2/r1+r2 is worse. We get p(r1r2/r1+r2)= p(r1)+p(r2)+p(r1+r2),
+;under the assumption that p(r1),p(r2),p(r1+r2) are small. On the other hand, if we assume p(1/r1+1/r2) is small,
+;we get that p(1/(1/r1 + 1/r2)) = p(1/r1+1/r2). 
+;========2.2 Hierarchical Data and the Closure Property==========
+;Syntax:
+;(list <a_1> <a_2> /dots <a_n>) is equivalent to 
+;(cons <a_1>  (cons <a_2> (cons \dots (cons <a_n> ()) \dots ))),
+;where () is understood to be nil, null, empty.
+;(cadr <arg>) = (car (cdr <arg>))
+;Let l be (list <a_1> <a_2> \dots <a_n>), then
+;(cons <a_0> l) is (list <a_0> <a_1> <a_2> \dots <a_n>)
+;The following procedures are already implemented in Scheme, and are
+;only being written down for pedagogical reasons:
+;(define (list-ref items n)
+;   (if (= n 0)
+;       (car items)
+;       (list-ref (cdr items) (- n 1))))
+;(define (length items)
+;   (if (null? items)
+;   0
+;   (+ 1 (length (cdr items)))))
+;where null? just checks if its argument is the empty list ().
+;We could also compute length using iteration:
+;(define (length items)
+;   (define (length-iter a count)
+;       (if (null? a)
+;           count
+;           (length-iter (cdr a) (+ 1 count)))))
+;(define (append list1 list2)
+;   (if (null? list1)
+;       list2
+;       (cons (car list1) (append (cdr list1) list2))))
+;Exercise 2.17:
+(define (last-pair l)
+  (list (list-ref l (- (length l) 1))))
+;Exercise 2.18:
+;(define (reverse l)
+;  (define (reverser l n)
+;    (if (= n (- 1))
+;        ()
+;        (cons (list-ref l n) (reverser l (- n 1)))))
+;  (reverser l (- (length l) 1)))
+;Exercise 2.19:
+(define (cc amount coin-values)
+  (cond ((= amount 0) 1)
+        ((or (< amount 0) (no-more? coin-values)) 0)
+        (else
+          (+ (cc amount
+                 (except-first-denomination coin-values))
+             (cc (- amount (first-denomination
+                             coin-values))
+                 coin-values)))))
+(define (first-denomination coin-values)
+  (list-ref coin-values 0))
+(define (except-first-denomination coin-values)
+  (define (popper l n)
+    (if (= n (length l)) 
+        ()
+        (cons (list-ref l n) (popper l (+ n 1)))))
+  (popper coin-values 1))
+;There has to be a prettier way to do this, but this works :| .
+(define (no-more? l)
+  (if (= (length l) 0)
+      #t
+      #f))
+;Does the order of the list matter? No. The counting is the same.
+;(define (f x y . z) <body>). This syntax says that f needs at least
+;two arguments provided, but can have arbitrarily many arguments over
+;two. For example if we call (f 1 2 3 4 5), then we get
+;that x=1, y=2 and z=(3 4 5).
+;(define (g . w) <body>). Now we can either call g with no arguments,
+;or arbitrarily many.
+;Exercise 2.20
+(define (same-parity x . y)
+  (define (parity-checker m n)
+    (if (= (remainder m 2) (remainder n 2)) 
+        #t
+        #f))
+  (define (parity-builder l n)
+    (cond ((= n (length l)) ())
+          ((parity-checker x (list-ref l n)) (cons (list-ref l n) (parity-builder l (+ n 1))))
+          (else  (parity-builder l (+ n 1)))))
+  (cons x (parity-builder y 0)))
+;map syntax
+;(define (map proc items)
+;   (if (null? items)
+;       ()
+;       (cons (proc (car items))
+;             (map proc (cdr items)))))
+;Exercise 2.21:
+;(define (square-list items)
+;  (if (null? items)
+;      ()
+;      (cons (square (car items)) (square-list (cdr items)))))
+(define (square-list items)
+  (map square items))
+;Exercise 2.22
+;The first method does return the list in reverse order, which one can verify by
+;evaluating it on an argument by substitution.
+;The reason seems to be (cons (square (car things)) answer).
+;You are building it right to left, iteratively. 
+;To fix it maybe write (cons answer (square (car things)))
+;Apparently this doesnt work either, which is the next
+;part of the question. I'm going to evaluate this to see why... 
+;In the second case, if you pass to iter (list 1 2 3 4) () you get
+;(cons (cons (cons (cons () 1) 4) 9) 16), so you build something that
+;is not even a list, anymore. The car of each pair points to the next pair,
+;and the cdr of each pair contains the value at that pair, but in reverse order.
+;You build all together the wrong thing! 
+;You could fix the second method by using append:
+(define (square-list items)
+  (define (iter things answer)
+    (if (null? things)
+        answer
+        (iter (cdr things)
+              (append answer
+                    (list (square (car things)))))))
+  (iter items ()))
+;Exercise 2.23:
+(define (for-each func items)
+  (func (list-ref items 0))
+  (newline)
+  (if (not (null? (cdr items))) 
+      (for-each func (cdr items)) 
+      ))
+;=============2.2.2 Hierarchical Structures ==============
+(define (count-leaves x)
+  (cond ((null? x) 0)
+        ((not (pair? x)) 1)
+        (else (+ (count-leaves (car x))
+                 (count-leaves (cdr x))))))
+;Exercise 2.24:
+;done sur un papier, mon ami. 
+;Exercise 2.25:
+;1.cadaddr, or (car(cdr(car(cdr(cdr *)))))
+;2.caar , or (car(car *)))
+;3.cadadadadadadr 
+;Exercise 2.26:
+;(1 2 3 4 5 6)
+;( (1 2 3) 4 5 6)
+;( (1 2 3) (4 5 6))
+;Exercise 2.27:
+;I am going to redefine reverse here. I don't like how I wrote it above.
+(define (reverse items)
+  (define (iter things answer)
+    (if (null? things)
+        answer
+        (iter (cdr things) (cons (car things) answer))))
+  (iter items ()))
+(define (deep-reverse items)
+  (define (iter things answer)
+    (cond ((null? things) answer)
+          ((pair? (car things))
+           (iter (cdr things) (cons (deep-reverse (car things)) answer)))
+          (else (iter (cdr things) (cons (car things) answer)))))
+  (iter items ()))
+;(define (deep-reverse items)
+;  (define (reverser  things index)
+;    (cond ((< index 0) ())
+;          ((pair? (list-ref things index)) (cons (deep-reverse (list-ref things index)) (reverser things (- index 1))))
+;          (else (cons (list-ref things index) (reverser things (- index 1))))))
+;  (display (car items))
+;  (reverser items (- (length items) 1)))
+;Exercise 2.28
+(define (fringe tree)
+  (cond ((null? tree) ())
+        ((pair? (car tree)) (append (fringe (car tree)) (fringe (cdr tree))))
+        (else (cons (car tree) (fringe (cdr tree))))))
+;Exercise 2.29
+;left and right are branches. 
+(define (make-mobile left right)
+  (list left right))
+;structure can either be a number, which represents a weight, or a mobile.
+(define (make-branch len structure)
+  (list len structure))
+;a
+(define (left-branch mobile)
+  (car mobile))
+(define (right-branch mobile)
+  (cadr mobile))
+(define (branch-length branch)
+  (car branch))
+(define (branch-structure branch)
+  (cadr branch))
+;b
+(define (total-weight mobile)
+  (cond ((and (not (pair? (branch-structure (left-branch mobile)))) (not (pair? (branch-structure (right-branch mobile)))))
+         (+ (branch-structure (left-branch mobile)) (branch-structure (right-branch mobile))))
+        ((and (pair? (branch-structure (left-branch mobile))) (not (pair? (branch-structure (right-branch mobile)))))
+         (+ (total-weight (branch-structure (left-branch mobile))) (branch-structure (right-branch mobile))))
+        ((and (not (pair? (branch-structure (left-branch mobile)))) (pair? (branch-structure (right-branch mobile))))
+         (+ (branch-structure (left-branch mobile)) (total-weight (branch-structure (right-branch mobile)))))
+        ((and (pair? (branch-structure (left-branch mobile))) (pair? (branch-structure (left-branch mobile))))
+         (+ (total-weight (branch-structure (left-branch mobile))) (total-weight (branch-structure (right-branch mobile)))))))
+;c
+(define (torque branch)
+  (if (pair? (branch-structure branch))
+      (* (branch-length branch) (total-weight (branch-structure branch)))
+      (* (branch-length branch) (branch-structure branch))))
+(define (balanced mobile)
+  (cond ((and (not (pair? (branch-structure (left-branch mobile)))) (not (pair? (branch-structure (right-branch mobile)))))
+         (= (torque (left-branch mobile)) (torque (right-branch mobile))))
+        ((and (pair? (branch-structure (left-branch mobile))) (not (pair? (branch-structure (right-branch mobile)))))
+         (and (balanced (branch-structure (left-branch mobile))) 
+              (= (torque (left-branch mobile)) (torque (right-branch mobile)))))
+        ((and (not (pair? (branch-structure (left-branch mobile)))) (pair? (branch-structure (right-branch mobile))))
+         (and (= (torque (left-branch mobile)) (torque (right-branch mobile))) 
+              (balanced (branch-structure (right-branch mobile)))))
+        ((and (pair? (branch-structure (left-branch mobile))) (pair? (branch-structure (left-branch mobile))))
+         (and (balanced (branch-structure (left-branch mobile))) (balanced (branch-structure (right-branch mobile)))))))
+;d
+;Just change the cadr in the right-branch selector and branch-structure selector to cdr, and we are done.
+;(define (scale-tree tree factor)
+;  (cond ((null? tree) ())
+;        ((not (pair? tree)) (* tree factor))
+;        (else (cons (scale-tree (car tree) factor)
+;                    (scale-tree (cdr tree) factor)))))
+;(define (scale-tree tree factor)
+;   (map (lambda (sub-tree)
+;   (if (pair? sub-tree)
+;       (scale-tree sub-tree factor)
+;       (* sub-tree factor)))
+;       tree))
+;Exercise 2.30
+(define (square-tree tree)
+  (map (lambda (sub-tree)
+         (if (pair? sub-tree)
+             (square-tree sub-tree)
+             (square sub-tree)))
+       tree))
+;Exercise 2.31
+(define (tree-map proc tree)
+  (map (lambda (sub-tree)
+         (if (pair? sub-tree)
+             (tree-map proc sub-tree)
+             (proc sub-tree)))
+       tree))
+;Exercise 2.32:
+(define (powerset s)
+  (if (null? s)
+      (list ())
+      (let ((rest (powerset (cdr s))))
+        (append rest (map (lambda (subset) 
+                            (cons (car s) subset)) 
+                          rest)))))
+;It works because the set of all subsets is simply the set of all subsets of the cdr of the set union the set of the one missing element union any those subsets... 
+
 ;=========2.2.3 Sequences as Conventional Interfaces ==========
-;qweqwe
 (define (filter predicate sequence)
   (cond ((null? sequence) ())
         ((predicate (car sequence))
