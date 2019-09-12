@@ -1,27 +1,4 @@
-(define (make-rat n d) (cons n d))
-(define (numer x)
-  (let ((g (gcd (car x) (cdr x))))
-    (/ (car x) g)))
-(define (denom x)
-  (let ((g (gcd (car x) (cdr x))))
-    (/ (cdr x) g)))
-(define (add-rat x y)
-  (make-rat (+ (* (numer x) (denom y))
-               (* (numer y) (denom x)))
-            (* (denom x) (denom y))))
-(define (sub-rat x y)
-  (make-rat (- (* (numer x) (denom y))
-               (* (numer y) (denom x)))
-            (* (denom x) (denom y))))
-(define (mul-rat x y)
-  (make-rat (* (numer x) (numer y))
-            (* (denom x) (denom y))))
-(define (div-rat x y)
-  (make-rat (* (numer x) (denom y))
-            (* (denom x) (numer y))))
-
-
-;It works because the set of all subsets is simply the set of all subsets of the cdr of the set union the set of the one missing element union any those subsets... 
+;Lost everything before this. Didn't bother to retrieve it... Now it is gone :| (face of indifference). 
 ;=========2.2.3 Sequences as Conventional Interfaces ==========
 ;qweqwe
 (define (filter predicate sequence)
@@ -693,61 +670,20 @@
         (else (error "Unknown type: ANGLE" z))))
 ;constructors
 ;it is more efficient to do it this way. just look at the time complexity of each.
-(define (make-from-real-imag x y)
-  (make-from-real-imag-rectangular x y))
-(define (make-from-mag-ang r a)
-  (make-from-mag-ang-polar r a))
+;(define (make-from-real-imag x y)
+;  (make-from-real-imag-rectangular x y))
+;(define (make-from-mag-ang r a)
+;  (make-from-mag-ang-polar r a))
 ;if two programmers wrote these two implementations of complex numbers separately, a third programmer could implement the arithmetic package,
 ;without ever having to know how the complex numbers are specifically implemented. 
 ;==============2.4.3. Data-Directed Programming and Additivity ==============
 ;For this section assume we have two procedures, put and get, for manipulating the operation-and-type table:
+;put syntax
 ;(put <op> <type> <item>) installs the <item> in the table, indexed by the <op> and the <type>
+;get syntax
 ;(get <op> <type>) looks up the <op>, <type> entry in the table and returns the item found there. If no item is found, get returns false.
 ;for now, we assume put and get come with Scheme, but later (Chapter 3, Section 3.3.3.) we will implement these.
-(define (install-rectangular-package)
-  ;;internal procedures
-  (define (real-part z) (car z))
-  (define (imag-part z) (cdr z))
-  (define (make-from-real-imag x y) (cons x y))
-  (define (magnitude z)
-    (sqrt (+ (square (real-part z))
-             (square (imag-part z)))))
-  (define (angle z)
-    (atan (imag-part z) (real-part z)))
-  (define (make-from-mag-ang r a)
-    (cons (* r (cos a)) (* r (sin a))))
-  ;;interface to the rest of the system
-  (define (tag x) (attach-tax 'rectangular x))
-  (put 'real-part '(rectangular) real-part)
-  (put 'imag-part '(rectangular) imag-part)
-  (put 'magnitude '(rectangular) magnitude)
-  (put 'angle '(rectangular) angle)
-  (put 'make-from-real-imag 'rectangular
-       (lambda (x y) (tag (make-from-real-imag x y))))
-  (put 'make-from-mag-ang 'rectangular
-       (lambda (r a) (tag (make-from-mag-ang r a))))
-  'done)
-(define (install-polar-package)
-  ;;internal procedures
-  (define (magnitude z) (car z))
-  (define (angle z) (cdr z))
-  (define (make-from-mag-ang r a) (cons r a))
-  (define (real-part z) (* (magnitude z) (cos (angle z))))
-  (define (imag-part z) (* (magnitude z) (sin (angle z))))
-  (define (make-from-real-imag x y)
-    (cons (sqrt (+ (square x) (square y)))
-          (atan y x)))
-  ;;interface to the rest of the system 
-  (define (tag x) (attach-tax 'polar x))
-  (put 'real-part '(polar) real-part)
-  (put 'imag-part '(polar) imag-part)
-  (put 'magnitude '(polar) magnitude)
-  (put 'angle '(polar) angle)
-  (put 'make-from-real-imag '(polar) 
-       (lambda (x y) (tag (make-from-real-imag x y))))
-  (put 'make-from-mag-ang '(polar) 
-       (lambda (x y) (tag (make-from-mag-ang r a))))
-  'done)
+
 (define (apply-generic op . args)
   (let ((type-tags (map type-tag args)))
     (let ((proc (get op type-tags)))
@@ -840,14 +776,14 @@
 ;Exercise 2.76
 ;Explicit dispatch:
 ;  new types:
-;    Write new procedures to handle the new types. If there are n new types, we would have to write n new procedures.
+;    Write new procedures to handle the new types.  
 ;  new operations:
-;    Write the new operations for each of the types. If there are n new operations, we would have to write n*(number-of-types) new procedures. 
+;    Write the new operations for each of the types.  
 ;Data directed:
 ;  new types:
 ;    This corresponds to new columns in our (<operator>,types) table.
 ;  new operations:
-;    This correspond to new columns in our (<operator>,types) table. 
+;    This correspond to new rows in our (<operator>,types) table. 
 ;Message passing:
 ;  new types:
 ;    We would have to write new constructors for each type that handles each operation.
@@ -869,4 +805,146 @@
 ;  to our code. It would extend the existing objects... 
 ;  I prefer the message passing approach for this situation. 
 ;===========2.5 Systems with Generic Operations===============
-
+;===========2.5.1. Generic Arithmetic Operations==============
+(define (add x y) (apply-generic 'add x y))
+(define (sub x y) (apply-generic -mul x y))
+(define (div x y) (apply-generic 'div x y))
+(define (install-scheme-number-package)
+  (define (tag x) (attach-tag 'scheme-number x))
+  (put 'add '(scheme-number scheme-number)
+       (lambda (x y) (tag (+ x y))))
+  (put 'sub '(scheme-number scheme-number)
+       (lambda (x y) (tag (- x y))))
+  (put 'mul '(scheme-number scheme-number)
+       (lambda (x y) (tag (* x y))))
+  (put 'div '(scheme-number scheme-number)
+       (lambda (x y) (tag (/ x y))))
+  (put 'make 'scheme-number 
+       (lambda (x) (tag x)))
+  'done)
+(define (make-scheme-number n)
+  ((get 'make 'scheme-number) n))
+(define (install-rational-package)
+  ;;internal procedures
+  (define (make-rat n d) (cons n d))
+  (define (numer x)
+    (let ((g (gcd (car x) (cdr x))))
+      (/ (car x) g)))
+  (define (denom x)
+    (let ((g (gcd (car x) (cdr x))))
+      (/ (cdr x) g)))
+  (define (add-rat x y)
+    (make-rat (+ (* (numer x) (denom y))
+                 (* (numer y) (denom x)))
+              (* (denom x) (denom y))))
+  (define (sub-rat x y)
+    (make-rat (- (* (numer x) (denom y))
+                 (* (numer y) (denom x)))
+              (* (denom x) (denom y))))
+  (define (mul-rat x y)
+    (make-rat (* (numer x) (numer y))
+              (* (denom x) (denom y))))
+  (define (div-rat x y)
+    (make-rat (* (numer x) (denom y))
+              (* (denom x) (numer y))))
+  ;;interface to the rest of the system
+  (define (tag x) (attach-tag 'rational x))
+  (put 'add '(rational rational)
+       (lambda (x y) (tag (add-rat x y))))
+  (put 'sub '(rational rational)
+       (lambda (x y) (tag (sub-rat x y))))
+  (put 'mul '(rational rational)
+       (lambda (x y) (tag (mul-rat x y))))
+  (put 'div '(rational rational)
+       (lambda (x y) (tag (div-rat x y))))
+  (put 'make 'rational
+       (lambda (n d) (tag (make-rat n d))))
+  'done)
+(define (make-rational n d)
+  ((get 'make 'rational) n d))
+(define (make-from-real-imag x y)
+  ((get 'make-from-real-imag 'rectangular) x y))
+(define (make-from-mag-ang r a)
+  ((get 'make-from-mag-ang 'polar) r a ))
+(define (install-rectangular-package)
+  ;;internal procedures
+  (define (real-part z) (car z))
+  (define (imag-part z) (cdr z))
+  (define (make-from-real-imag x y) (cons x y))
+  (define (magnitude z)
+    (sqrt (+ (square (real-part z))
+             (square (imag-part z)))))
+  (define (angle z)
+    (atan (imag-part z) (real-part z)))
+  (define (make-from-mag-ang r a)
+    (cons (* r (cos a)) (* r (sin a))))
+  ;;interface to the rest of the system
+  (define (tag x) (attach-tax 'rectangular x))
+  (put 'real-part '(rectangular) real-part)
+  (put 'imag-part '(rectangular) imag-part)
+  (put 'magnitude '(rectangular) magnitude)
+  (put 'angle '(rectangular) angle)
+  (put 'make-from-real-imag 'rectangular
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang 'rectangular
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  'done)
+(define (install-polar-package)
+  ;;internal procedures
+  (define (magnitude z) (car z))
+  (define (angle z) (cdr z))
+  (define (make-from-mag-ang r a) (cons r a))
+  (define (real-part z) (* (magnitude z) (cos (angle z))))
+  (define (imag-part z) (* (magnitude z) (sin (angle z))))
+  (define (make-from-real-imag x y)
+    (cons (sqrt (+ (square x) (square y)))
+          (atan y x)))
+  ;;interface to the rest of the system 
+  (define (tag x) (attach-tax 'polar x))
+  (put 'real-part '(polar) real-part)
+  (put 'imag-part '(polar) imag-part)
+  (put 'magnitude '(polar) magnitude)
+  (put 'angle '(polar) angle)
+  (put 'make-from-real-imag '(polar) 
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang '(polar) 
+       (lambda (x y) (tag (make-from-mag-ang r a))))
+  'done)
+(define (install-complex-package)
+  ;;imported procedures from rectangular and polar packages
+  (define (make-from-real-imag x y)
+    ((get 'make-from-real-imag 'rectangular) x y))
+  (define (make-from-mag-ang r a)
+    ((get 'make-from-mag-ang 'polar) r a))
+  ;;internal procedures
+  (define (add-complex z1 z2)
+    (make-from-real-imag (+ (real-part z1) (real-part z2))
+                         (+ (imag-part z1) (imag-part z2))))
+  (define (sub-complex z1 z2)
+    (make-from-real-imag (- (real-part z1) (real-part z2))
+                         (- (imag-part z1) (imag-part z2))))
+  (define (mul-complex z1 z2)
+    (make-from-mag-ang (* (magnitude z1) (magnitude z2))
+                       (+ (angle z1_ (angle z2)))))
+  (define (div-complex z1 z2)
+    (make-from-mag-ang (/ (magnitude z1) (magnitude z2))
+                       (- (angle z1) (angle z2))))
+  ;;interface to rest of the system
+  (define (tag z) (attach-tag 'complex z))
+  (put 'add '(complex complex)
+       (lambda (z1 z2) (tag (add-complex z1 z2))))
+  (put 'sub '(complex complex)
+       (lambda (z1 z2) (tag (sub-complex z1 z2))))
+  (put 'mul '(complex complex)
+       (lambda (z1 z2) (tag (mul-complex z1 z2))))
+  (put 'div '(complex complex)
+       (lambda (z1 z2) (tag (div-complex z1 z2))))
+  (put 'make-from-real-imag '(complex complex)
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang '(complex complex)
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  'done)
+(define (make-complex-from-real-imag x y)
+  ((get 'make-from-real-imag 'complex) x y))
+(define (make-complex-from-mag-ang r a)
+  ((get 'make-complex-from-real-imag 'complex) r a))
