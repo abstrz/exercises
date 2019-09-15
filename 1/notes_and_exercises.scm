@@ -1931,7 +1931,7 @@ guess
       (if proc
           (apply proc (map contents args))
           (try-op-on-coerced-type type-tags 0 op args)))))
-;;I've yet to give an example of a stituation where this strategy fails. Gotta do that next some time later, to finish the exercise.
+;;I've yet to give an example of a situation where this strategy fails. Gotta do that next some time later, to finish the exercise.
 
 
 
