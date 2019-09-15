@@ -1904,7 +1904,7 @@ guess
     (iter n ()))
   ;;should apply coercion at index i in cercion-list to arg at index i in args.
   (define (coerce-args coercion-list args)
-    (if (not (= (length (coercion-list)) (length (args))))
+    (if (not (= (length (coercion-list)) (length args)))
         (error "Invalid input. Both arguments must be lists of the same length!:" coercion-list args)
         (if (null? coercion-list)
             ()
