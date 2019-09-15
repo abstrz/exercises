@@ -1908,7 +1908,9 @@ guess
         (error "Invalid input. Both arguments must be lists of the same length!:" coercion-list args)
         (if (null? coercion-list)
             ()
-            (cons ((car coercion-list) (car args)) (coerce-args (cdr coercion-list) (cdr args))))))
+            (cons ((car coercion-list) (car args)) (coerce-args (cdr coercion-list) (cdr args)))))))
+  ;;loops through type-tags list, checks to see if the args can be coerced to each type in the type-tags list,
+  ;;and if it can, checks if a procedure exists for this coerced type.
   (define (try-op-on-coerced-type type-tags index op args)
     (if (>= index (length type-tags))
         (error "This operation is not possible on the given arguments!" op args)
@@ -1931,5 +1933,4 @@ guess
 
 
 
-;;coerce the types of the arguments to the new type, and apply the procedure. 
 
