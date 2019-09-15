@@ -1910,7 +1910,8 @@ guess
             ()
             (cons ((car coercion-list) (car args)) (coerce-args (cdr coercion-list) (cdr args)))))))
   ;;loops through type-tags list, checks to see if the args can be coerced to each type in the type-tags list,
-  ;;and if it can, checks if a procedure exists for this coerced type.
+  ;;and if it can, checks if a procedure exists for this coerced type,
+  ;;and if it can, it applies this procedure to the coerced arguments and returns the result.
   (define (try-op-on-coerced-type type-tags index op args)
     (if (>= index (length type-tags))
         (error "This operation is not possible on the given arguments!" op args)
@@ -1930,6 +1931,7 @@ guess
       (if proc
           (apply proc (map contents args))
           (try-op-on-coerced-type type-tags 0 op args)))))
+;;I've yet to give an example of a stituation where this strategy fails. Gotta do that next some time later, to finish the exercise.
 
 
 
