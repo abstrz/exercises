@@ -1825,7 +1825,7 @@ guess
 ;==============2.5.2. Combining Data of Different Types==============
 (define (scheme-number->complex n)
   (make-complex-from-real-imag (contents n) 0))
-(put-coercion 'scheme-number 'complex scheme-number->complex)
+;(put-coercion 'scheme-number 'complex scheme-number->complex)
 (define (apply-generic op . args)
   (let ((type-tags (map type-tag args)))
     (let ((proc (get op type-tags)))
@@ -1836,19 +1836,100 @@ guess
                     (type2 (cadr type-tags))
                     (a1 (car args))
                     (a2 (cadr args)))
-                (let ((t1->t2 (get-coercion type1 type2))
-                      (t2->t1 (get-coercion type2 type1)))
-                  (cond (t1->t2
-                          (apply-generic op (t1->t2 a1) a2))
-                        (t2->t1
-                          (apply-generic op a1 (t2->t1 a2)))
-                        (else (error "No method for these types"
-                                     (list op type-tags))))))
-              (error "No method for these types"
-                     (list op type-tags)))))))
+                (if (eq? type1 type2)
+                    (error "No method for these types" (list op type-tags))
+                    (let ((t1->t2 (get-coercion type1 type2))
+                          (t2->t1 (get-coercion type2 type1)))
+                      (cond (t1->t2
+                              (apply-generic op (t1->t2 a1) a2))
+                            (t2->t1
+                              (apply-generic op a1 (t2->t1 a2)))
+                            (else (error "No method for these types"
+                                         (list op type-tags))))))
+                (error "No method for these types"
+                       (list op type-tags))))))))
 ;Exercise 2.81:
-(define (scheme-number->scheme-number n) n)
-(define (complex->complex z) z)
-(put-coercion 'scheme-number 'scheme-number scheme-number->scheme-number)
-(put-coercion 'complex 'complex complex->complex)
-;a
+;(define (scheme-number->scheme-number n) n)
+;(define (complex->complex z) z)
+;(put-coercion 'scheme-number 'scheme-number scheme-number->scheme-number)
+;(put-coercion 'complex 'complex complex->complex)
+;a.
+;(define (exp x y) (apply-generic 'exp x y))
+;;following added to Scheme-number package
+;(put 'exp '(scheme-number scheme-number)
+;     (lambda (x y) (tag (exp x y)))
+;Let a b be two scheme-numbers. Then:
+;1) (exp a b)
+;   (apply-generic 'exp a b)
+;     type-tags: (scheme-number scheme-number)
+;     proc     : (get 'exp (scheme-number scheme-number))=exp
+;2) (apply exp (a b))
+;   (exp a b) 
+;and we get an infinite loop.
+;Let z=(complex rectangle 2 3) w=(complex rectangle 4 5).
+;Say we call
+;(exp z w)
+;we get:
+;1) (exp z w)
+;   (apply-generic 'exp z w)
+;     type-tags: (complex complex)
+;     proc: (get 'exp (complex complex))=#f
+;2) (apply-generic 'exp (t1->t2 a1) a2)
+;     (t1->t2 a1)=a1, since both types are 'complex, so we just get
+;   (apply-generic 'exp a1 a2),
+;     and we are back to where we started.
+;again, we get an infinite loop.
+;b.
+;He is correct, but his solution doesn't work. The way he tried to solve the issue created a new issue 
+;of infinite looping, both in the case where a procedure exists and in the case where it doesn't.
+;c.Done. Added a condition that checks if the two types are the same, and if they are, we return an error.
+;Exercise 2.82
+(define (apply-generic op . args)
+  ;;get-coercion-list behaves like (type_1 type_2 ... type_n type) \mapsto (type_1->type type_2->type \dots type_n->type)
+  ;;if (eq? type_i type) then (eq? type_i->type identity)
+  (define (get-coercion-list type-tags type)
+    (if (<= (length (type-tags)) 1)
+        ()
+        (cond ((eq? (car type-tags) type)
+               (cons identity (get-coercion-list (cdr type-tags) type)))
+              ((get-coercion (car type-tags) type)
+               (cons (get-coercion (car type-tags) type) (get-coercion-list (cdr type-tags) type)))
+              (else (get-coercion-list (cdr type-tags) type))))) 
+  (define (generate-list-of-n-copies element n)
+    (define (iter element n l)
+      (if (= n 0)
+          l
+          (iter element (- n 1) (cons element l))
+          ))
+    (iter element n ()))
+  ;;should apply coercion at index i in cercion-list to arg at index i in args.
+  (define (coerge-args coercion-list args)
+    (if (not (= (length (coercion-list)) (length (args))))
+        (error "Invalid input. Both arguments must be lists of the same length!:" coercion-list args)
+        (if (null? coercion-list)
+            ()
+            (cons ((car coercion-list) (car args)) (coerce-args (cdr coercion-list) (cdr args))))))
+  (define (try-op-on-coerced-type type-tags index op args)
+    (if (>= index (length type-tags))
+        (error "This operation is not possible on the given arguments!" op args)
+        (let ((type (list-ref type-tags index)))
+          (if (= (length (get-coercion-list type-tags type)) (length type-tags))
+              (let ((coercion-list (get-coercion-list type-tags type)))
+                ;;search to see if a procedure exists for the operation and the new type-list
+                (let ((type-list (generate-list-of-n-copies type (length type-tags))))
+                  (let ((proc-coerced (get op type-list)))
+                    (if proc-coerced
+                        (let ((args-coerced (coerce-args coercion-list args)))
+                          (apply proc-coerced args-coerced))
+                        (try-op-on-coerced-type type-tags (+ index 1) op args)))))
+              (try-op-on-coerced-type type-tags (+ index 1) op args)))))
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (try-op-on-coerced-type type-tags 0 op args)))))
+
+
+
+;;coerce the types of the arguments to the new type, and apply the procedure. 
+
