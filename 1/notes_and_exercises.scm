@@ -1896,12 +1896,12 @@ guess
                (cons (get-coercion (car type-tags) type) (get-coercion-list (cdr type-tags) type)))
               (else (get-coercion-list (cdr type-tags) type))))) 
   (define (generate-list-of-n-copies element n)
-    (define (iter element n l)
+    (define (iter n l)
       (if (= n 0)
           l
           (iter element (- n 1) (cons element l))
           ))
-    (iter element n ()))
+    (iter n ()))
   ;;should apply coercion at index i in cercion-list to arg at index i in args.
   (define (coerce-args coercion-list args)
     (if (not (= (length (coercion-list)) (length (args))))
