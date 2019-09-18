@@ -1897,18 +1897,18 @@ guess
               (else (get-coercion-list (cdr type-tags) type))))) 
   (define (generate-list-of-n-copies element n)
     (define (iter n l)
-      (if (= n 0)
+      (if (= n 1)
           l
           (iter element (- n 1) (cons element l))
           ))
     (iter n ()))
   ;;should apply coercion at index i in coercion-list to arg at index i in args.
   (define (coerce-args coercion-list args)
-    (if (not (= (length (coercion-list)) (length args))
+    (if (not (= (length (coercion-list)) (length args)))
         (error "Invalid input. Both arguments must be lists of the same length!:" coercion-list args)
         (if (null? coercion-list)
             ()
-            (cons ((car coercion-list) (car args)) (coerce-args (cdr coercion-list) (cdr args)))))))
+            (cons ((car coercion-list) (car args)) (coerce-args (cdr coercion-list) (cdr args))))))
   ;;loops through type-tags list, checks to see if the args can be coerced to each type in the type-tags list,
   ;;and if it can, checks if a procedure exists for this coerced type,
   ;;and if it can, it applies this procedure to the coerced arguments and returns the result.
@@ -1931,8 +1931,99 @@ guess
       (if proc
           (apply proc (map contents args))
           (try-op-on-coerced-type type-tags 0 op args)))))
-;;I've yet to give an example of a situation where this strategy fails. Gotta do that next some time later, to finish the exercise.
-
-
-
-
+;;This example would fail for something like scalar-multiplication, which requires an object of type scalar and an object of type vector. 
+;;The procedure above would first try to coerce vector to scalar and then scalar to vector, and give up, saying no procedure exists,
+;;even if we define and put into our table a scalar multiplication procedure, after defining scalar and vector. 
+;Exercise 2.83:
+;We want all lower types to inherit procedures from higher types. Say magnitude is defined for complex numbers, but not for any of the lower types, then we want
+;(apply-generic 'magnitude integer-object) to still return a magnitude, since an integer is a complex number... Say the integer is a, then we want to represent that
+;by (integer rational real complex a), and then for each of the other types, we just need to add (put 'magnitude 'type), and the apply-generic procedure will
+;go from tag to tag, climbing up the hierarchy, until it hits the complex magnitude procedure, and then it can apply it. 
+;complex
+;  ^
+;  |
+; real
+;  ^
+;  |
+;rational
+;  ^
+;  |
+;integer
+;Assume that integers are tagged with 'integer. 
+(define (install-integer-package)
+  <stuff>
+  ;apply-generic will strip off the integer tag, so we don't explicitly have to worry about doing that in our raise definition here.
+  (define (raise a)
+    ((get 'make 'rational) a 1))
+  (put 'raise '(integer) raise)
+  'done)
+(define (install-rational-package)
+  <stuff>
+  ;apply-generic strips off rational tag, leaving us with a pair (numer denom).
+  (define (raise r)
+    ((get 'make 'real) (/ (car r) (cadr r))))
+  (put 'raise '(rational) raise)
+  'done)
+(define (install-real-package)
+  <stuff>
+  (define (raise r)
+    ((get 'make 'complex) r 0))
+  (put 'raise '(complex) raise)
+  'done)
+(define (install-complex-package)
+  <stuff>)
+;generic procedure definition. 
+(define (raise x)
+  (apply-generic 'raise x))
+;Exercise 2.84:
+(define (apply-generic op . args)
+  (define (higher-type type1 type2)
+    (cond ;;if one is the lowest type, then not that one.
+          ((eq? type1 'integer) type2)
+          ((eq? type2 'integer) type1)
+          ;;if one is the highest type, then that one. 
+          ((eq? type1 'complex) type1)
+          ((eq? type2 'complex) type2)
+          ;;type1 is either 'real or 'rational, so check for that.
+          ((eq? type1 'real) type1)
+          ((eq? type1 'rational) type2)
+          ;;handle error
+          (else "One of the types are not supported!:" (list type1 type2))))
+  (define (higher-type? type1 type2)
+    (if (eq? (higher-type type1 type2) type1)
+        #t
+        #f))
+  (define (highest-type type-list)
+    (define (recursive-checker type type-list)
+      (cond ((null? type-list) type) 
+            ((higher-type? (car type-list) type) (recursive-checker (car type-list) (cdr type-list)))
+            (else (recursive-checker type (cdr type-list)))))
+    (recursive-checker (car type-list) type-list))
+  ;;this procedure will always be used in apply-generic such that the type of x is always less than type. So I won't check pathological cases. 
+  (define (raise-to-type type x)
+    (if (eq? (type-tag x) type)
+        x
+        (raise-to-type type ((get 'raise (type-tag x)) x))))
+  (define (raise-args type args)
+    (cond ((null? args) ())
+          ((eq? (type-tag (car args)) type)
+           (cons (car args) (raise-args type (cdr args))))
+           (else (raise-to-type type (car args)) (raise-args type (cdr args)))))
+  (define (generate-list-of-n-copies element n)
+    (define (iter n l)
+      (if (= n 1)
+          l
+          (iter element (- n 1) (cons element l))
+          ))
+    (iter n ()))
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          ;;else, we want to coerce args to highest type of that array, and try again.
+          (let ((highest-type-list (generate-list-of-n-copies (highest-type type-tags) (length type-tags))))
+            (let ((coerced-proc (get op highest-type-list)))
+              (if coerced-proc
+                  (let ((coerced-args (raise-args (highest-type type-tags) args)))
+                    (apply coerced-proc coerced-args))
+                  (error "No such operation for the given args!" (list op args)))))))))
