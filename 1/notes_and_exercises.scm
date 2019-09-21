@@ -2497,8 +2497,9 @@ guess
   (put 'mul '(polynomial polynomial) 
        (lambda (p q) (tag (mul-poly p q)))) 
   (put '=zero? '(polynomial) =zero?)
-  (put 'make-from-dense-poly 'polynomial
+  (put 'make-as-dense-poly 'polynomial
        (lambda (var terms) (tag (make-dense-poly var terms))))
-  (put 'make-from-sparse-poly 'polynomial
+  (put 'make-as-sparse-poly 'polynomial
        (lambda (var terms) (tag (make-sparse-poly var terms))))
   'done)
+;Exercise 2.91
