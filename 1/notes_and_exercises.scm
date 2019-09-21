@@ -2402,7 +2402,7 @@ guess
   (put 'make 'sparse
        (lambda (var terms) (tag (make-poly var terms))))
   'done)
-(define (install-dense)
+(define (install-dense-package)
   (define (add-terms l1 l2)
     (cond ((empty-termlist? l1) l2)
           ((empty-termlist? l2) l1)
