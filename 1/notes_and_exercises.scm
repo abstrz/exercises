@@ -2556,6 +2556,12 @@ guess
       (define (build-term-list L)
         (cons (make-term (order (first-term L)) (make-poly var2 (make-term n (coeff (first-term L))))) (build-term-list (rest-terms L))))
       (make-poly var1 (build-term-list (term-list q))))
+    (define (expand-dense var1 var2 n q)
+      ;let q= b_mx^m + ... + b_0.
+      ;Generates a new term-list
+      (define (build-term-list L)
+        (cons (make-term (- (length (rest-terms L)) 1) (make-poly var2 (make-term n (car L)))) (build-term-list (rest-terms L))))
+      (make-poly var1 (build-term-list (term-list q))))
     ;(make-poly var1 ((m (make-poly var2 (n b_m))) (m-1 (make-poly var2 (n b_{m-1}))) ... (0 (make-poly var2 (0 b_0))))
     (if (eq? (variable p) 'x)
         p
