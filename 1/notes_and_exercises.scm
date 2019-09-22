@@ -2403,6 +2403,8 @@ guess
        (lambda (var terms) (tag (make-poly var terms))))
   'done)
 (define (install-dense-package)
+  (define (rest-terms term-list)
+    (cdr term-list))
   (define (add-terms l1 l2)
     (cond ((empty-termlist? l1) l2)
           ((empty-termlist? l2) l1)
@@ -2535,33 +2537,50 @@ guess
 ;By imposing an ordering on variables, extend the polynomial package so that addition and multiplication of polynomials works for polynomials in different variables.
 ;Let's start by doing this first for dense and sparse polynomials.
 ;For now, suppose there exists only two possible variables x and y. Let's arrange them in a type-hierarchy where x is higher than y, so if we have p(x) + q(y), then we first
-;raise q(y) to q(x) (by expanding and rearranging such that y are coefficient terms in x), and then performing the computation. 
-;To achieve this... we just need to install a raise procedure for sparse and dense polynomials, and then extend it to the general polynomial package, and 
+;y->x q(y) to q(x) (by expanding and rearranging such that y are coefficient terms in x), and then performing the computation. 
+;To achieve this... we just need to install a y->x procedure for sparse and dense polynomials, and then extend it to the general polynomial package, and 
 ;then apply it before any algebraic operation! 
 
 ;Let p(y)= a_n(x)y^n + a_{n-1}(x)y^{n-1} + \dots + a_0(x). 
 ;This polynomial is represented as a sparse polynomial as
 ;(sparse y ((n a_n(x)) (n-1  a_{n-1}(x)) \dots (0  a_0(x))))
-;Our raise procedure must parce through each such a_n(x),
+;Our y->x procedure must parce through each such a_n(x),
 ;generating new terms recursively as it goes along.
 ;This is my first attempt. Need to change it to be more general.
 (define (install-sparse-package)
   <stuff>
-  (define (expand var1 var2 n q)
-    ;let q= b_mx^m + ... + b_0.
-    ;Generates a new term-list
-    (define (build-term-list L)
-      (cons (make-term (order (first-term L)) (make-poly var2 (make-term n (coeff (first-term L))))) (build-term-list (rest-terms L))))
-    (make-poly var1 (build-term-list (term-list q))))
-    ;(make-sparse-poly var1 ((m (make-poly var2 (n b_m))) (m-1 (make-poly var2 (n b_{m-1}))) ... (0 (make-poly var2 (0 b_0))))
-    
-  (define (raise p)
+  (define (y->x p)
+    (define (expand-sparse var1 var2 n q)
+      ;let q= b_mx^m + ... + b_0.
+      ;Generates a new term-list
+      (define (build-term-list L)
+        (cons (make-term (order (first-term L)) (make-poly var2 (make-term n (coeff (first-term L))))) (build-term-list (rest-terms L))))
+      (make-poly var1 (build-term-list (term-list q))))
+    (define (expand-dense var1 var2 n q)
+      ;let q= b_mx^m + ... + b_0.
+      ;Generates a new term-list
+      (define (build-term-list L)
+        (cons (make-term (- (length (rest-terms L)) 1) (make-poly var2 (make-term n (car L)))) (build-term-list (rest-terms L))))
+      (make-poly var1 (build-term-list (term-list q))))
+    ;(make-poly var1 ((m (make-poly var2 (n b_m))) (m-1 (make-poly var2 (n b_{m-1}))) ... (0 (make-poly var2 (0 b_0))))
     (if (eq? (variable p) 'x)
         p
         ;expand p and rearrange. 
         (let ((L (term-list p)))
           (let ((t1 (first-term L)))
             (let ((t1-c (coeff t1))
-                  (t1-o (coeff t1)))
+                  (t1-o (order t1)))
               (let ((rest-poly (make-poly (variable p) (rest-terms (term-list p)))))
-                (add (expand 'x 'y t1-o t1-c) (raise rest-poly)))))))) 
+                (cond ((eq? (type-tag t1-c) 'sparse)
+                       (add (expand-sparse 'x 'y t1-o t1-c) (y->x rest-poly)))
+                      ((eq? (type-tag t1-c) 'dense)
+                       (add (expand-dense 'x 'y t1-0 t1-c) (y->x rest-poly)))
+                      ((eq? (type-tag t1-c) 'polynomial)
+                       (if (eq? (type-tag (cdr t1-c)) 'sparse)
+                           (add (expand-sparse 'x 'y t1-o (contents t1-c)) (y->x rest-roly))
+                           (add (expand-dense 'x 'y t1-o (contents t1-c))) (y->x rest-poly)))
+                      (else
+                        (add (make-poly 'x (make-term 0 (make-poly 'y (t1-o t1-c)))) (y->x rest-poly))))))))))
+  ;Now, we just rewrite all the algebraic operations to check variables first.
+  ;I will do this at a later date.
+  'done)
