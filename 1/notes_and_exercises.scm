@@ -2574,7 +2574,7 @@ guess
                            (add (expand-sparse 'x 'y t1-o (contents t1-c)) (y->x rest-roly))
                            (add (expand-dense 'x 'y t1-o (contents t1-c))) (y->x rest-poly)))
                       (else
-                        (add (make-poly 'x (make-term 0 (make-poly 'y (t1-o t1-c)))) (y->x rest-poly))))))))))
+                        (add (make-poly 'x (make-term 0 (make-poly 'y t1))) (y->x rest-poly))))))))))
   ;Now, we just rewrite all the algebraic operations to check variables first.
   ;I will do this at a later date.
   'done)
