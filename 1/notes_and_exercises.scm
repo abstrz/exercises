@@ -2583,4 +2583,5 @@ guess
                         (add (make-poly 'x (make-term 0 (make-poly 'y (list t1)))) (y->x rest-poly))))))))))
   ;Now, we just rewrite all the algebraic operations to check variables first.
   ;I will do this at a later date.
+  (put 'y->x 'sparse y->x)
   'done)
