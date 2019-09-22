@@ -2503,3 +2503,28 @@ guess
        (lambda (var terms) (tag (make-sparse-poly var terms))))
   'done)
 ;Exercise 2.91
+(define (div-terms L1 L2)
+  (if (empty-termlist? L1)
+      (list (the-empty-termlist) (the-empty-termlist))
+      (let ((t1 (first-term L1))
+            (t2 (first-term L2)))
+        (if (> (order t2) (order t1))
+            (list (the-empty-term-list) L1)
+            (let ((new-c (div (coeff t1) (coeff t2)))
+                  (new-o (- (order t1) (order t2))))
+              (let ((rest-of-result
+                      ;build list of terms for result. 
+                      (let ((qtnt (make-term new-o new-c)))
+                        (let ((rmdr (add-terms L1 (minus (mul-terms qtnt L2)))))
+                          (if (< (order (first-term rmdr)) (order t2))
+                              (list () ())
+                              (let ((next-qtnt-c (div (coeff (first-term rmdr)) (coeff t2)))
+                                    (next-qtnt-o (- (order (first-term-rmdr)) (order t2))))
+                                (let (next-qtnt (make-term next-qtnt-o next-qtnt-c))
+                                  (let ((next-rmdr (add-terms rmdr (minus (mul-terms next-qtnt L2)))))
+                                    (cons next-qtnt (car (div-terms next-rmdr L2)))))))))))
+                (let ((final-quotient (cons result rest-of-result)))
+                  (let ((final-rmdr (add-terms L1 (minus (mul-terms final-quotient L2)))))
+                    (list final-quotient final-rmdr)))))))))
+;HIERARCHIES OF TYPES IN SYMBOLIC ALGEBRA
+
