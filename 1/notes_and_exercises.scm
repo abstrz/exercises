@@ -2517,6 +2517,10 @@ guess
                       (let ((qtnt (make-term new-o new-c)))
                         (let ((rmdr (add-terms L1 (minus (mul-terms qtnt L2)))))
                           (if (< (order (first-term rmdr)) (order t2))
+                              ;keep return object consistently a list of two objects,
+                              ;the first representing the quotient and the second the remainder.
+                              ;the actual final remainder is computer from the final quotient,
+                              ;which is being recursively build, here.
                               (list () ())
                               (let ((next-qtnt-c (div (coeff (first-term rmdr)) (coeff t2)))
                                     (next-qtnt-o (- (order (first-term-rmdr)) (order t2))))
@@ -2527,4 +2531,37 @@ guess
                   (let ((final-rmdr (add-terms L1 (minus (mul-terms final-quotient L2)))))
                     (list final-quotient final-rmdr)))))))))
 ;HIERARCHIES OF TYPES IN SYMBOLIC ALGEBRA
+;Exercise 2.92
+;By imposing an ordering on variables, extend the polynomial package so that addition and multiplication of polynomials works for polynomials in different variables.
+;Let's start by doing this first for dense and sparse polynomials.
+;For now, suppose there exists only two possible variables x and y. Let's arrange them in a type-hierarchy where x is higher than y, so if we have p(x) + q(y), then we first
+;raise q(y) to q(x) (by expanding and rearranging such that y are coefficient terms in x), and then performing the computation. 
+;To achieve this... we just need to install a raise procedure for sparse and dense polynomials, and then extend it to the general polynomial package, and 
+;then apply it before any algebraic operation! 
 
+;Let p(y)= a_n(x)y^n + a_{n-1}(x)y^{n-1} + \dots + a_0(x). 
+;This polynomial is represented as a sparse polynomial as
+;(sparse y ((n a_n(x)) (n-1  a_{n-1}(x)) \dots (0  a_0(x))))
+;Our raise procedure must parce through each such a_n(x),
+;generating new terms recursively as it goes along.
+;This is my first attempt. Need to change it to be more general.
+(define (install-sparse-package)
+  <stuff>
+  (define (expand var1 var2 n q)
+    ;let q= b_mx^m + ... + b_0.
+    ;Generates a new term-list
+    (define (build-term-list L)
+      (cons (make-term (order (first-term L)) (make-poly var2 (make-term n (coeff (first-term L))))) (build-term-list (rest-terms L))))
+    (make-poly var1 (build-term-list (term-list q))))
+    ;(make-sparse-poly var1 ((m (make-poly var2 (n b_m))) (m-1 (make-poly var2 (n b_{m-1}))) ... (0 (make-poly var2 (0 b_0))))
+    
+  (define (raise p)
+    (if (eq? (variable p) 'x)
+        p
+        ;expand p and rearrange. 
+        (let ((L (term-list p)))
+          (let ((t1 (first-term L)))
+            (let ((t1-c (coeff t1))
+                  (t1-o (coeff t1)))
+              (let ((rest-poly (make-poly (variable p) (rest-terms (term-list p)))))
+                (add (expand 'x 'y t1-o t1-c) (raise rest-poly)))))))) 
