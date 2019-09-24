@@ -2526,7 +2526,7 @@ guess
                               (list () ())
                               (let ((next-qtnt-c (div (coeff (first-term rmdr)) (coeff t2)))
                                     (next-qtnt-o (- (order (first-term-rmdr)) (order t2))))
-                                (let (next-qtnt (make-term next-qtnt-o next-qtnt-c))
+                                (let ((next-qtnt (make-term next-qtnt-o next-qtnt-c)))
                                   (let ((next-rmdr (add-terms rmdr (minus (mul-terms next-qtnt L2)))))
                                     (cons next-qtnt (car (div-terms next-rmdr L2)))))))))))
                 (let ((final-quotient (cons result rest-of-result)))
@@ -2578,7 +2578,7 @@ guess
                       ((eq? (type-tag t1-c) 'polynomial)
                        (if (eq? (type-tag (cdr t1-c)) 'sparse)
                            (add (expand-sparse 'x 'y t1-o (contents t1-c)) (y->x rest-roly))
-                           (add (expand-dense 'x 'y t1-o (contents t1-c))) (y->x rest-poly)))
+                           (add (expand-dense 'x 'y t1-o (contents t1-c)) (y->x rest-poly))))
                       (else
                         (add (make-poly 'x (make-term 0 (make-poly 'y (list t1)))) (y->x rest-poly))))))))))
   ;I'm only writing the algebraic operations that are different, and omitting put statements since those are unchanged.
@@ -2586,112 +2586,113 @@ guess
     (if (same-variable? (variable p1) (variable p2))
         (make-poly (variable p1)
                    (add-terms (term-list p1) (term-list p2)))
-        (else
-          ;assume only 'x and 'y variables are possible.
-          (if (eq? (variable p1) 'y)
-              (add-poly (y-> x p1) p2)
-              (add-poly p1 (y->x p2))))))
-  (define (mul-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (mul-terms (term-list p1) (term-list p2)))
-        (else
-          ;assume only 'x and 'y variables are possible.
-          (if (eq? (variable p1) 'y)
-              (mul-poly (y-> x p1) p2)
-              (mul-poly p1 (y->x p2)))))))
 
-(define (install-dense-package)
-  
-  <stuff>
-  ;Here the polynomial p(y)=a_n(x)y^n + a_{n-1}y^{n-1} + \dots + a_0(x) is represented simply as
-  ;(dense y (a_n(x) a_{n-1}(x) ... a_0(x)))
-  ;Now, the issue is that... we can't just blindly build term lists, and then sum them, because then we lose track of degree... We need a way around this,
-  ;maybe we can build by degree. By that I mean we can write a procedure that takes in a polynomial in y and a number n, and expands
-  ;and returns the coefficient of order n of the same polynomial considered as being in the variable x...Then, we could just recursively build a list of all the 
-  ;degree coefficients, and that would be the full expansion of the polynomial in y considered as a polynomial in x, and that would be our final output. 
-  (define (y->x p)
-    ;p is a polynomial in y. As above, let p(y)=a_n(x)y^n + a_{n-1}y^{n-1} + \dots + a_0(x). Then,
-    ;as a dense polynomial, it just has term-list (a_n(x) a_{n-1}(x) ... a_0(x))
-    ;Now, our goal is to go through this list, expanding each polynomial in x, and pulling out degree n terms. 
-    ;Later, we will think about how we can find the maximum degree, and then recursively, build our fully expanded term list. One problem at a time.
-    (define (element-then-k-zeros element k)
-      (define (iter i result)
-        (if (= i 0)
-            result
-            (iter (- i 1) (append result (list 0)))))
-      (iter k (list element)))
-    (define (build-n-degree-term p n)
-      ;L looks like (a_n(x) a_{n-1}(x) ... a_0(x))
-      (define (parse-sparse-poly a k)
-        (let ((L-a (term-list a)))
-          (if (= (order (first-term L-a)) n)
-              (mul-poly (make-poly 'y (element-then-k-zeros 1 (+ k 1))) (first-term L-a))
-              (parse-sparse-poly (make-poly (variable a) (rest-terms L-a))))))
-      (define (parse-dense-poly a k)
-        (let ((L-a (term-list a)))
-          (if ((= (- (length (rest-terms (term-list L-a))) 1) n))
-              (mul-poly (make-poly 'y (element-then-k-zeros 1 (+ k 1))) (first-term L-a))
-              (parse-dense-poly (make-poly (variable a) (rest-terms L-a))))))
-      (let ((L (term-list p)))
-        (let ((ord (- (length L) 1))
-              (a (first-term L)))
-          ;ord is the power of y.
-          (cond (((type-tag a) 'sparse)
-                 (add (parse-sparse-poly a ord) (build-n-degree-term (make-poly (variable p) (rest-terms L)))))
-                (((type-tag a) 'dense)
-                 (add (parse-dense-poly a ord) (build-n-degree-term (make-poly (variable p) (rest-terms L)))))
-                (((type-tag a) 'polynomial)
-                 (if (eq? (type-tag (contents a)) 'sparse)
-                     (add (parse-sparse-poly (contents a) ord) (build-n-degree-term (make-poly (variable p) (rest-terms L))))
-                     (add (parse-dense-poly (contents a) ord) (build-n-degree-term (make-poly (variable p) (rest-terms L))))))
-                (else
-                  (add a (build-n-degree-term (make-poly (variable p) (rest-terms L)))))))))
-    ;now, we just need to find the maximum power of x in p(y)'s expansion. For that we can write a method that iterates through the coefficients,
-    ;and checks. 
-    (define (max-power-var p var)
-      (define (max-power-sparse a min-bound)
-        (let ((L (term-list a)))
-          (let ((t1 (first-term L)))
-            (let ((ord (order t1)))
-              (if (> ord min-bound)
-                  (max ord (max-power-sparse (make-poly var (rest-terms L)) ord))
-                  (max min-bound (max-power-sparse (make-poly var (rest-terms L)) min-bound)))))))
-      (define (max-power-dense a)
-        (- (length (term-list a)) 1))
-      (let ((L (term-list p)))
-        (let ((a (first-term L)))
-          (cond ((eq? (type-tag a) 'sparse)
-                 (max (max-power-sparse a 0) (max-power-var (make-poly (variable p) (rest-terms L)) var)))
-                ((eq? (type-tag a) 'dense)
-                 (max (max-power-dense a 0) (max-power-var (make-poly (variable p) (rest-terms L)) var)))
-                ((eq? (type-tag a) 'polynomial)
-                 (if (eq? (type-tag (contents a)) 'sparse)
-                     (max (max-power-sparse (contents a) 0) (max-power-var (make-poly (variable p) (rest-terms L)) var))
-                     (max (max-power-dense (contents a) 0) (max-power-var (make-poly (variable p) (rest-terms L)) var))))
-                (else 
-                  (max 0 (max-power-var (make-poly (variable p) (rest-terms L)) var)))))))
-    (define (build-term-list p i)
-      (if (= i 0)
-          ()
-          (cons (build-n-degree-term p i) (build-term-list p (- i 1)))))
-    (let ((max-power (max-power-var p (variable p))))
-      (let ((term-list (build-term-list p max-power)))
-        (make-poly 'x term-list))))
-  (define (add-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (add-terms (term-list p1) (term-list p2)))
+        ;assume only 'x and 'y variables are possible.
         (if (eq? (variable p1) 'y)
-            (add-poly (y->x p1) p2)
+            (add-poly (y-> x p1) p2)
             (add-poly p1 (y->x p2)))))
   (define (mul-poly p1 p2)
     (if (same-variable? (variable p1) (variable p2))
         (make-poly (variable p1)
-                   (mul-terms (term-list p1) (term-list p2))) 
+                   (mul-terms (term-list p1) (term-list p2)))
+        ;assume only 'x and 'y variables are possible.
         (if (eq? (variable p1) 'y)
-            (mul-poly (y->x p1) p2)
+            (mul-poly (y-> x p1) p2)
             (mul-poly p1 (y->x p2))))))
-;the polynomial package is unchanged, since addition at that level is defined recursively by addition at the lower levels, assuming some sort of type conversion between sparse and dense polynomial
-;representations.
 
+  (define (install-dense-package)
+
+    <stuff>
+    ;Here the polynomial p(y)=a_n(x)y^n + a_{n-1}y^{n-1} + \dots + a_0(x) is represented simply as
+    ;(dense y (a_n(x) a_{n-1}(x) ... a_0(x)))
+    ;Now, the issue is that... we can't just blindly build term lists, and then sum them, because then we lose track of degree... We need a way around this,
+    ;maybe we can build by degree. By that I mean we can write a procedure that takes in a polynomial in y and a number n, and expands
+    ;and returns the coefficient of order n of the same polynomial considered as being in the variable x...Then, we could just recursively build a list of all the 
+    ;degree coefficients, and that would be the full expansion of the polynomial in y considered as a polynomial in x, and that would be our final output. 
+    (define (y->x p)
+      ;p is a polynomial in y. As above, let p(y)=a_n(x)y^n + a_{n-1}y^{n-1} + \dots + a_0(x). Then,
+      ;as a dense polynomial, it just has term-list (a_n(x) a_{n-1}(x) ... a_0(x))
+      ;Now, our goal is to go through this list, expanding each polynomial in x, and pulling out degree n terms. 
+      ;Later, we will think about how we can find the maximum degree, and then recursively, build our fully expanded term list. One problem at a time.
+      (define (element-then-k-zeros element k)
+        (define (iter i result)
+          (if (= i 0)
+              result
+              (iter (- i 1) (append result (list 0)))))
+        (iter k (list element)))
+      (define (build-n-degree-term p n)
+        ;L looks like (a_n(x) a_{n-1}(x) ... a_0(x))
+        (define (parse-sparse-poly a k)
+          (let ((L-a (term-list a)))
+            (if (= (order (first-term L-a)) n)
+                (mul-poly (make-poly 'y (element-then-k-zeros 1 (+ k 1))) (first-term L-a))
+                (parse-sparse-poly (make-poly (variable a) (rest-terms L-a))))))
+        (define (parse-dense-poly a k)
+          (let ((L-a (term-list a)))
+            (if ((= (- (length (rest-terms (term-list L-a))) 1) n))
+                (mul-poly (make-poly 'y (element-then-k-zeros 1 (+ k 1))) (first-term L-a))
+                (parse-dense-poly (make-poly (variable a) (rest-terms L-a))))))
+        (let ((L (term-list p)))
+          (let ((ord (- (length L) 1))
+                (a (first-term L)))
+            ;ord is the power of y.
+            (cond (((type-tag a) 'sparse)
+                   (add (parse-sparse-poly a ord) (build-n-degree-term (make-poly (variable p) (rest-terms L)))))
+                  (((type-tag a) 'dense)
+                   (add (parse-dense-poly a ord) (build-n-degree-term (make-poly (variable p) (rest-terms L)))))
+                  (((type-tag a) 'polynomial)
+                   (if (eq? (type-tag (contents a)) 'sparse)
+                       (add (parse-sparse-poly (contents a) ord) (build-n-degree-term (make-poly (variable p) (rest-terms L))))
+                       (add (parse-dense-poly (contents a) ord) (build-n-degree-term (make-poly (variable p) (rest-terms L))))))
+                  (else
+                    (add a (build-n-degree-term (make-poly (variable p) (rest-terms L)))))))))
+      ;now, we just need to find the maximum power of x in p(y)'s expansion. For that we can write a method that iterates through the coefficients,
+      ;and checks. 
+      (define (max-power-var p var)
+        (define (max-power-sparse a min-bound)
+          (let ((L (term-list a)))
+            (let ((t1 (first-term L)))
+              (let ((ord (order t1)))
+                (if (> ord min-bound)
+                    (max ord (max-power-sparse (make-poly var (rest-terms L)) ord))
+                    (max min-bound (max-power-sparse (make-poly var (rest-terms L)) min-bound)))))))
+        (define (max-power-dense a)
+          (- (length (term-list a)) 1))
+        (let ((L (term-list p)))
+          (let ((a (first-term L)))
+            (cond ((eq? (type-tag a) 'sparse)
+                   (max (max-power-sparse a 0) (max-power-var (make-poly (variable p) (rest-terms L)) var)))
+                  ((eq? (type-tag a) 'dense)
+                   (max (max-power-dense a 0) (max-power-var (make-poly (variable p) (rest-terms L)) var)))
+                  ((eq? (type-tag a) 'polynomial)
+                   (if (eq? (type-tag (contents a)) 'sparse)
+                       (max (max-power-sparse (contents a) 0) (max-power-var (make-poly (variable p) (rest-terms L)) var))
+                       (max (max-power-dense (contents a) 0) (max-power-var (make-poly (variable p) (rest-terms L)) var))))
+                  (else 
+                    (max 0 (max-power-var (make-poly (variable p) (rest-terms L)) var)))))))
+      (define (build-term-list p i)
+        (if (= i 0)
+            ()
+            (cons (build-n-degree-term p i) (build-term-list p (- i 1)))))
+      (let ((max-power (max-power-var p (variable p))))
+        (let ((term-list (build-term-list p max-power)))
+          (make-poly 'x term-list))))
+    (define (add-poly p1 p2)
+      (if (same-variable? (variable p1) (variable p2))
+          (make-poly (variable p1)
+                     (add-terms (term-list p1) (term-list p2)))
+          (if (eq? (variable p1) 'y)
+              (add-poly (y->x p1) p2)
+              (add-poly p1 (y->x p2)))))
+    (define (mul-poly p1 p2)
+      (if (same-variable? (variable p1) (variable p2))
+          (make-poly (variable p1)
+                     (mul-terms (term-list p1) (term-list p2))) 
+          (if (eq? (variable p1) 'y)
+              (mul-poly (y->x p1) p2)
+              (mul-poly p1 (y->x p2))))))
+  ;the polynomial package is unchanged, since addition at that level is defined recursively by addition at the lower levels, assuming some sort of type conversion between sparse and dense polynomial
+  ;representations.
+  ;=====================================
+  ;Extended exercise; Rational functions
+  ;=====================================
