@@ -2883,4 +2883,82 @@ guess
   (put 'make '(rational)
        (lambda (p q) (tag (make-rat p q))))
   'done)
-
+;=========== 3. Modularity, Objects, and State ============
+;=========== 3.1 Assignment and Local State ===============
+;=========== 3.1.1 Local State Variables ==================
+(define balance 100)
+;begin syntax:
+;(begin <exp_1> <exp_2> ... <exp_n>)
+;explanation: begin evaluates <exp_1> ... <exp_n>, and then has as its return value the return value of <exp_n>.
+;set syntax:
+;(set! <name> <new-value>)
+;explanation: set just sets a new value for the variable <name>.
+(define new-withdraw
+  (let ((balance 100))
+    (lambda (amount)
+      (if (>= balance amount)
+          (begin (set! balance (- balance amount))
+                 balance)
+          "Insufficient funds!"))))
+(define (make-withdraw balance)
+  (lambda (amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds!")))
+(define W1 (make-withdraw 100))
+(define W2 (make-withdraw 100))
+;the point is that the two are separate objects, with their own local variables.
+(define (make-account balance)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds!!!!!!"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (define (dispatch m)
+    (cond ((eq? m 'withdraw) withdraw)
+          ((eq? m 'deposit) deposit)
+          (else (error "Unknown request: MAKE-ACCOUNT" m))))
+  dispatch)
+;Exercise 3.1
+(define (make-accumulator a)
+  (let ((initial-value a))
+    (lambda (b)
+      (begin (set! initial-value (+ initial-value b))
+             initial-value))))
+;Exercise 3.2
+(define (make-monitored f)
+  (let ((calls 0))
+    (define (dispatch m)
+      (if (eq? m 'how-many-calls?)
+          calls
+          (begin (set! calls (+ calls 1))
+                 (f m))))
+    dispatch))
+;Exercise 3.3
+(define (make-account balance password)
+  (define (call-the-cops)
+    (display "WE ARE NOW CALLING THE POLICE DO NOT MOVE OR YOU WILL POOP!"))
+  (let ((password-attempts 0))
+    (define (withdraw amount)
+      (if (>= balance amount)
+          (begin (set! balance (- balance amount))
+                 balance)
+          "Insufficient funds!!!!!!"))
+    (define (deposit amount)
+      (set! balance (+ balance amount))
+      balance)
+    (define (dispatch p m)
+      (if (eq? p password)
+          (cond ((eq? m 'withdraw) withdraw)
+                ((eq? m 'deposit) deposit)
+                (else (error "Unknown request: MAKE-ACCOUNT" m)))
+          (begin (set! password-attempts (+ password-attempts 1))
+                 (if (>= password-attempts 7)
+                     (call-the-cops)
+                     (lambda (x) "Incorrect password")))))
+          dispatch))
+;==========3.1.2. The Benefits of Introducing Assignment==========
