@@ -10,6 +10,14 @@
 (define (average x y) (/ (+ x y) 2))
 (define (logB B x)
   (/ (log x) (log B)))
+(define (gen-gcd . args)
+  (define (rec l)
+    (cond ((= (length l) 1) (car l)) 
+          ((= (length l) 2) (gcd (car l) (cadr l)))
+          ((> (length l) 2) (gcd (gcd (car l) (cadr l)) (rec (cddr l))))))
+  (if (< (length args) 2) 
+      (error "You need to provide at least two arguments. You gave:" (length args))
+      (rec args)))
 ;=============1.2.4 Exponentiation=============================
 ;;recursive definition
 ;(define (expt_rec b n)
@@ -2695,3 +2703,184 @@ guess
 ;=====================================
 ;Extended exercise; Rational functions
 ;=====================================
+;Exercise 2.93:
+;we know how to handle addition, subtraction, multiplication of polynomials.
+(define (add a b)
+  (apply-generic 'add a b))
+(define (sub a b)
+  (apply-generic 'sub a b))
+(define (mul a b)
+  (apply-generic 'mul a b))
+(define (install-rational-package)
+  <stuff>
+  ;;internal procedures
+    (define (make-rat n d)
+      (let ((g (greatest-common-divisor n d)))
+        (let ((a (div n g))
+              (b (div d g)))
+           (cons a b))))
+  (define (numer x)
+    (car x))
+  (define (denom x)
+    (cdr x))
+  (define (add-rat x y)
+    (make-rat (add (mul (numer x) (denom y))
+                   (mul (numer y) (denom x)))
+              (mul (denom x) (denom y))))
+  (define (sub-rat x y)
+    (make-rat (sub (mul (numer x) (denom y))
+                   (mul (numer y) (denom x)))
+              (mul (denom x) (denom y))))
+  (define (mul-rat x y)
+    (make-rat (mul (numer x) (numer y))
+              (mul (denom x) (denom y))))
+  (define (div-rat x y)
+    (make-rat (mul (numer x) (denom y))
+              (mul (denom x) (numer y))))
+  ;;interface to the rest of the system
+  (define (tag x) (attach-tag 'rational x))
+  (put 'add '(rational rational)
+       (lambda (x y) (tag (add-rat x y))))
+  (put 'sub '(rational rational)
+       (lambda (x y) (tag (sub-rat x y))))
+  (put 'mul '(rational rational)
+       (lambda (x y) (tag (mul-rat x y))))
+  (put 'div '(rational rational)
+       (lambda (x y) (tag (div-rat x y))))
+  (put 'make 'rational
+       (lambda (n d) (tag (make-rat n d))))
+  'done)
+;tested it out on paper, because we dont actually have
+;a get and put method, I cant actually run this code... 
+;Exercise 2.94:
+(define (install-scheme-number-package)
+  <stuff>
+  (put 'greatest-common-divisor '(scheme-number scheme-number) 
+       (lambda (a b) (tag (gcd a b))))
+  'done)
+;We assume that polynomials are always represented as sparse polynomials,
+;and so that all the methods that we've written so far for sparse polynomials
+;are tucked under <stuff> below.
+(define (install-polynomial-package)
+  <stuff>
+  (define (div-terms L1 L2)
+    (if (empty-termlist? L1)
+        (list (the-empty-termlist) (the-empty-termlist))
+        (let ((t1 (first-term L1))
+              (t2 (first-term L2)))
+          (if (> (order t2) (order t1))
+              (list (the-empty-term-list) L1)
+              (let ((new-c (div (coeff t1) (coeff t2)))
+                    (new-o (- (order t1) (order t2))))
+                (let ((rest-of-result
+                        ;build list of terms for result. 
+                        (let ((qtnt (make-term new-o new-c)))
+                          (let ((rmdr (add-terms L1 (minus (mul-terms qtnt L2)))))
+                            (if (< (order (first-term rmdr)) (order t2))
+                                ;keep return object consistently a list of two objects,
+                                ;the first representing the quotient and the second the remainder.
+                                ;the actual final remainder is computer from the final quotient,
+                                ;which is being recursively build, here.
+                                (list () ())
+                                (let ((next-qtnt-c (div (coeff (first-term rmdr)) (coeff t2)))
+                                      (next-qtnt-o (- (order (first-term-rmdr)) (order t2))))
+                                  (let ((next-qtnt (make-term next-qtnt-o next-qtnt-c)))
+                                    (let ((next-rmdr (add-terms rmdr (minus (mul-terms next-qtnt L2)))))
+                                      (cons next-qtnt (car (div-terms next-rmdr L2)))))))))))
+                  (let ((final-quotient (cons result rest-of-result)))
+                    (let ((final-rmdr (add-terms L1 (minus (mul-terms final-quotient L2)))))
+                      (list final-quotient final-rmdr)))))))))
+  (define (gcd-terms a b)
+    (if (empty-termlist? b)
+        (mul-terms (make-poly (variable a) (make-term 0 (/ 1 (gen-gcd-for-question a)))) a)
+        (gcd-terms b (pseudoremainder-terms a b))))
+  (define (remainder-terms a b)
+    (cadr (div-terms a b)))
+  (define (pseudoremainder-terms a b)
+    (define (integerizing-factor p q)
+      (expt (first-term (term-list q)) (+ 1 (- (order (first-term (term-list p))) (order (first-term (term-list q)))))))
+    (cadr (div-terms (mul-terms (make-poly (variable a) (make-term 0 (integerizing-factor a b))) a) b)))
+  (define (gcd-poly a b)
+    (if (eq? (variable a) (variable b))
+        (make-poly (variable a) (gcd-terms (term-list a) (term-list-b)))
+        (error "Polynomials not in the same variable!": (list (variable a) (variable b)))))
+  (put 'greatest-common-divisor '(polynomial polynomial) 
+       (lambda (p q) (tag (gcd-poly p q))))
+  'done)
+;Checked it out on paper. It's the euclidean algorithm. assumed div-terms works, this works.
+;I can't actually check if it works until we implement get and put. That is done sometime in the next chapter.
+;Exercise 2.95
+;a.We get a 1458/13^2 - 2916/13^2 + 1458/13^2, which is the right answer, up to a scalar multiple.
+;Also, implemented pseudoremainder-terms and changed gcd-terms to use it.
+;b. I will implement a generalized gcd procedure, to make things easy. 
+;gcd(a,b,c)=gcd(gcd(a,b) c)
+;I implemented it, and moved it to the top of this file. Here is a version useful for these questions, though.
+(define (gen-gcd-for-question l)
+  (define (rec arg-list)
+    (cond ((= (length arg-list) 1) (coeff (car arg-list))) 
+          ((= (length arg-list) 2) (gcd (coeff (car arg-list)) (coeff (cadr arg-list))))
+          ((> (length arg-list) 2) (gcd (gcd (coeff (car arg-list)) (coeff (cadr arg-list))) (rec (cddr arg-list))))))
+  (if (< (length l) 2) 
+      (error "You need to provide at least two arguments. You gave:" (length l))
+      (rec l)))
+;Exercise 2.97:
+;a.
+;takes a term-list and returns its order. Since a sparse polynomial does not have its list ordered
+;according to the other of the terms, we aren't assured that the first term will be of the highest order,
+;so we have to find the max value, term by term.
+;b
+(define (install-scheme-package)
+  <stuff>
+  (define (reduce-integers n d)
+    (let ((g (gcd n d)))
+      (list (/ n g) (/ d g))))
+  (put 'reduce '(scheme-number scheme-number) reduce-integers)
+  'done)
+(define (install-polynomial-package)
+  <stuff>
+  (define (term-list->order l)
+    (define (recursive-checker l running-max)
+      (cond ((null? l) running-max)
+            ((> (order (first-term l)) running-max)
+             (recursive-checker (cdr l) (order (first-term l))))
+            (else (recursive-checker (cdr l) running-max))))
+    (recursive-checker l 0))
+  ;assuming (eq? (variable n) (variable d)) 
+  (define (reduce-terms n d)
+    (let ((g (gcd-terms n d)))
+      (let ((O2 (term-list->order g))
+            (O1 (max (term-list->order n) (term-list->order d))))
+        (let ((c (expt (coeff (first-term g)) (+ 1 (- O1 O2)))))
+          (let ((c-as-term-list (list (make-term 0 c))))
+            (let ((n_ (mul-terms n c-as-term-list))
+                  (d_ (mul-terms d c-as-term-list)))
+              ;Since by defn g | n_,d_, and since div-terms returns a list whose first coordinate is the quotient and second is the remainder,
+              ;we get the following definitions for nn and dd.
+              (let ((nn_ (car (div-terms n_ g)))
+                    (dd_ (car (div-terms d_ g))))
+                ;let gg be the gcd of the coefficients of the numerator and the denominator
+                (let ((gg (gen-gcd-for-question (append nn_ dd_))))
+                  (let ((gg-as-term-list (list (make-term 0 gg))))
+                    (let ((nn (div-terms nn_ gg-as-term-list))
+                          (dd (div-terms dd_ gg-as-term-list)))
+                      (list nn dd)))))))))))
+  (define (reduce-poly p q)
+    (if (eq? (variable p) (variable q))
+        (let ((term-lists (reduce-term (term-list p) (term-list q))))
+          (list (make-poly (variable p) (car term-lists))
+                (make-poly (variable q) (cadr term-lists))))
+        (error "THE POLYNOMIALS MUST BE IN THE SAME VARIABLE!")))
+  (put 'reduce '(polynomial polynomial) reduce-poly)
+  'done)
+(define (reduce p q)
+  (apply-generic 'reduce p q))
+(define (install-rational-package)
+  <stuff>
+  (define (make-rat n d)
+    (let ((reduced (reduce n d)))
+      (cons (car reduced) (cadr reduced))))
+  (define (tag x) (attach-tag 'rational x))
+  (put 'make '(rational)
+       (lambda (p q) (tag (make-rat p q))))
+  'done)
+
