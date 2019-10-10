@@ -2893,6 +2893,7 @@ guess
 ;set syntax:
 ;(set! <name> <new-value>)
 ;explanation: set just sets a new value for the variable <name>.
+;the syntax of new-withdraw is different from what we've seen thus far.
 (define new-withdraw
   (let ((balance 100))
     (lambda (amount)
@@ -2939,7 +2940,90 @@ guess
                  (f m))))
     dispatch))
 ;Exercise 3.3
-(define (make-account balance password)
+;specifying password as a formal argument to make-account makes password a local environment variable inside make-account.
+;(define (make-account balance password)
+;  (define (call-the-cops)
+;    (display "WE ARE NOW CALLING THE POLICE DO NOT MOVE OR YOU WILL POOP!"))
+;  (let ((password-attempts 0))
+;    (define (withdraw amount)
+;      (if (>= balance amount)
+;          (begin (set! balance (- balance amount))
+;                 balance)
+;          "Insufficient funds!!!!!!"))
+;    (define (deposit amount)
+;      (set! balance (+ balance amount))
+;      balance)
+;    (define (dispatch p m)
+;      (if (eq? p password)
+;          (cond ((eq? m 'withdraw) withdraw)
+;                ((eq? m 'deposit) deposit)
+;                (else (error "Unknown request: MAKE-ACCOUNT" m)))
+;          (begin (set! password-attempts (+ password-attempts 1))
+;                 (if (>= password-attempts 7)
+;                     (call-the-cops)
+;                     (lambda (x) "Incorrect password")))))
+;          dispatch))
+;==========3.1.2. The Benefits of Introducing Assignment==========
+;fact: Probability that any two integers, chosen at random, are coprime is 6/pi^2
+;We use this fact to estimate pi:
+;random-init is some initial integer. rand-update is a well-defined function.
+;(define rand (let ((x random-init))
+;               (lambda ()
+;                 (set! x (rand-update x))
+;                 x)))
+;(define (estimate-pi trials)
+;  (sqrt (/ 6 (monte-carlo trials cesaro-test))))
+;(define (cesaro-test)
+;  (= (gcd (rand) (rand)) 1))
+(define (monte-carlo trials experiment)
+  (define (iter trials-remaining trials-passed)
+    (cond ((= trials-remaining 0)
+           (/ trials-passed trials))
+          ((experiment)
+           (iter (- trials-remaining 1)
+                 (+ trials-passed 1)))
+          (else (iter (- trials-remaining 1)
+                      trials-passed))))
+  (iter trials 0))
+;Exercise 3.5
+
+;P represents a predicate in R^2 that defines some jordan closed subset.
+(define (random-in-range low high)
+  (let ((range (- high low)))
+    (if (= range 0)
+        (+ low 0)
+        (+ low (random range)))))
+;(x1 y1) (x2 y2) give us the diagonal of a rectangle containing the region specified by P.
+(define (estimate-integral P x1 x2 y1 y2 trials)
+  (define (exper)
+    (let ((x (random-in-range x1 x2))
+          (y (random-in-range y1 y2)))
+      (P x y)))
+  (let ((area-rectangle (* (- x2 x1) (- y2 y1))))
+    (* area-rectangle (monte-carlo trials exper))))
+
+;to estimate pi, we just need to check a unit circle centered at zero, so we want:
+;x^2+y^2<1, so P is
+(define (in-unit-circle? x y)
+  (<= (+ (square x) (square y)) 1))
+(define (pi-estimate trials)
+  (estimate-integral in-unit-circle? -1 1 -1 1 trials))
+;Exercise 3.6:
+;until we implement rand-update, rand-init, we can't use this... 
+(define (rand m)
+  (let ((x rand-init))
+    (define generate
+      (lambda ()
+        (set! x (rand-update x))
+        x))
+    (define (reset num)
+      (set! x  num))
+    (cond ((eq? m 'generate) (generate))
+          ((eq? m 'reset) reset)
+          (else (error "Only currently supports 'generate and 'reset functionality. You entered:" m)))))
+;==================3.1.3. The Costs of Introducing Assignment==================
+;Exercise 3.7:
+(define (make-account balance . passwords)
   (define (call-the-cops)
     (display "WE ARE NOW CALLING THE POLICE DO NOT MOVE OR YOU WILL POOP!"))
   (let ((password-attempts 0))
@@ -2951,14 +3035,97 @@ guess
     (define (deposit amount)
       (set! balance (+ balance amount))
       balance)
+    (define (add-password p)
+      (set! passwords (append (list p) passwords)))
     (define (dispatch p m)
-      (if (eq? p password)
+      (if (or (eq? p passwords) (not (null? (memq p passwords))))
           (cond ((eq? m 'withdraw) withdraw)
                 ((eq? m 'deposit) deposit)
+                ((eq? m 'add-password) add-password)
                 (else (error "Unknown request: MAKE-ACCOUNT" m)))
           (begin (set! password-attempts (+ password-attempts 1))
                  (if (>= password-attempts 7)
                      (call-the-cops)
                      (lambda (x) "Incorrect password")))))
-          dispatch))
-;==========3.1.2. The Benefits of Introducing Assignment==========
+    dispatch))
+(define (make-joint acc p p-new)
+  (begin ((acc p 'add-password) p-new)
+         acc))
+;Exercise 3.8
+;define a procedure f st (+ (f 0) (f 1)) returns 0, if evaluated from left to right and 1 if evaluated from right to left... 
+;Clearly, we need to use assignment...
+(define (f n)
+  (let ((m 1))
+    (begin (set! m (* n m))
+           m)))
+;left to right: (f 0) sets m to 0, so that (f 1) sets m to zero, and so the sum is 0.
+;right to left: (f 1) sets m to 1, so that (f 0) returns zero, and so the sum is 1. 
+;==================3.2 The Environment Model of Evaluation==================
+;==================3.2.1 The Rules for Evaluation==================
+;Procedures are created in one way only: by evaluating a \lambda-expression. 
+;  This produces a procedure whose code is obtained from the text of the lambda-expression 
+;  and whose environment is the environment in which the lambda expression was evaluated to produce the procedure.
+;The environment model of procedure application can be summarized by two rules:
+;  -A procedure object is applied to a set of arguments by constructing a frame, binding the formal parameters of the procedure to the arguments of the call, and then evaluating the body
+;   of the procedure in the context of the new environment constructed. The new frame has as its enclosing environment the environment part of the procedure object being applied.
+;  -A procedure is created by evaluating a \lambda-expression relative to a given environment. The resulting procedure object is a pair consisting of the text of the
+;   \lambda-expression and a pointer to the environment in which the procedure was created.
+;Evaluating the expression (set! <variable> <value>) in some environment locates the binding of the variable in the environment and changes that binding to indicate the new value.
+;That is, one finds the first frame in the environment that contains a binding for the variable and modifies that frame. If the variable is unbound in the environment, then set! signals an error.
+;==================3.2.2. Applying Simple Procedures==================
+;Exercise 3.9
+;done on paper.
+;==================3.2.3. Frames as the Repository of Local State==================
+;the code in which the lambda expression is evaluated to create the object is the environment to which the procedure points.
+;Exercise 3.10:
+;(let ((<var> <exp>)) <body>) is syntactic sugar for ((lambda (<var>) <body>) <exp>)
+;(define (make-withdraw initial-amount)
+;  (let ((balance initial-amount))
+;    (lambda (amount)
+;      (if (>= balance amount)
+;          (begin (set! balance (- balance amount))
+;                 balance)
+;          "Insufficient funds!"))))
+;In order to look at the environment structure generated by this definition, lets substitute out the syntactic sugar:
+;(define (make-withdraw initial-amount)
+;  ((lambda (balance)
+;    (lambda (amount)
+;      (if (>= balance amount)
+;          (begin (set! balance (- balance amount))
+;                 balance)
+;          "Insufficient funds!"))) 
+;   initial-amount))
+;done diddly did the rest on paper. with this definition, when we run (define W1 (make-withdraw 100)), we create an frame.
+;==================3.2.4 Internal Definitions==================
+;Exercise 3.11:
+(define (make-account balance)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (define (dispatch m)
+    (cond ((eq? m 'withdraw) withdraw)
+          ((eq? m 'deposit) deposit)
+          (else
+            (error "Unknown request: MAKE-ACCOUNT"
+                   m))))
+  dispatch)
+;Show the environment structure generated by the sequence of interactions
+;(define acc (make-account 50))
+;((acc 'deposit) 40)
+;((acc 'withdraw) 60)
+;Will do this on paper...)
+;The local states for the two accounts are kept distinct by defining different frames, where balance, and all of the locally defined procedures are bound. 
+;(define acc2 (make-account 100)). Then we create a new environment E2 where balance is 100, and evaluate the body of make-account there, 
+;creating the three procedure objects whose corresponding environments are E2, and return dispatch. This dispatch is different than the dispatch created when
+;evaluating (define acc (make-account 50)). To withdraw, deposit, whatever, we create a new environment where m is set to withdraw, deposit, or whatever, and then
+;evaluating (deposit m) there. We return the procedure we want, create a new environment, pointing to the environment that the procedure that we got (withdraw, deposit, or whatever)
+;points to, which in the case of acc is E1 and in the case of acc2 is E2, and then evaluate the body of the procedure with the argument given in the amount we wish to withdraw, deposit, 
+;or whatever. E1 and E2 are distinct, and so are all intermediary frames created in dispatching, withdrawing, or depositing, so none of the environment structure is shared, besides
+;the global environment.
+;==================3.3 Modeling with Mutable Data==================
+
