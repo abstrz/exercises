@@ -3128,4 +3128,44 @@ guess
 ;or whatever. E1 and E2 are distinct, and so are all intermediary frames created in dispatching, withdrawing, or depositing, so none of the environment structure is shared, besides
 ;the global environment.
 ;==================3.3 Modeling with Mutable Data==================
-
+;==================3.3.1 Mutable List Structure==================
+;Exercise 3.12
+(define (append! x y)
+  (set-cdr! (last-pair x) y)
+  x)
+(define (last-pair x)
+  (if (null? (cdr x)) 
+      x 
+      (last-pair (cdr x))))
+(define x (list 'a 'b))
+(define y (list 'c 'd))
+(define z (append x y))
+;(cdr x) will return (b)
+(define w (append! x y))
+;w will return (a b c d)
+;(cdr x) is (b) or (cons b ()), which now has been changed by append! to (cons b (cons c (cons d ()))) or (b c d)
+;rest was done on paper.
+;Exercise 3.13:
+(define (make-cycle x)
+  (set-cdr! (last-pair x) x)
+  x)
+;did it on paper, but its like x_1,->x_2,->...->x_n,->x_1... where a,b represents (cons a b).
+(define z (make-cycle (list 'a 'b 'c)))
+;well, we set the cdr of the last pair of ('a 'b 'c), which is (cons 'c ()) to x itself, but the cdr of the last pair of x is now changed to x itself, and so on... so we
+;get an eternal loop, like a,->b,->c,->a,->b,->c->..., and so the interpreter can never return any value, since it is eternally computing a value to return!
+(define (mystery x)
+  (define (loop x y)
+    (if (null? x)
+        y
+        (let ((temp (cdr x)))
+          (set-cdr! x y)
+          (loop temp x))))
+  (loop x ()))
+;Let a=(a_1,...a_n). Then (mystery a) works through a locally defined procedure loop. Let us permanently call the first argument to loop x and the second argument to loop y. 
+;Loop reverses x iteratively, and keeps track of this reversed list by y. At first we run (loop x ()). We pass () as the second argument because this is the empty list which
+;will iteratively be built into the reversed list. At first pass, we save the cdr of x to temp, which is (a_2, ... ,a_n). Then we set the cdr of x to point to our iteratively built
+;list y, which at first is just (), so we change x to (cons a_1 ()) or (a_1). Next, we pass temp as x and (a_1) as y. We, again, save the cdr of x (a_3 ... a_n) to temp, and point the
+;cdr of x to our iteratively constructed list, so we get (cons a_2 (cons a_1 ()) or (a_2 a_1). We continue this process, until we hit an iteration where x is () and y is (a_n a_{n-1} ... a_1), at which point we return y. The original argument a is changed to (a_1), in the first pass, and is never changed again. After running (mystery a), then, we expect that a is (a_1) and (mystery a) is a reversed, or (a_n a_{n-1} a_1), which answers the next question.
+(define v (list 'a 'b 'c 'd))
+(define w (mystery v))
+;v returns (a) and w returns (d c b a)
