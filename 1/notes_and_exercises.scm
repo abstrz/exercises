@@ -3137,11 +3137,11 @@ guess
   (if (null? (cdr x)) 
       x 
       (last-pair (cdr x))))
-(define x (list 'a 'b))
-(define y (list 'c 'd))
-(define z (append x y))
+;(define x (list 'a 'b))
+;(define y (list 'c 'd))
+;(define z (append x y))
 ;(cdr x) will return (b)
-(define w (append! x y))
+;(define w (append! x y))
 ;w will return (a b c d)
 ;(cdr x) is (b) or (cons b ()), which now has been changed by append! to (cons b (cons c (cons d ()))) or (b c d)
 ;rest was done on paper.
@@ -3150,9 +3150,10 @@ guess
   (set-cdr! (last-pair x) x)
   x)
 ;did it on paper, but its like x_1,->x_2,->...->x_n,->x_1... where a,b represents (cons a b).
-(define z (make-cycle (list 'a 'b 'c)))
+;(define z (make-cycle (list 'a 'b 'c)))
 ;well, we set the cdr of the last pair of ('a 'b 'c), which is (cons 'c ()) to x itself, but the cdr of the last pair of x is now changed to x itself, and so on... so we
 ;get an eternal loop, like a,->b,->c,->a,->b,->c->..., and so the interpreter can never return any value, since it is eternally computing a value to return!
+;Exercise 3.14
 (define (mystery x)
   (define (loop x y)
     (if (null? x)
@@ -3169,3 +3170,79 @@ guess
 (define v (list 'a 'b 'c 'd))
 (define w (mystery v))
 ;v returns (a) and w returns (d c b a)
+;Exercise 3.15: done on paper.
+;Exercise 3.16:
+;(define (count-pairs x)
+;  (if (not (pair? x))
+;      0
+;      (+ (count-pairs (car x))
+;         (count-pairs (cdr x))
+;         1)))
+;====
+;(define z (cons 'c ()))
+;(define w (cons 'b z))
+;(define x (cons 'a w))
+;then (count-pairs x) returns 3.
+;====
+(define z (cons 'c ()))
+(define w (cons z z))
+(define x (cons 'a w))
+;then (count-pairs x) returns 4.
+;===
+;(define z (cons 'a ()))
+;(define w (cons z z))
+;(define x (cons w w))
+;then (count-pairs x) returns 7.
+;==
+;(define z (cons 'c ()))
+;(define w (cons 'b z))
+;(define x (cons 'a w))
+(set-cdr! z x)
+;now (make-pair x) is infinite. 
+;Exercise 3.17:
+;need a procedure that checks to see if current object is equal to object in a list.
+(define (eqin? x L)
+  (if (null? L) #f
+      ;or because we just need one true to get true
+      (or (eq? x (car L)) (eqin? x (cdr L)))))
+;this program could be improved by checking in the second conditional statement if 
+;the car or cdr have already been traversed, as is done in the else statement...
+;The procedure as written works in the case of structures containing cyclic graphs...
+(define (count-pairs x)
+  (let ((pairs ()))
+    (define (traverse z)
+      (cond ((not (pair? z)) 0)
+            ((not (eqin? z pairs))
+             (begin (set! pairs (append pairs (list z)))
+                    (+ (traverse (car z)) (traverse (cdr z)) 1)))
+            ;if it's already been counted, and all possible paths from it have already been counted, then we just return 0.
+            (else (cond ((and (pair? (car z)) (not (pair? (cdr z))))
+                         (if (eqin? (car z) pairs)
+                             0
+                             (traverse (car z))))
+                        ((and (not (pair? (car z))) (pair? (cdr z)))
+                         (if (eqin? (cdr z) pairs)
+                             0
+                             (traverse (cdr z))))
+                        ((and (pair? (car z)) (pair? (cdr z)))
+                         (if (and (eqin? (car z) pairs) (eqin? (cdr z) pairs))
+                             0
+                             (+ (traverse (car z)) (traverse (cdr z)))))
+                        (else 0)))))
+    (traverse x)))
+;Exercise 3.18:
+;procedure that examines a list and determines whether it contains a cycle... not too bad.
+;idea is to have an external data structure (just a simple list) that keeps track of which nodes have been visited...
+;since in the q for this exercise, we are given that the traversal is simply by checking cdrs... we can simply
+;return true if we encounter a vertex already in our list and false otherwise.
+;if there isn't a cycle, the graph is finite, so we don't have to worry about infinite loops arising! 
+(define (contains-cycle? L)
+  (let ((pairs ()))
+    (define (check-for-cycle li)
+      (cond ((not (pair? li)) #f)
+            ((not (eqin? li pairs))
+             (begin (set! pairs (append pairs (list li)))
+                    (or #f (check-for-cycle (cdr li)))))
+            (else #t)))
+    (check-for-cycle L)))
+
