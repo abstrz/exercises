@@ -3333,42 +3333,8 @@ guess
               ((eq? m 'delete-queue!) (delete-queue!))
               (else (error "Unknown operation!" m))))
       dispatch))
-;Exercise 3.23:);
-;this was my first attempt, but I wasn't able to think of an \Omega(1) implementation of rear-delete-deque! with this representation of the deque data structure. Below is the second implementation,
-;which is difficult to explain verbally, but is quite clear if one draws a graph of it.
-;(define (make-deque)
-;  (cons () ()))
-;(define (empty-deque? deque)
-;  (null? (front-deque deque)))
-;(define (front-deque deque)
-;  (car deque))
-;(define (rear-deque deque)
-;  (cdr deque))
-;(define (front-insert-deque! deque item)
-;  (let ((new-pair (cons item ())))
-;    (cond ((empty-deque? deque)
-;           (set-car! deque new-pair)
-;           (set-cdr! deque new-pair))
-;          (else 
-;            (set-car! deque (append new-pair (front-deque deque)))))))
-;(define (rear-insert-deque! deque item)
-;  (let ((new-pair (cons item ())))
-;    (cond ((empty-deque? deque)
-;           (set-car! deque new-pair)
-;           (set-cdr! deque new-pair))
-;          (else 
-;            (set-cdr! (rear-deque deque) new-pair)
-;            (set-cdr! deque new-pair)))))
-;(define (front-delete-deque! deque)
-;  (cond ((empty-deque? deque)
-;         (error "FRONT-DELETE! called with an empty deque" deque))
-;        (else (if (null? (cdr (front-deque deque)))
-;                  (begin (set-car! deque (cdr (front-deque deque)))
-;                         (set-cdr! deque (front-deque deque)))
-;                  (set-car! deque (cdr (front-deque deque))))
-;              deque)))
-;next I wanted to implement rear-delete-deque! with this representation of deque, but couldn't think of a way to do it in \Omega(1) time, so gave up
-;and moved to the implementation below.
+;Exercise 3.23:)
+;the following implementation works. All procedures take \Omega(1) time. 
 (define (make-deque)
   (cons () ()))
 (define (empty-deque? deque)
