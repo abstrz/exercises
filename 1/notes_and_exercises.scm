@@ -3336,7 +3336,7 @@ guess
 ;Exercise 3.23:);
 ;this was my first attempt, but I wasn't able to think of an \Omega(1) implementation of rear-delete-deque! with this representation of the deque data structure. Below is the second implementation,
 ;which is difficult to explain verbally, but is quite clear if one draws a graph of it.
-;;(define (make-deque)
+;(define (make-deque)
 ;  (cons () ()))
 ;(define (empty-deque? deque)
 ;  (null? (front-deque deque)))
@@ -3367,8 +3367,8 @@ guess
 ;                         (set-cdr! deque (front-deque deque)))
 ;                  (set-car! deque (cdr (front-deque deque))))
 ;              deque)))
-;;if we cdr through the list to get to the second last pair, we won't accomplish \Omega(1) time complexity, so we aren't going to do that...
-;operations to implement: make-deque, empty-deque?, front-deque, rear-deque, front-insert-deque!, rear-insert-deque!, front-delete-deque!, rear-delete-deque!
+;next I wanted to implement rear-delete-deque! with this representation of deque, but couldn't think of a way to do it in \Omega(1) time, so gave up
+;and moved to the implementation below.
 (define (make-deque)
   (cons () ()))
 (define (empty-deque? deque)
