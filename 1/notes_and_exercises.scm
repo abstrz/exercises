@@ -3334,7 +3334,8 @@ guess
               (else (error "Unknown operation!" m))))
       dispatch))
 ;Exercise 3.23:)
-;the following implementation works. All procedures take \Omega(1) time. 
+;The following implementation works. All procedures take \Omega(1) time. 
+;Look at deque.jpg to see a picture of this implementation of the deque data structure.
 (define (make-deque)
   (cons () ()))
 (define (empty-deque? deque)
