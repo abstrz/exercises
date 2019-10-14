@@ -3490,7 +3490,6 @@ guess
 ;Exercise 3.25:
 (define (make-table-generalized)
   (let ((local-table (list '*table*)))
-    ;we use a temp-table local variable to recursively traverse the table, looking for our key value pair.
     (define (lookup keys)
       (define (table-traverser ks table)
         (let ((key (car ks)))
