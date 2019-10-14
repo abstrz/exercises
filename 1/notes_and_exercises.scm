@@ -1505,7 +1505,7 @@ guess
 ;if two programmers wrote these two implementations of complex numbers separately, a third programmer could implement the arithmetic package,
 ;without ever having to know how the complex numbers are specifically implemented. 
 ;==============2.4.3. Data-Directed Programming and Additivity ==============
-;For this section assume we have two procedures, put and get, for manipulating the operation-and-type table:
+;For this section assume we have two procedures, put and get, for manipulating the operation-and-type TABLE:
 ;put syntax
 ;(put <op> <type> <item>) installs the <item> in the table, indexed by the <op> and the <type>
 ;get syntax
@@ -3389,3 +3389,152 @@ guess
           (set-cdr! (cdr (rear-deque deque)) ()))))
 
 ;============3.3.3. Representing Tables============
+;1d table
+;assoc expects a key and a list of records as arguments, and returns the record that has the given key as its car.
+;(define (assoc key records)
+;  (cond ((null? records) false)
+;        ((equal? key (caar records)) (car records))
+;        (else (assoc key (cdr records)))))
+(define (lookup key table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (cdr record)
+        false)))
+(define (insert! key value table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (set-cdr! record value)
+        (set-cdr! table
+                  (cons (cons key value)
+                        (cdr table)))))
+  'ok)
+(define (make-table)
+  (list '*table*))
+;2d table
+;we construct a 2d table by letting each key point to a subtable... ie
+;math: +:43      letters: a:97
+;      -:45               b:98
+;      *:42
+;the subtables dont get a *table* symbol as the first car, but rather just the subtable name.
+;drawing a box and pointer graph of the table makes everything clear! 
+(define (make-table)
+  (let ((local-table (list '*table*)))
+    (define (lookup key-1 key-2)
+      (let ((subtable
+              (assoc key-1 (cdr local-table))))
+        (if subtable
+            (let ((record
+                    (assoc key-2 (cdr subtable))))
+              (if record
+                  (cdr record)
+                  false))
+            false)))
+    (define (insert! key-1 key-2 value)
+      (let ((subtable (assoc key-1 (cdr local-table))))
+        (if subtable
+            (let ((record (assoc key-2 (cdr subtable))))
+              (if record
+                  (set-cdr! record value)
+                  (set-cdr! subtable
+                            (cons (cons key-2 value)
+                                  (cdr subtable)))))
+            (set-cdr! local-table
+                      (cons (list key-1
+                                  (cons key-2 value))
+                            (cdr local-table)))))
+      'ok)
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unknown operation: TABLE" m))))
+    dispatch))
+(define operation-table (make-table))
+(define get (operation-table 'lookup-proc))
+(define put (operation-table 'insert-proc!))
+;Exercise 3.24
+(define (make-table-1 same-key?)
+  (let ((local-table (list '*table*)))
+    (define (equ? key records)
+      (cond ((null? records) false)
+            ((same-key? key (caar records)) (car records))
+            (else (equ? key (cdr records)))))
+    (define (lookup key-1 key-2 local-table)
+      (let ((subtable
+              (equ? key-1 (cdr local-table))))
+        (if subtable
+            (let ((record
+                    (equ? key-2 (cdr subtable))))
+              (if record
+                  (cdr record)
+                  false))
+            false)))
+    (define (insert! key-1 key-2 value local-table)
+      (let ((subtable (equ? key-1 (cdr local-table))))
+        (if subtable
+            (let ((record (equ? key-2 (cdr subtable))))
+              (if record
+                  (set-cdr! record value)
+                  (set-cdr! subtable
+                            (cons (cons key-2 value)
+                                  (cdr subtable)))))
+            (set-cdr! local-table
+                      (cons (list key-1
+                                  (cons key-2 value))
+                            (cdr local-table)))))
+      'ok)
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unknown operation: TABLE" m))))
+    dispatch))
+;Exercise 3.25:
+(define (make-table-generalized)
+  (let ((local-table (list '*table*)))
+    ;we use a temp-table local variable to recursively traverse the table, looking for our key value pair.
+    (define (lookup keys)
+      (define (table-traverser ks table)
+        (let ((key (car ks)))
+          (if (null? (cdr ks))
+              (let ((record (assoc key (cdr table))))
+                (if record
+                    (cdr record)
+                    #f))
+              (let ((subtable
+                      (assoc key (cdr table))))
+                (if subtable
+                    (table-traverser (cdr ks) subtable)
+                    #f)))))
+      (table-traverser keys local-table))
+    (define (insert! keys value)
+      (define (make-piece ks v)
+        (if (null? (cdr ks))
+            (cons (car ks) v)
+            (list (car ks) (make-piece (cdr ks) v))))
+      (define (table-traverser ks v table)
+        (let ((key (car ks)))
+          (if (null? (cdr ks))
+              (if (not (pair? (cdr table)))
+                  (set-cdr! table (list (cons key value)))
+                  (let ((record (assoc key (cdr table))))
+                    (if record
+                        (set-cdr! record value)
+                        (set-cdr! table
+                                  (cons (cons key value)
+                                        (cdr table))))))
+              (let ((subtable
+                      (assoc key (cdr table))))
+                (if subtable
+                    (table-traverser (cdr ks) value subtable)
+                    (set-cdr! table
+                              (cons (make-piece ks value) (cdr table))))))))
+      (begin (table-traverser keys value local-table)
+             'ok))
+    (define (print-table)
+      (display local-table))
+    (define (dispatch m)
+      (cond ((eq? m 'lookup!) lookup)
+            ((eq? m 'insert!) insert!)
+            ((eq? m 'print-table) (print-table))
+            (else (error "Unknown operation: TABLE" m))))
+    dispatch))
+
