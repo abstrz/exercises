@@ -3249,34 +3249,34 @@ guess
 ;Exercise 3.20:
 ;done on paper.
 ;3.3.2. Representing Queues
-;(define (front-ptr queue) (car queue))
-;(define (rear-ptr queue) (cdr queue))
-;(define (set-front-ptr! queue item)
-;  (set-car! queue item))
-;(define  (set-rear-ptr! queue item)
-;  (set-cdr! queue item))
-;(define (empty-queue? queue)
-;  (null? (front-ptr queue)))
-;(define (make-queue)
-;  (cons '() '()))
-;(define (front-queue queue)
-;  (if (empty-queue? queue)
-;      (error "FRONT called with an empty queue" queue)
-;      (car (front-ptr queue))))
-;(define (insert-queue! queue item)
-;  (let ((new-pair (cons item '())))
-;    (cond ((empty-queue? queue)
-;           (set-front-ptr! queue new-pair)
-;           (set-rear-ptr! queue new-pair)
-;           queue)
-;          (else (set-cdr! (rear-ptr queue) new-pair)
-;                (set-rear-ptr! queue new-pair)
-;                queue))))
-;(define (delete-queue! queue)
-;  (cond ((empty-queue? queue)
-;         (error "DELETE! called with an empty queue" queue))
-;        (else (set-front-ptr! queue (cdr (front-ptr queue)))
-;              queue)))
+(define (front-ptr queue) (car queue))
+(define (rear-ptr queue) (cdr queue))
+(define (set-front-ptr! queue item)
+  (set-car! queue item))
+(define  (set-rear-ptr! queue item)
+  (set-cdr! queue item))
+(define (empty-queue? queue)
+  (null? (front-ptr queue)))
+(define (make-queue)
+  (cons '() '()))
+(define (front-queue queue)
+  (if (empty-queue? queue)
+      (error "FRONT called with an empty queue" queue)
+      (car (front-ptr queue))))
+(define (insert-queue! queue item)
+  (let ((new-pair (cons item '())))
+    (cond ((empty-queue? queue)
+           (set-front-ptr! queue new-pair)
+           (set-rear-ptr! queue new-pair)
+           queue)
+          (else (set-cdr! (rear-ptr queue) new-pair)
+                (set-rear-ptr! queue new-pair)
+                queue))))
+(define (delete-queue! queue)
+  (cond ((empty-queue? queue)
+         (error "DELETE! called with an empty queue" queue))
+        (else (set-front-ptr! queue (cdr (front-ptr queue)))
+              queue)))
 ;Exercise 3.21:
 (define (print-queue queue)
   (display (front-ptr queue)))
@@ -3291,48 +3291,48 @@ guess
 ;so I won't adjust the delete-queue! procedure. 
 ;Just finished Exercise 3.22, and adjusted the delete-queue! procedure to behave as desired!
 ;Exercise 3.22:
-(define (make-queue)
-  (let ((front-ptr ())
-        (rear-ptr ()))
-    ;We don't return set-front-ptr!, set-rear-ptr! to the user. These are internal setters that will be used by insert-queue! and delete-queue!
-    (define (set-front-ptr! x)
-      (set! front-ptr x))
-    ;x is a pair
-    (define (set-rear-ptr! x)
-      (set! rear-ptr x))
-    (define (empty-queue?)
-      (null? front-ptr))
-    (define (front-queue)
-      (if (not (empty-queue?))
-          (car front-ptr)
-          (error "QUEUE IS EMPTY!")))
-    (define (insert-queue! x)
-      (let ((new-pair (cons x ())))
-        (if (empty-queue?)
-            (begin (set-front-ptr! new-pair)
-                   (set-rear-ptr! new-pair)
-                   front-ptr)
-            (begin (set-cdr! rear-ptr new-pair) 
-                   (set-rear-ptr! new-pair)
-                   front-ptr))))
-    (define (delete-queue!)
-      (if (not (empty-queue?))
-          (if (null? (cdr front-ptr))
-              (begin (set-front-ptr! (cdr front-ptr))
-                     (set-rear-ptr! front-ptr)
-                     front-ptr)
-              (begin (set-front-ptr! (cdr front-ptr))
-                     front-ptr))
-              (error "DELETE! called with an empty queue")))
-      (define (dispatch m)
-        (cond ((eq? m 'front-ptr) front-ptr)
-              ((eq? m 'rear-ptr) rear-ptr)
-              ((eq? m 'empty-queue?) (empty-queue?))
-              ((eq? m 'front-queue) (front-queue))
-              ((eq? m 'insert-queue!) insert-queue!)
-              ((eq? m 'delete-queue!) (delete-queue!))
-              (else (error "Unknown operation!" m))))
-      dispatch))
+;(define (make-queue)
+;  (let ((front-ptr ())
+;        (rear-ptr ()))
+;    ;We don't return set-front-ptr!, set-rear-ptr! to the user. These are internal setters that will be used by insert-queue! and delete-queue!
+;    (define (set-front-ptr! x)
+;      (set! front-ptr x))
+;    ;x is a pair
+;    (define (set-rear-ptr! x)
+;      (set! rear-ptr x))
+;    (define (empty-queue?)
+;      (null? front-ptr))
+;    (define (front-queue)
+;      (if (not (empty-queue?))
+;          (car front-ptr)
+;          (error "QUEUE IS EMPTY!")))
+;    (define (insert-queue! x)
+;      (let ((new-pair (cons x ())))
+;        (if (empty-queue?)
+;            (begin (set-front-ptr! new-pair)
+;                   (set-rear-ptr! new-pair)
+;                   front-ptr)
+;            (begin (set-cdr! rear-ptr new-pair) 
+;                   (set-rear-ptr! new-pair)
+;                   front-ptr))))
+;    (define (delete-queue!)
+;      (if (not (empty-queue?))
+;          (if (null? (cdr front-ptr))
+;              (begin (set-front-ptr! (cdr front-ptr))
+;                     (set-rear-ptr! front-ptr)
+;                     front-ptr)
+;              (begin (set-front-ptr! (cdr front-ptr))
+;                     front-ptr))
+;              (error "DELETE! called with an empty queue")))
+;      (define (dispatch m)
+;        (cond ((eq? m 'front-ptr) front-ptr)
+;              ((eq? m 'rear-ptr) rear-ptr)
+;              ((eq? m 'empty-queue?) (empty-queue?))
+;              ((eq? m 'front-queue) (front-queue))
+;              ((eq? m 'insert-queue!) insert-queue!)
+;              ((eq? m 'delete-queue!) (delete-queue!))
+;              (else (error "Unknown operation!" m))))
+;      dispatch))
 ;Exercise 3.23:)
 ;The following implementation works. All procedures take \Omega(1) time. 
 ;Look at deque.jpg to see a picture of this implementation of the deque data structure.
@@ -3622,4 +3622,306 @@ guess
             (else (error "Unknown operation: TABLE" m))))
     dispatch))
 ;Exercise 3.27
+;for this exercise use the definitions
+;(define (make-table)
+;  (list '*table*))
+;(define (lookup key table)
+;  (let ((record (assoc key (cdr table))))
+;    (if record
+;        (cdr record)
+;        false)))
+;(define (insert! key value table)
+;  (let ((record (assoc key (cdr table))))
+;    (if record
+;        (set-cdr! record value)
+;        (set-cdr! table
+;                  (cons (cons key value)
+;                        (cdr table)))))
+;  'ok)
+;done on paper
+;If we just draw out the tree of calls to memo-fib, and evaluate from left to right, we figure it out quite easily. First, insert and lookup are O(n), so let k_1, k_2 \in \mathcal{R} be such that
+;T(insert n)<k_1n and T(lookup n)<k_2n. Then we have, by following the calls in our tree diagram, that T(n)=T(insert n)+T(lookup n-2)<k_1n+k_2(n-2)=(k_1+k_2)n -2k_2<(k_1+k_2)n, for all n>0,
+;so that T(n) \in O(n)! 
 ;=============3.3.4 A Simulator for Digital Circuits=============
+(define (half-adder a b s c)
+  (let ((d (make-wire))
+        (e (make-wire)))
+    (or-gate a b d)
+    (and-gate a b c)
+    (inverter c e)
+    (and-gate d e s)
+    'ok))
+(define (full-adder a b c-in sum c-out)
+  (let ((s (make-wire))
+        (c1 (make-wire))
+        (c2 (make-wire)))
+    (half-adder b c-in s c1)
+    (half-adder a s sum c2)
+    (or-gate c1 c2 c-out)
+    'ok))
+;primitive function boxes
+;(get-signal <wire>)
+;  returns the current value of the signal on the wire.
+;(set-signal! <wire> <new-value>)
+;  changes the value of the signal on the wire to the new value.
+;(add-action! <wire> <procedure of no arguments>)
+;  asserts that the designated procedure should be run whenever the signal on the wire changes value.
+;  Such procedures are the vehicles by which changes in the signal value on the wire are
+;  communicated to other wires.
+;In addition, we will make use of a procedure after-delay that takes
+;a time delay and a procedure to be run and executes the given procedure after
+;the given delay.
+(define (logical-not s)
+  (cond ((= s 0) 1)
+        ((= s 1) 0)
+        (else (error "Invalid signal" s))))
+(define (logical-or s t)
+  (if (or (= s 1) (= t 1))
+      1
+      0))
+(define (logical-and s t)
+  (if (and (= s 1) (= t 1))
+      1
+      0))
+(define (inverter input output)
+  (define (invert-input)
+    (let ((new-value (logical-not (get-signal input))))
+      (after-delay inverter-delay
+                   (lambda () (set-signal! output new-value)))))
+  (add-action! input invert-input) 
+  'ok)
+
+(define (and-gate a1 a2 output)
+  (define (and-action-procedure)
+    (let ((new-value
+            (logical-and (get-signal a1) (get-signal a2))))
+      (after-delay
+        and-gate-delay
+        (lambda () (set-signal! output new-value)))))
+  (add-action! a1 and-action-procedure)
+  (add-action! a2 and-action-procedure)
+  'ok)
+;Exercise 3.28:
+(define (or-gate a1 a2 output)
+  (define (or-action-procedure)
+    (let ((new-value
+            (logical-or (get-signal a1) (get-signal a2))))
+      (after-delay
+        or-gate-delay
+        (lambda () (set-signal! output new-value)))))
+  (add-action! a1 or-action-procedure)
+  (add-action! a2 or-action-procedure)
+  'ok)
+;Exercise 3.29:
+; $p \lor q \equiv \lnot (\lnot p \land \lnot q)$, so
+;(define (or-gate a1 a2 output)
+;  (let ((w1 (make-wire))
+;        (w2 (make-wire))
+;        (w3 (make-wire)))
+;    (inverter a1 w1)
+;    (inverter a2 w2)
+;    (and-gate w1 w2 w3)
+;    (inverter w3 output))
+;  'ok)
+;Exercise 3.30:
+;l1 is the list of the a_k, l2 of the b_k, and l3 of the s_k. c is the first carry wire. 
+;(define (full-adder a b c-in sum c-out)
+;  (let ((s (make-wire))
+;        (c1 (make-wire))
+;        (c2 (make-wire)))
+;    (half-adder b c-in s c1)
+;    (half-adder a s sum c2)
+;    (or-gate c1 c2 c-out)
+;    'ok))
+;assume that (length l1) = (length l2) = (length l3), and that the li all contain only wires.
+(define (ripple-carry-adder l1 l2 l3 c)
+  (define (make-wire-list n)
+    (define (iter product index)
+      (if (= index 0)
+          product
+          (iter (cons (make-wire) product) (- index 1))))
+    (iter () n))
+  (define (make-ripple-carry-adder-circuit lak lbk lsk lck cdefault)
+    (cond ((null? lak)
+           'done)
+          (else 
+            (full-adder (car lak) (car lbk) cdefault (car lsk) (car lck))
+            (make-ripple-carry-adder-circuit (cdr lak) (cdr lbk) (cdr lsk) (cdr lck) (car lck)))))
+  (let ((lc (make-wire-list (length l1))))
+    (make-ripple-carry-adder-circuit l1 l2 l3 lc c)))
+;Let the delay of a logical operation be denoted by $d_{<op>}$ for operation $op$, and let d be
+;the delay of ripple-carry-adder. Then we have
+;$d = n (4d_{and} + 3d_{or} + 2d_{not})$.
+;==Representing wires==
+(define (make-wire)
+  (let ((signal-value 0)
+        (action-procedures '()))
+    (define (set-my-signal! new-value)
+      (if (not (= signal-value new-value))
+          (begin (set! signal-value new-value)
+                 (call-each action-procedures))
+          'done))
+    (define (accept-action-procedure! proc)
+      (set! action-procedures
+        (cons proc action-procedures))
+      (proc))
+    (define (dispatch m)
+      (cond ((eq? m 'get-signal) signal-value)
+            ((eq? m 'set-signal!) set-my-signal!)
+            ((eq? m 'add-action!) accept-action-procedure!)
+            (else (error "Unknown operation: WIRE" m))))
+    dispatch))
+(define (call-each procedures)
+  (if (null? procedures)
+      'done
+      (begin ((car procedures))
+             (call-each (cdr procedures)))))
+(define (get-signal wire) (wire 'get-signal))
+(define (set-signal! wire new-value)
+  ((wire 'set-signal!) new-value))
+(define (add-action! wire action-procedure)
+  ((wire 'add-action!) action-procedure))
+;Agenda syntax
+;(make-agenda returns a new empty agenda
+;(empty-agenda? <agenda>) is true if the specified agenda is empty.
+;(first-agenda-item <agenda>) returns the first item on the agenda.
+;(remove-first-agenda-item! <agenda>) modifies the agenda by removing the first item.
+;(add-to-agenda! <time> <action> <agenda>) modifies the agenda by adding the given action procedure 
+;to be run at the specified time.
+;(current-time <agenda>) returns the current simulation time.
+;==Implementing the agenda==
+(define (make-time-segment time queue)
+  (cons time queue))
+(define (segment-time s) (car s))
+(define (segment-queue s) (cdr s))
+;the agenda itself is a one-dimensional table of time segments. Current time (the time of the last action that was processed) is stored 
+;at the head of the agenda.
+(define (make-agenda) (list 0))
+(define (current-time agenda) (car agenda))
+(define (set-current-time! agenda time)
+  (set-car! agenda time))
+(define (segments agenda) (cdr agenda))
+(define (set-segments! agenda segments)
+  (set-cdr! agenda segments))
+(define (first-segment agenda) (car (segments agenda)))
+(define (rest-segments agenda) (cdr (segments agenda)))
+(define (empty-agenda? agenda)
+  (null? (segments agenda)))
+(define (add-to-agenda! time action agenda)
+  (define (belongs-before? segments)
+    (or (null? segments)
+        (< time (segment-time (car segments)))))
+  (define (make-new-time-segment time action)
+    (let ((q (make-queue)))
+      (insert-queue! q action)
+      (make-time-segment time q)))
+  (define (add-to-segments! segments)
+    (if (= (segment-time (car segments)) time)
+        (insert-queue! (segment-queue (car segments))
+                       action)
+        (let ((rest (cdr segments)))
+          (if (belongs-before? rest)
+              (set-cdr!
+                segments
+                (cons (make-new-time-segment time action)
+                      (cdr segments)))
+              (add-to-segments! rest)))))
+  (let ((segments (segments agenda)))
+    (if (belongs-before? segments)
+        (set-segments!
+          agenda
+          (cons (make-new-time-segment time action)
+                segments))
+        (add-to-segments! segments))))
+(define (remove-first-agenda-item! agenda)
+  (let ((q (segment-queue (first-segment agenda))))
+    (delete-queue! q)
+    (if (empty-queue? q)
+        (set-segments! agenda (rest-segments agenda)))))
+(define (first-agenda-item agenda)
+  (if (empty-agenda? agenda)
+      (error "Agenda is empty: FIRST-AGENDA-ITEM")
+      (let ((first-seg (first-segment agenda)))
+        (set-current-time! agenda
+                           (segment-time first-seg))
+        (front-queue (segment-queue first-seg)))))
+
+;==A sample simulation==
+(define (after-delay delay action)
+  (add-to-agenda! (+ delay (current-time the-agenda))
+                  action
+                  the-agenda))
+(define (propagate)
+  (if (empty-agenda? the-agenda)
+      'done
+      (let ((first-item (first-agenda-item the-agenda)))
+        (first-item)
+        (remove-first-agenda-item! the-agenda)
+        (propagate))))
+
+(define (probe name wire)
+  (add-action! wire
+               (lambda ()
+                 (newline)
+                 (display name) (display " ")
+                 (display (current-time the-agenda))
+                 (display "  New-value= ")
+                 (display (get-signal wire)))))
+(define the-agenda (make-agenda))
+(define inverter-delay 2)
+(define and-gate-delay 3)
+(define or-gate-delay 5)
+(define input-1 (make-wire))
+(define input-2 (make-wire))
+(define sum (make-wire))
+(define carry (make-wire))
+
+;Exercise 3.31:
+;suppose we had defined
+;(define (accept-action-procedure! proc)
+;  (set! action-procedures
+;    (cons proc action-procedures)))
+;  (add-action! input invert-input) 
+;  'ok)
+;Our program would have bugs, in this case.
+;Say we run
+;(set-value! a 1).
+;then (or-action-procedure) would run on a, and d would be set to 1. 
+;(and-action-procedure) would run on a, and c would remain 0.
+;(invert-input) would not run, as c is unchanged, and so e would remain 0.
+;(and-action-procedure) would run on d, and s would remain 0.
+;Thus s, after changing a to 1 has value 0, as does c, which is not what we want!
+;This bug is introduced because we didn't invert the value of e from the start,
+;i.e. because accept-action-procedure! didn't run the proc once when adding it to wires c e...
+;If it was run, then e would have been set to 1 at the beginning, so that the circuit all together would have produced the right answer.
+;Values of wires are initialized to 0, so when setting up a circuit, we must run the procedures which we add to the wires so that
+;the initial value of the circuit is correct. Then, changing those values by means of changing currents to the wires of the input of the circuit
+;will propagate correctly throughout the circuit! Thus it is necessary to make sure to run the procedures added to wires immediately. 
+;Exercise 3.32:
+;(define w1 (make-wire))
+;(set-signal! w1 0)
+;(define w2 (make-wire))
+;(set-signal! w2 1)
+;(define w3 (make-wire))
+;(probe 'w1 w1)
+;(probe 'w2 w2)
+;(probe 'w3 w3)
+;(and-gate w1 w2 w3)
+;Let w1, w2, w3 be connected to an and-gate as the line above this one shows.
+;In our implementation, to change w1's signal to 1 we call (set-signal! w1 1), which calls each of the procedures on the wire,
+;particularly we run (and-action-procedure), which computes new-value as (logical-and (get-signal w1) (get-signal w2)) as 1,
+;and then adds (lambda () (set-signal! output new-value)) at the end of the queue at time 3. 
+;When we then change the signal of w2 to 0, we, again, run (and-action-procedure), this time called from w2, which computes
+;new-value as (logical-and (get-signal w1) (get-signal w2)), this time as 0. We add in our agenda at time 3
+;(lambda () (set-signal! output new-value)). Running propagate, then, we remove and run the first entry of the first segment of our agenda,
+;in our case there is only one segment, with time 3. The first procedure to be run and removed is (lambda () (set-signal! output new-value)) in a frame 
+;where new value is computed as 1. Thus we set the signal of output to 1. `propagate` recursively calls itself. 
+;Again, we remove the first entry of the queue of the first segment and run it. This time, we set output to 0. In the end, output is 0, as required.
+;Now suppose we organized the actions in the cdr of the segments not as queues, but as ordinary lists, where we insert from the left and remove from the left. 
+;Then the first entry would be where new-value is computed as 1 and the second entry would be where new-value is computed as 0. We would remove the first entry,
+;and run (lambda () (set-signal! output new-value)), setting the signal of output to 0. Then, we would again remove the first entry and run it.
+;We would be running (lambda () (set-signal! output new-value)) with new-value now computed as 1, setting the signal of output to 1. The agenda would now be empty,
+;so propagate would return 'done, and our final computed signal value for output would be 1. We would have an and-gate with inputs 1 and 0 and output 1, which
+;is incorrect! Hence, we can't simply use a list, we need to use something like a queue. Values need to be assigned in the order that the changes were made, that is
+;first in first out! If we make a change and then another change, the consequence of the first change must be computed, THEN the value of the second change,
+;and this is precisely what a queue does! 
