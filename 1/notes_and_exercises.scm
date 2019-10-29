@@ -4149,4 +4149,67 @@ guess
 (define C (make-connector))
 (define F (celsius-fahrenheit-converter C))
 ;=========3.4 Concurrency: Time is of the Essence=========
-
+;Exercise 3.38:
+;a.
+;  1. Peter,Paul,Mary:
+;    (set! balance (+ balance 10))
+;    (set! balance (- balance 20))
+;    (set! balance (- balance (/ balance 2)))
+;    The final value of balance is 45.
+;  2. Peter, Mary, Paul:
+;    (set! balance (+ balance 10))
+;    (set! balance (- balance (/ balance 2)))
+;    (set! balance (- balance 20))
+;    The final value of balance is 35
+;  3. Mary, Peter, Paul:
+;    (set! balance (- balance (/ balance 2)))
+;    (set! balance (+ balance 10))
+;    (set! balance (- balance 20))
+;    The final value of balance is 40
+;  4. Mary, Paul, Peter:
+;    Since addition is commutative, this will be the same answer as in case 3, i.e. balance will be 40
+;  5. Paul, Peter, Mary:
+;    Since addition is commutative, this will be the same as in Case 1, i.e. balance will be 45.
+;  6. Paul, Mary, Peter
+;    (set! balance (- balance 20))
+;    (set! balance (- balance (/ balance 2)))
+;    (set! balance (+ balance 10))
+;    The final value of balance is 50.
+;b.
+;  Done on paper.
+;  One possibility is that all three access the balance variable at roughly the same time, and Paul and Mary both take out 100 at roughly the same time, both setting the balance variable to 0,
+;  but then that Peter decides to take out nothing, and finally sets the balance variable to 100.
+;  In the end, Paul and Mary would have taken out 100 each, and the final bank balance would be 100.
+;===================3.4.2 Mechanisms for Controlling Concurrency===================
+;Exercise 3.39:
+;(define x 10)
+;(define s (make-serializer))
+;(parellel-execute
+;  (lambda () (set! x ((s (lambda () (* x x))))))
+;  (s (lambda () (set! x (+ x 1)))))
+;We can either get a final value of x of 100 101 or 121.
+;Let the first argument to parallel-execute be p1 and the second p2.
+;If p1 runs then p2, we end up with 101.
+;If p1 runs to the serialized sub-procedure, then stops and runs p2 all the way through,
+;then continues, we get 100.
+;If p2 runs all the way through, then p1 runs all the way through, we get 121.
+;110 cannot happen, since (lambda () (* x x)) is serialized and thus cannot be interrupted.
+;11 can't happen because we can't leave p2 to run (lambda () (* x x)),
+;because the two are serialized.
+;Exercise 3.40:
+;(define x 10)
+;(parallel-execute (lambda () (set! x (* x x)))
+;                  (lambda () (set! x (* x x x))))
+;Let p1 be the first argument to parallel-execute and p2 the second.
+;p1->p2: x is 10^6
+;p2->p1: x is 10^6
+;p1-access-x->p2-access-x->p2-set-x->p1-set-x: x is 10^2
+;p2-access-x->p1-access-x->p1-set-x->p2-set-x:10^3
+;p1-access-x->p1-first-x-arg-to-*-referenced->p2-access-and-set-x->p2-second-x-arg-to-*-referenced:x is 10*1000=10000=10^4
+;p2-access-x->p2-first-x-arg-to-*-reference->p1-access-and-set-x->p2-rest-of-args-to-*-referenced:x is 10*100*100=10^5
+;p2-access-x->p2-first-and-second-x-arg-to-*-referenced->p1-access-and-set-x->p2-third-x-arg-to-*-referenced:x is 10*10*100=10^4
+;(define x 10)
+;(parallel-execute (s (lambda () (set! x (* x x))))
+;                  (s (lambda () (set! x (* x x x)))))
+;Then only p1->p2 and p2->p1 can occur, which in both cases produces the answer of 10^6.
+;Exercise 3.41:
