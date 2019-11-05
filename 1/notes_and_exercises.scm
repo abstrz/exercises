@@ -4434,7 +4434,7 @@ guess
             (else (error "SEMAPHORE operation not supported!:" m))))
     the-semaphore))
 ;atomic test-and-set! operations implementation
-;we can use the same list structure as above, but with #f and #t elements, and test-and-set! and clear! operations.
+;we can use the deque structure as above, but with cells.
 (define (make-semaphore-2 n)
   (define (make-cell-deque n)
     (let ((deque (make-deque)))
