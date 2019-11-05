@@ -18,6 +18,12 @@
   (if (< (length args) 2) 
       (error "You need to provide at least two arguments. You gave:" (length args))
       (rec args)))
+(define (copies-list element size)
+  (define (iter n result)
+    (if (= n 0)
+        result
+        (iter (- n 1) (cons element result))))
+  (iter size '()))
 ;=============1.2.4 Exponentiation=============================
 ;;recursive definition
 ;(define (expt_rec b n)
@@ -3378,7 +3384,7 @@ guess
         ((null? (cddr (front-deque deque)))
          (set-car! deque ())
          (set-cdr! deque ()))
-        ((= (length (front-deque d)) 4)
+        ((= (length (front-deque deque)) 4)
          (set-car! (cdr (rear-deque deque)) ())
          (set-cdr! deque (front-deque deque))
          (set-cdr! (cdr (rear-deque deque)) ()))
@@ -4213,3 +4219,245 @@ guess
 ;                  (s (lambda () (set! x (* x x x)))))
 ;Then only p1->p2 and p2->p1 can occur, which in both cases produces the answer of 10^6.
 ;Exercise 3.41:
+;(define (make-account balance)
+;  (define (withdraw amount)
+;    (if (>= balance amount)
+;        (begin (set! balance
+;                 (- balance amount))
+;               balance)
+;        "Insufficient funds"))
+;  (define (deposit amount)
+;    (set! balance (+ balance amount))
+;    balance)
+;  (let ((protected (make-serializer)))
+;    (define (dispatch m)
+;      (cond ((eq? m 'withdraw) (protected withdraw))
+;            ((eq? m 'deposit) (protected deposit))
+;            ((eq? m 'balance)
+;             (protected
+;               (lambda () balance)));serialized
+;            (else
+;              (error "Unknown rquest: MAKE-ACCOUNT"
+;                     m))))
+;    dispatch))
+;We don't need to serialize balance. 
+;Assuming accessing and returning the local variable `balance` is just one step, no. 
+;Let's look at the various different requirements on concurrency which one may use,
+;and check whether or not make-account, without balance serialized, meets those requirements.
+;Requirement 1: "No two operations that change any shared state variables can occur at the same time."
+;  Okay, well balance doesn't set balance, it only gets it. Thus, as the program was written,
+;  we needn't have serialized balance. 
+;Requirement 2: 
+;  a. "Processes don't have to run sequentially, but they must behave as if they did."
+;  b. "There may be more than one possible 'correct' result produced by the same concurrent program.
+;    Well, assuming that returning balance just takes one step. The only possibilities are that
+;    balance is returned before withdraw/deposit, during the execution of withdraw/deposit,
+;    or after the execution of withdraw/deposit. 
+;    If before, then we are good.
+;    If after, we are good.
+;    If during, either balance is returned before or after the new value is set, in any case
+;    the behavior is as if balance was executed before or after!
+;    Thus, we are good by this requirement too.
+;    Hence, we needn't have serialized balance! 
+;Exercise 4.42
+;The change is safe to make. There is no difference in what concurrency is allowed by the two versions.
+;In the first version, we add elements to the serialized set as we dispatch, and if these aren't bound
+;in one of the enclosing environments, they are lost. So we temporarily add elements to the serialized set.
+;In the second case, we permanently add two elements to the serialized set. In any case, what is in the set
+;cannot be run concurrently. In the first case, then, the dispatched protected procedures can never be run
+;concurrently. In the second case, the two permanent members of the serialized set cannot be run concurrently. 
+;The second case is a more efficient solution, with the exact same behavior. 
+;===================Complexity of using multiple shared resources===================
+(define (exchange acc1 acc2)
+  (let ((difference (- (acc1 'balance) (acc2 'balance))))
+    ((acc1 'withdraw) difference)
+    ((acc2 'deposit) difference)))
+;An example from the book of exchanging three balances can go wrong is the following:
+;  Suppose Peter and Paul have access to acc1 acc2 and acc3.
+;  Peter might want to exchange the balances in acc1 and acc2.
+;  The exchange procedure above computes different before setting the balances.
+;  In the time taken to compute the difference, Paul can change the balance of acc1.
+;  Then, the exchange would be inaccurate. Thus serializing withdraw and deposit as we've done
+;  is insufficient to prevent errors to do with concurrency.
+(define (make-account-and-serializer balance)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amoutn))
+    balance)
+  (let ((balance-serializer (make-serializer)))
+    (define (dispatch m)
+      (cond ((eq? m 'withdraw) withdraw)
+            ((eq? m 'deposit) deposit)
+            ((eq? m 'balance) balance)
+            ((eq? m 'serializer) balance-serializer)
+            (else (error "Unknown request: MAKE-ACCOUNT" m))))
+    dispatch))
+(define (deposit account amount)
+  (let ((s (account 'serializer))
+        (d (account 'deposit)))
+    ((s d) amount)))
+(define (serialized-exchange account1 account2)
+  (let ((serializer1 (account1 'serializer))
+        (serializer2 (account2 'serializer)))
+    ((serializer1 (serializer2 exchange))
+     account1 account2)))
+;Exercise 3.43 
+;Let's say we have n exchanges between the three accounts. Let's denote an exchange of balances between account i and j by e_{ij}
+;e_{a_1 b_1} e_{a_2 b_2}...e_{a_n b_n} e_{a_n b_n}.
+;Since on all three accounts withdrawals and deposits are serialized,
+;for each account there exists a sequence of deposits and withdrawals such that executing this sequence produces the same result as the concurrent execution of exchanges above.
+;We have the following sequences:
+;((w_11 d_11) (w_12 d_12) ... (w_1n d_1n))
+;((w_21 d_21) (w_22 d_22) ... (w_2n d_2n))
+;((w_31 d_31) (w_32 d_32) ... (w_3n d_3n))
+;
+;Since each withdrawal out of one account is a deposit in another, we can rearrange the sequences such that each column forms a bipartite graph with a perfect matching.
+;WLOG, let us assume that the sequences above are already arranged in such an order. Then, column i
+;(w_1i d_1i)
+;(w_2i d_2i)
+;(w_3i d_3i)
+;The only possibilities of such a matching such that the withdrawals and deposits aren't in the same account are:
+;w_1i = d_3i , w_2i = d_1i, and w_3i=d_2i and w_1i = d_2i, w_2i=d_3i, and w_3i=d_1i.
+;Since
+;  (balance_1 + d_1i - w_1i) + (balance_2 + d_2i - w_2i) + (balance_3 + d_3i - w_3i) =
+;  (balance_1 + balance_2 + balance_3) + (d_1i + d_2i+d_3i) - (w_1i + w_2i + w_3i),
+;we see in both cases that we can rearrange the last two terms such that they all cancel out. Thus,
+;the sum of balances are constant. 
+;Since this is true for each column, we conclude that in general the sum of balances is constant.
+;This argument relies crucially on serialization, so that if we remove this assumption we find that it isn't true that the sum of the balances is preserved.
+;For example,
+;Suppose that we run
+;(parallel-execute (lambda () (exchange acc1 acc2)) (lambda () (exchange acc3 acc1)))
+;where acc1 has 5 dollars, acc2 has 10, and acc3 has 15.
+;Then, suppose as the first exchange is executing the withdrawal of 5 dollars from acc1, but before setting the new balance,
+;the second exchange deposits 10 dollars into the account. 
+;Then the first exchange withdrawal procedure completes, and the balance is set to 0.
+;Then the final sum would be 0+10+5+15-10=20, whereas it should be 5+10+15=30.
+;I drew a timing diagram on a paper to illustrate this
+;Exercise 3.44:
+;(define (transfer from-account to-account amount)
+;  ((from-account 'withdraw) amount)
+;  ((to-account 'deposit) amount))
+;Louis Reasoner is wrong. Both of the operationsin transfer are serialized. The difference with the exchange procedure 
+;is that computing difference was not serialized, and so the difference could be computed in a time period within which
+;deposits or withdrawals could be made, thus rendering the difference wrong. When that difference was deposited into the
+;second argument to exchange from the first argument to exchange, you would thus end up with an incorrect sequence of balances.
+;Exercise 3.45:
+;(define (serialized-exchange acc1 acc2)
+;  (let ((serializer1 (acc1 'serializer))
+;        (serializer2 (acc2 'serialized)))
+;    ((serializer1 (serializer2 exchange))
+;     acc1
+;     acc2)))
+;(define (exchange acc1 acc2)
+;  (let ((difference (- (acc1 'balance) (acc2 'balance))))
+;    ((acc1 'withdraw) difference)
+;    ((acc2 'deposit) difference)))
+
+;(define a1 (make-account))
+;((a1 'deposit) 20)
+;(define a2 (make-account))
+;((a2 'deposit) 100)
+;(serialized-exchange a1 a2)
+;((serializer1 (serializer 2 exchange)) a1 a2)
+;Let s_1 be serializer1 and s_2 be serializer 2.
+;Let e_{s_1 s_2} be the doubly serializer exchange procedure. 
+;We have that a1 has serialized deposit with the first serializer, and a2 with the second.
+;Then, we have:
+;(e'' a1 a2)
+;(let ((difference (- (acc1 'balance) (acc2 'balance))))
+;  ((acc1 'withdraw) difference)
+;  ((acc2 'deposit) difference))
+;We are currently running e_{s_1 s_2}, and so since the local withdrawal procedure of acc1 is serialized,
+;we can't run it until exchange terminates, but exchange can't terminate until the procedure is run,
+;so the program never terminates.
+;=========== Implementing Serializers ===============
+(define (make-serializer)
+  (let ((mutex (make-mutex)))
+    (lambda (p)
+      (define (serialized-p . args)
+        (mutex 'acquire)
+        (let ((val (apply p args)))
+          (mutex 'release)
+          val))
+      serialized-p)))
+(define (make-mutex)
+  (let ((cell (list #f)))
+    (define (the-mutex m)
+      (cond ((eq? m 'acquire)
+             (if (test-and-set! cell)
+                 (the-mutex 'acquire)))
+            ((eq? m 'release) (clear! cell))))
+    the-mutex))
+(define (clear! cell) (set-car! cell #f))
+(define (test-and-set! cell)
+  (if (car cell) 
+      #t 
+      (begin 
+        (set-car! cell #t) 
+        #f)))
+;Exercise 3.46
+;I did this on paper
+;Exercise 3.47
+;a
+
+;we can think of a semaphore as a deque of n mutexes. an acquire operation takes the first mutex, acquires it, then puts it at the end of the deque.
+;release operation takes the last mutex of the deque, releases it, then puts it at the beginning of the deque. 
+;mutex generalization implementation
+(define (make-semaphore-1 n)
+  (define (make-mutex-deque n)
+    (let ((deque (make-deque)))
+      (define (iter index)
+        (if (= index 0)
+            deque
+            (begin (front-insert-deque! deque (make-mutex))
+                   (iter (- index 1)))))
+      (iter n)))
+  (let ((mutex-deque (make-mutex-deque n)))
+    (define (acquire)
+      (let ((front-mutex (car (front-deque mutex-deque))))
+        (front-mutex 'acquire)
+        (front-delete-deque! mutex-deque)
+        (rear-insert-deque! mutex-deque front-mutex)))
+    (define (release)
+      (let ((rear-mutex (car (rear-deque mutex-deque))))
+        (rear-mutex 'release)
+        (rear-delete-deque! mutex-deque)
+        (front-insert-deque! mutex-deque rear-mutex)))
+    (define (the-semaphore m)
+      (cond ((eq? m 'acquire) (acquire))
+            ((eq? m 'release) (release))
+            (else (error "SEMAPHORE operation not supported!:" m))))
+    the-semaphore))
+;atomic test-and-set! operations implementation
+;we can use the same list structure as above, but with #f and #t elements, and test-and-set! and clear! operations.
+(define (make-semaphore-2 n)
+  (define (make-cell-deque n)
+    (let ((deque (make-deque)))
+      (define (iter index)
+        (if (= index 0)
+            deque
+            (begin (front-insert-deque! deque (list #f))
+                   (iter (- index 1)))))
+      (iter n)))
+  (let ((cell-deque (make-cell-deque n)))
+    (define (acquire)
+      (let ((front-cell (car (front-deque cell-deque))))
+        (if (test-and-set! front-cell)
+            (acquire)
+            (begin (front-delete-deque! cell-deque)
+                   (rear-insert-deque! cell-deque front-cell)))))
+    (define (release)
+      (let ((rear-cell (car (rear-deque cell-deque))))
+        (clear! rear-cell)
+        (rear-delete-deque! cell-deque)
+        (front-insert-deque! cell-deque rear-cell)))
+    (define (the-semaphore m)
+      (cond ((eq? m 'acquire) (acquire))
+            ((eq? m 'release) (release))
+            (else (error "SEMAPHORE operation not supported!:" m))))
+    the-semaphore))
