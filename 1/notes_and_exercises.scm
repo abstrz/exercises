@@ -2928,6 +2928,7 @@ guess
   (define (dispatch m)
     (cond ((eq? m 'withdraw) withdraw)
           ((eq? m 'deposit) deposit)
+          ((eq? m 'balance) balance)
           (else (error "Unknown request: MAKE-ACCOUNT" m))))
   dispatch)
 ;Exercise 3.1
@@ -3021,7 +3022,7 @@ guess
     (define generate
       (lambda ()
         (set! x (rand-update x))
-        x))
+03        x))
     (define (reset num)
       (set! x  num))
     (cond ((eq? m 'generate) (generate))
@@ -3729,7 +3730,7 @@ guess
 ;    (and-gate w1 w2 w3)
 ;    (inverter w3 output))
 ;  'ok)
-;Exercise 3.30:
+;eXERCIse 3.30:
 ;l1 is the list of the a_k, l2 of the b_k, and l3 of the s_k. c is the first carry wire. 
 ;(define (full-adder a b c-in sum c-out)
 ;  (let ((s (make-wire))
@@ -4286,7 +4287,7 @@ guess
                balance)
         "Insufficient funds"))
   (define (deposit amount)
-    (set! balance (+ balance amoutn))
+    (set! balance (+ balance amount))
     balance)
   (let ((balance-serializer (make-serializer)))
     (define (dispatch m)
@@ -4461,3 +4462,168 @@ guess
             ((eq? m 'release) (release))
             (else (error "SEMAPHORE operation not supported!:" m))))
     the-semaphore))
+;==============DEADLOCK==============
+;Exercise 3.48
+(define (make-account-i n balance)
+  (let ((id n))
+    (define (withdraw amount)
+      (if (>= balance amount)
+          (begin (set! balance (- balance amount))
+                 balance)
+          "Insufficient funds"))
+    (define (deposit amount)
+      (set! balance (+ balance amount))
+      balance)
+    (let ((balance-serializer (make-serializer)))
+      (define (dispatch m)
+        (cond ((eq? m 'withdraw) withdraw)
+              ((eq? m 'deposit) deposit)
+              ((eq? m 'balance) balance)
+              ((eq? m 'serializer) balance-serializer)
+              ((eq? m 'id) id)
+              (else (error "Unknown request: MAKE-ACCOUNT" m))))
+      dispatch)))
+(define (serialized-exchange-id account1 account2)
+  (let ((serializer1 (account1 'serializer))
+        (serializer2 (account2 'serializer))
+        (id1 (account1 'id))
+        (id2 (account2 'id)))
+    (cond ((= id1 id2)
+          'done)
+          ((< id1 id2)
+           (serializer2 (serializer1 (exchange acc1 acc2)))
+           'done)
+          ((< id2 id1)
+           (serializer1 (serializer2 (exchange acc2 acc1)))
+           'done))))
+;Exercise 3.49:
+;After being stuck trying to find examples of this, and realizing that each example was just another variant of an exchange problem,
+;I looked online for solutions. One solution that I found was database mutations, and another a particular example from another textbook.
+;Thus, it seems like this question will be better answered when I know a little more CS. I happily skip over it to the remainder of the book.
+;=====================3.5 Streams=====================
+;===3.5.1 Streams are Delayed Lists===
+;stream analogs of list operations:
+(define (stream-ref s n)
+  (if (= n 0)
+      (stream-car s)
+      (stream-ref (stream-cdr s) (- n 1))))
+;(define (stream-map proc s)
+;  (if (stream-null? s)
+;      the-empty-stream
+;      (cons-stream (proc (stream-car s)) (stream-map proc (stream-cdr S)))))
+(define (stream-for-each proc s)
+  (if (stream-null? s)
+      'done
+      (begin (proc (stream-car s))
+             (stream-for-each proc (stream-cdr s)))))
+(define (display-stream s)
+  (stream-for-each display-line s))
+(define (display-line x) (newline) (display x))
+;syntax of streams:
+;  (cons-stream <a> <b>) is equivalent to (cons <a> (delay <b>))
+;  (define (stream-car stream) (car stream))
+;  (define (stream-cdr stream) (force (cdr stream)))
+(define (stream-enumerate-interval low high)
+  (if (> low high)
+      the-empty-stream
+      (cons-stream low
+                   (stream-enumerate-interval (+ low 1) high))))
+(define (stream-filter pred stream)
+  (cond ((stream-null? stream) the-empty-stream)
+        ((pred (stream-car stream))
+         (cons-stream (stream-car stream)
+                      (stream-filter
+                        pred
+                        (stream-cdr stream))))
+        (else (stream-filter pred (stream-cdr stream)))))
+;naive delay implementation:
+;(define (delay exp)
+;  (lambda () exp))
+;force syntax:
+;(define (force delayed-object)
+;  (delayed-object))
+;This can be made more efficient using memoization:
+(define (memo-proc proc)
+  (let ((already-run? #f) 
+        (result #f))
+    (lambda ()
+      (if (not already-run?)
+          (begin (set! result (proc))
+                 (set! already-run? #t)
+                 result)
+          result))))
+;can implement delay and force by:
+;(define (delay proc)
+;  (memo-proc (lambda () proc)))
+;(define (force proc)
+;  (proc))
+;we then define delay so that (delay <exp>) is equivalent to
+;(memo-proc (lambda () <exp>))
+;Exercise 3.50:
+(define (stream-map-1 proc . argstreams)
+  (if (stream-null? (car argstreams))
+      the-empty-stream
+      (cons-stream
+        (apply proc (map stream-car argstreams))
+        (apply stream-map-1
+               (cons proc (map stream-cdr argstreams))))))
+;Exercise 3.51:
+;(define (show x)
+;  (display-line x)
+;  x)
+;(define x 
+;  (stream-map show
+;              (stream-enumerate-interval 0 10)))
+;(stream-ref x 5)
+;(stream-ref x 7)
+;done on paper
+;Exercise 3.52:
+(define sum 0)
+(define (accum x) (set! sum (+ x sum)) sum)
+(define seq
+  (stream-map accum
+              (stream-enumerate-interval 1 20)))
+;seq is {1 3 6 10 15 21 28 36 45 55 66 78 91 105 120 136 153 171 190 210}
+(define y (stream-filter even? seq))
+;y is {6 10 28 36 66 78 120 136 190 210}
+;sum is 6.
+(define z
+  (stream-filter (lambda (x) (= (remainder x 5) 0))
+                 seq))
+;z is {10 15 45 55 105 120 190 210}
+;sum is 10.
+;(stream-ref y 7)
+;136
+;====================3.5.2 Infinite Streams====================
+(define (integers-starting-from n)
+  (cons-stream n (integers-starting-from (+ n 1))))
+(define (sieve stream)
+  (cons-stream
+    (stream-car stream)
+    (sieve (stream-filter
+             (lambda (x)
+               (not (divisible? x (stream-car stream))))
+             (stream-cdr stream)))))
+(define primes (sieve (integers-starting-from 2)))
+(define (add-streams s1 s2) (stream-map + s1 s2))
+(define ones
+  (cons-stream 1 ones))
+(define integers
+  (cons-stream 1 (add-streams ones integers)))
+(define fibs
+  (cons-stream 
+    0
+    (cons-stream 1 (add-streams (stream-cdr fibs) fibs))))
+(define (scale-stream stream factor)
+  (stream-map (lambda (x) (* x factor))
+              stream))
+;Exercise 3.53;
+;defines the sequence {2^n}_{n=0}^{\infty}.
+;Exercise 3.54:
+(define (mul-streams s1 s2)
+  (stream-map * s1 s2))
+(define factorials
+  (cons-stream 1 (mul-streams factorials (stream-cdr integers))))
+;Exercise 3.55:
+(define (partial-sums S)
+  (cons-stream (stream-car S) (add-streams (scale-stream ones (stream-car S)) (partial-sums (stream-cdr S)))))
