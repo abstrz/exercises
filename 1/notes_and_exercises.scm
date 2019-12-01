@@ -4628,7 +4628,7 @@ guess
 (define (partial-sums S)
   (cons-stream (stream-car S) (add-streams (scale-stream ones (stream-car S)) (partial-sums (stream-cdr S)))))
 ;Exercise 3.56:
-;merge just implements an ordered set union, if we look at the streams as ordered sets. 
+;merge just implements an ordered set union, if we look at the streams as totally ordered sets. 
 (define (merge s1 s2)
   (cond ((stream-null? s1) s2)
         ((stream-null? s2) s1)
@@ -4648,3 +4648,67 @@ guess
                                  (merge (stream-cdr s1)
                                         (stream-cdr s2)))))))))
 (define S (cons-stream 1 (merge (scale-stream S 2) (merge (scale-stream S 3) (scale-stream S 5)))))
+;Exercise 3.57:
+;done on paper.
+;Let's start our counting of the fib numbers from 0, and let A(n) be the number of additions to compute the nth fib number.
+;Then in the case where we memoize, A(n)=n-1. In the case where we don't A(n)=\sum_{k=1}^{n-1}F(k), where F(k) is the kth fib number.
+;Exercise 3.58:
+(define (expand num den radix)
+  (cons-stream 
+    (quotient (* num radix) den)
+    (expand (remainder (* num radix) den) den radix)))
+;stream of quotients q_i produced in the following:
+;  (num*radix) = q_0*den + r_0
+;  (r_0*radix) = q_1*den + r_1
+;  (r_1*radix) = q_2*den + r_2
+;(expand 1 7 0): 
+;  {0 0 0 0 ...}
+;(expand 3 8 10):
+;  (3*10) = 8q_0 + r_0 or
+;      30 = 8q_0 + r_0 =
+;         = 8* 3 + 6, so q_0  is 3.
+;
+;  (6*10) = 8*q_1 + r_1 or
+;      60 = 8*  7 + 4, so q_1 is 7.
+;
+;  (4*10) = 8*5 + 0, so q_2=4
+;
+;  the rest of the stream will just be zero, since the remainder is zero.
+;
+;  Thus the result is
+;
+;  {3 7 5 0 0 0 0 0 0 ...}
+
+;Exercise 3.59:
+;a:
+(define (integrate-series series)
+  (define (builder i s)
+    (cons-stream (/ (stream-car s) i) (builder (+ i 1) (stream-cdr s))))
+  (builder 1 series))
+;b:
+(define exp-series
+  (cons-stream 1 (integrate-series exp-series)))
+
+(define cose-series
+  (cons-stream 1 (scale-stream (integrate-series sine-series) -1)))
+(define sine-series
+  (cons-stream 0 (integrate-series cose-series)))
+;Exercise 3.60:
+;pretty ugly implementation imo, but I was trying to find one that fit into the outline given by the textbook of:
+;(define (mul-series s1 s2)
+;  (cons-stream <??> (add-streams <??> <??>)))
+(define (mul-series s1 s2)
+  (cons-stream (* (stream-car s1) (stream-car s2))
+               (add-streams (scale-stream (stream-cdr s1) (stream-car s2)) (mul-series s1  (stream-cdr s2)))))
+;Exercise 3.61:
+(define (invert-unit-series S)
+  (cons-stream 1 (scale-stream (mul-series (stream-cdr S) (invert-unit-series S)) -1)))
+
+;Exercise 3.62:
+(define (div-series s1 s2)
+  (if (= (stream-car s2) 0)
+      (error "Cannot divide series which begins with zero!")
+      (mul-series s1 (invert-unit-series s2))))
+(define tan-series
+  (div-series sine-series cose-series))
+
