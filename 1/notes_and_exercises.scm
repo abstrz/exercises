@@ -4712,3 +4712,85 @@ guess
 (define tan-series
   (div-series sine-series cose-series))
 
+;======================== 3.5.3 Exploiting the Stream Paradigm ========================
+;Exercise 3.63
+(define (sqrt-improve guess x)
+  (average guess (/ x guess)))
+(define (sqrt-stream x)
+  (define guesses
+    (cons-stream
+      1.0
+      (stream-map (lambda (guess) (sqrt-improve guess x))
+                  guesses)))
+  guesses)
+(define (pi-summands n)
+  (cons-stream (/ 1.0 n)
+               (stream-map - (pi-summands (+ n 2)))))
+(define pi-stream
+  (scale-stream (partial-sums (pi-summands 1)) 4))
+(define (euler-transform s)
+  (let ((s0 (stream-ref s 0))
+        (s1 (stream-ref s 1))
+        (s2 (stream-ref s 2)))
+    (cons-stream (- s2 (/ (square (- s2 s1))
+                          (+ s0 (* -2 s1) s2)))
+                 (euler-transform (stream-cdr s)))))
+;make-tableau defines a sequence of transformed sequences, each one converging faster than the one before.
+(define (make-tableau transform s)
+  (cons-stream s (make-tableau transform (transform s))))
+(define (accelerated-sequence transform s)
+  (stream-map stream-car (make-tableau transform s)))
+(define (sqrt-stream-1 x)
+  (cons-stream 1.0 (stream-map (lambda (guess) (sqrt-improve guess x)) (sqrt-stream-1 x))))
+;What happens is if you have already computed (stream-ref ss n), then the delayed cdrs will be saved, and so 
+;the next time you run (stream-ref ss n), it is a constant time calculation, but if you want to do
+;(stream-ref ss n+1), then we will have to run 
+;(stream-map (lambda (guess) (sqrt-improve guess 2)) (stream-cd^nr (sqrt-stream-1 2)))
+;but sqrt-stream-1 was not saved to a variable, as it is defined, and so all n of the previous results must now be recomputed,
+;before finally returning the n+1th. Thus we get that sqrt-stream-1 takes O(n) time. 
+;on the other hand, evaluating (stream-ref s n) and then (stream-ref s n+1) makes us evaluate
+;(stream-map (lambda (guess) (sqrt-improve guess x)) guesses)
+;but now guesses is a local variable that has all of the previous cdr traversals saved, so it just needs to compute one extra step. 
+;If we change our implementation of delay to just (lambda () <exp>) then there will be no advantage to saving guesses as a local variable,
+;since the cdr traversals are not saved...
+;Exercise 3.64:
+(define (stream-limit s r)
+  (let ((s0 (stream-car s))
+        (s1 (stream-car (stream-cdr s))))
+    (if (< (abs (- s1 s0)) r)
+        s1
+        (stream-limit (stream-cdr s) r))))
+(define (sqrtt x tolerance)
+  (stream-limit (sqrt-stream x) tolerance))
+;Exercise 3.65:
+(define (ln-summands n)
+  (cons-stream (/ 1.0 n)
+               (stream-map - (ln-summands (+ n 1)))))
+(define ln-stream
+  (partial-sums (ln-summands 1)))
+;---------INFINITE STREAMS---------
+(define (interleave s1 s2)
+  (if (stream-null? s1)
+      s2
+      (cons-stream (stream-car s1)
+                   (interleave s2 (stream-cdr s1)))))
+(define (pairs s t)
+  (cons-stream
+    (list (stream-car s) (stream-car t))
+    (interleave
+      (stream-map (lambda (x) (list (stream-car s) x))
+                  (stream-cdr t))
+      (pairs (stream-cdr s) (stream-cdr t)))))
+;Exercise 3.66:
+(define ip (pairs integers integers))
+;2^i(j-1)-i
+;Analyzing ip, I came up with the following function for the number of pairs before (i j):
+(define (before-pair pair)
+  (let ((i (car pair)) (j (cadr pair)))
+    (if (> i j)
+        (error "The first element of the pair must be greater than or equal to the second!")
+        (if (= i j)
+            (- (expt 2 i) 2)
+            (+ (* (- j i 1) (expt 2 i)) (* 3 (expt 2 (- i 1))) -2)))))
+;using this formula, we can get all of the answers
+
