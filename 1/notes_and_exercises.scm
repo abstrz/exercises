@@ -4783,12 +4783,11 @@ guess
       (pairs (stream-cdr s) (stream-cdr t)))))
 ;Exercise 3.66:
 (define ip (pairs integers integers))
-;2^i(j-1)-i
 ;Analyzing ip, I came up with the following function for the number of pairs before (i j):
 (define (before-pair pair)
   (let ((i (car pair)) (j (cadr pair)))
     (if (> i j)
-        (error "The first element of the pair must be greater than or equal to the second!")
+        (error "The first element of the pair must be less than or equal to the second!")
         (if (= i j)
             (- (expt 2 i) 2)
             (+ (* (- j i 1) (expt 2 i)) (* 3 (expt 2 (- i 1))) -2)))))
