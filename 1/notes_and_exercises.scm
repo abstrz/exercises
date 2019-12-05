@@ -4792,4 +4792,77 @@ guess
             (- (expt 2 i) 2)
             (+ (* (- j i 1) (expt 2 i)) (* 3 (expt 2 (- i 1))) -2)))))
 ;using this formula, we can get all of the answers
+;Exercise 3.67:
+;We need zero and negative integers.
+;want (pairs integers integers) to return all integers, by mixing in an additional stream... so... cant rewrite whole procedure, just gotta adjust the one that exists slightly...
+;also, integers are defined as not including zero, so... the definition given below assumes that integers are {1 2 3 4 5 ...}, as we've implemented them.
+(define (pairs-1 s t)
+  (let ((neg-s (scale-stream s -1))
+        (neg-t (scale-stream t -1)))
+    (cons-stream
+      (list (stream-car s) (stream-car t))
+      (interleave
+        (interleave 
+          (stream-map (lambda (x) (list (stream-car s) x))
+                      (stream-cdr t))
+          (pairs (stream-cdr s) (stream-cdr t)))
+        (cons-stream 
+          (list (stream-car s) (stream-car neg-t))
+          (cons-stream 
+            (list (stream-car neg-s) (stream-car t))
+            (cons-stream
+              (list (stream-car neg-s) (stream-car neg-t))
+              (interleave
+                (stream-map (lambda (x) (list x (stream-car t)))
+                            (stream-cdr s))
+                (interleave
+                  (stream-map (lambda (x) (list x (stream-car neg-t)))
+                              (stream-cdr neg-s))
+                  (interleave
+                    (stream-map (lambda (x) (list x (stream-car neg-t)))
+                                (stream-cdr s))
+                    (interleave
+                      (stream-map (lambda (x) (list x (stream-car t)))
+                                  (stream-cdr neg-s))
+                      (interleave
+                        (stream-map (lambda (x) (list (stream-car neg-s) x))
+                                    (stream-cdr neg-t))
+                        (interleave 
+                          (stream-map (lambda (x) (list (stream-car s) x))
+                                      (stream-cdr neg-t))
+                          (stream-map (lambda (x) (list (stream-car neg-s) x))
+                                      (stream-cdr t)))))))))))))))
+;Exercise 3.68
+(define (pairs-2 s t)
+  (interleave
+    (stream-map (lambda (x) (list (stream-car s) x))
+                t)
+    (pairs-2 (stream-cdr s) (stream-cdr t))))
+;It doesn't work. The cons-stream in our first definition causes the cdr's evaluation to be delayed, but as Louis defined it, the program tries evaluates the arguments before interleave is applied to them,
+;but that leads to an infinite loop, as (stream-cdr s), (stream-cdr t) will never end...
+;Exercise 3.69:
+(define (pairs s t)
+  (cons-stream
+    (list (stream-car s) (stream-car t))
+    (interleave
+      (stream-map (lambda (x) (list (stream-car s) x))
+                  (stream-cdr t))
+      (pairs (stream-cdr s) (stream-cdr t)))))
+(define (triples s t u)
+  (let ((txu (pairs t u)))
+    (cons-stream
+      (append (list (stream-car s)) (stream-car txu))
+      (interleave
+        (stream-map (lambda (p) (append (list (stream-car s)) p))
+                    (stream-cdr txu))
+        (triples (stream-cdr s) (stream-cdr t) (stream-cdr u))))))
+(define iiints (triples integers integers integers))
+(define pythogorean-triples
+  (stream-filter (lambda (p) (= (+ (square (car p))
+                                   (square (cadr p)))
+                                (square (caddr p)))) iiints))
+;Exercise 3.70:
+
+
+
 
