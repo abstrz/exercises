@@ -4841,13 +4841,6 @@ guess
 ;It doesn't work. The cons-stream in our first definition causes the cdr's evaluation to be delayed, but as Louis defined it, the program tries evaluates the arguments before interleave is applied to them,
 ;but that leads to an infinite loop, as (stream-cdr s), (stream-cdr t) will never end...
 ;Exercise 3.69:
-(define (pairs s t)
-  (cons-stream
-    (list (stream-car s) (stream-car t))
-    (interleave
-      (stream-map (lambda (x) (list (stream-car s) x))
-                  (stream-cdr t))
-      (pairs (stream-cdr s) (stream-cdr t)))))
 (define (triples s t u)
   (let ((txu (pairs t u)))
     (cons-stream
@@ -4862,7 +4855,84 @@ guess
                                    (square (cadr p)))
                                 (square (caddr p)))) iiints))
 ;Exercise 3.70:
+(define (merge-weighted s1 s2 w)
+  (cond ((stream-null? s1) s2)
+        ((stream-null? s2) s1)
+        (else
+          (let ((s1car (stream-car s1))
+                (s2car (stream-car s2)))
+            (cond ((< (w s1car) (w s2car))
+                   (cons-stream
+                     s1car
+                     (merge-weighted (stream-cdr s1) s2 w)))
+                  ((> (w s1car) (w s2car))
+                   (cons-stream
+                     s2car
+                     (merge-weighted s1 (stream-cdr s2) w)))
+                  (else
+                    (cons-stream s1car 
+                                 (cons-stream s2car
+                                              (merge-weighted (stream-cdr s1)
+                                                              (stream-cdr s2) w)))))))))
+(define (pairs s t)
+  (cons-stream
+    (list (stream-car s) (stream-car t))
+    (interleave
+      (stream-map (lambda (x) (list (stream-car s) x))
+                  (stream-cdr t))
+      (pairs (stream-cdr s) (stream-cdr t)))))
+(define (weighted-pairs s t w)
+  (cons-stream
+    (list (stream-car s) (stream-car t))
+    (merge-weighted
+      (stream-map (lambda (x) (list (stream-car s) x))
+                  (stream-cdr t))
+      (weighted-pairs (stream-cdr s) (stream-cdr t) w)
+      w))) 
 
-
-
-
+;a.
+(define (w1 p)
+  (let ((i (car p))
+        (j (cadr p)))
+    (+ i j)))
+(define iints1
+  (weighted-pairs integers integers w1))
+;b.
+(define (w2 p)
+  (let ((i (car p))
+        (j (cadr p)))
+    (+ (* 2 i) (* 3 j) (* 5 i j))))
+(define iints2 
+  (stream-filter (lambda (p)
+                   (and (not (or (= (remainder (car p) 2) 0) (= (remainder (car p) 3) 0) (= (remainder (car p) 5) 0)))
+                        (not (or (= (remainder (cadr p) 2) 0) (= (remainder (cadr p) 3) 0) (= (remainder (cadr p) 5) 0)))))
+                 (weighted-pairs integers integers w2)))
+;Exercise 3.71:
+(define (w3 p)
+  (let ((i (car p))
+        (j (cadr p)))
+    (+ (cube i) (cube j))))
+(define iints3 
+  (weighted-pairs integers integers w3))
+(define (generate-ram nums weight)
+  (if (= (weight (stream-car nums)) (weight (stream-car (stream-cdr nums))))
+      (cons-stream (stream-car nums)
+                   (generate-ram (stream-cdr (stream-cdr nums)) weight))
+      (generate-ram (stream-cdr nums) weight)))
+(define ramanujan-numbers
+  (generate-ram iints3 w3))
+;Exercise 3.72:
+(define (w4 p)
+  (let ((i (car p))
+        (j (cadr p)))
+    (+ (square i) (square j))))
+(define iints4
+  (weighted-pairs integers integers w4))
+(define (generate-threes nums weight)
+  (if (= (weight (stream-car nums)) (weight (stream-car (stream-cdr nums))) (weight (stream-car (stream-cdr (stream-cdr nums)))))
+      (cons-stream (stream-car nums)
+                   (generate-threes (stream-cdr (stream-cdr (stream-cdr nums))) weight))
+      (generate-threes (stream-cdr nums) weight)))
+(define threes
+  (generate-threes iints4 w4))
+;============Streams as signals============
