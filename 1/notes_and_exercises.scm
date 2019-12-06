@@ -3022,7 +3022,7 @@ guess
     (define generate
       (lambda ()
         (set! x (rand-update x))
-03        x))
+        x))
     (define (reset num)
       (set! x  num))
     (cond ((eq? m 'generate) (generate))
@@ -4489,7 +4489,7 @@ guess
         (id1 (account1 'id))
         (id2 (account2 'id)))
     (cond ((= id1 id2)
-          'done)
+           'done)
           ((< id1 id2)
            (serializer2 (serializer1 (exchange acc1 acc2)))
            'done)
@@ -4936,3 +4936,63 @@ guess
 (define threes
   (generate-threes iints4 w4))
 ;============Streams as signals============
+(define (integral integrand initial-value dt)
+  (define int
+    (cons-stream initial-value
+                 (add-streams (scale-stream integrand dt)
+                              int))))
+;Exercise 3.73:
+(define (RC R C dt)
+  (define (v i v0)
+    (add-streams (scale-stream i R) (integral (scale-stream i (/ 1 C)) v0 dt)))
+  v)
+;Exercise 3.74:
+(define (sign-change-detector a b)
+  ;if sign doesn't change, return 0.
+  (cond ((or (and (<= b 0) (<= a 0)) (and (>= b 0) (>= a 0))) 0)
+        ;if sign changed from negative to positive, return 1.
+        ((and (< b 0) (> a 0)) 1)
+        ;if sign change from positive to negative, return 1.
+        ((and (> b 0) (< a 0)) -1)))
+(define (interval a increment)
+  (cons-stream a (interval (+ a increment) increment)))
+(define (f-stream f stream)
+  (cons-stream (f (stream-car stream)) (f-stream f (stream-cdr stream))))
+(define sense-data 
+  (f-stream cos (interval 0 (/ 3.14 4))))
+(define (make-zero-crossings input-stream last-value)
+  (cons-stream
+    (sign-change-detector
+      (stream-car input-stream)
+      last-value)
+    (make-zero-crossings
+      (stream-cdr input-stream)
+      (stream-car input-stream))))
+(define zero-crossings
+  (make-zero-crossings sense-data 0))
+(define zero-crossings-1
+  (stream-map sign-change-detector
+              sense-data
+              (cons-stream 0 sense-data)))
+;Exercise 3.75
+;Louis's implementation averages all previous values, whereas Alyssa just wanted each value to be the average of itself and the value before it in the stream.
+(define (make-zero-crossings-2 input-stream last-value last-average-value)
+  (let ((avpt (/ (+ (stream-car input-stream)
+                    last-value)
+                 2)))
+    (cons-stream
+      (sign-change-detector avpt last-average-value)
+      (make-zero-crossings-2
+        (stream-cdr input-stream) (stream-car input-stream) avpt))))
+(define zero-crossings-2
+  (make-zero-crossings-2 sense-data 0 0))
+;Exercise 3.76:
+(define (smooth s)
+  (stream-map (lambda (x y) (/ (+ x y) 2)) s (cons-stream 0 s)))
+(define (make-zero-crossings-3 input-stream last-value)
+  (let ((smooth-stream (smooth input-stream)))
+    (cons-stream (sign-change-detector (stream-car smooth-stream) last-value)
+                 (make-zero-crossings-3 (stream-cdr input-stream) (stream-car smooth-stream)))))
+(define zero-crossings-3
+  (make-zero-crossings-3 sense-data 0))
+;===========3.5.4 Streams and Delayed Evaluation===========
