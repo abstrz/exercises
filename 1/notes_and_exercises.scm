@@ -4996,3 +4996,75 @@ guess
 (define zero-crossings-3
   (make-zero-crossings-3 sense-data 0))
 ;===========3.5.4 Streams and Delayed Evaluation===========
+(define (integral delayed-integrand initial-value dt)
+  (define int
+    (cons-stream
+      initial-value
+      (let ((integrand (force delayed-integrand)))
+        (add-streams (scale-stream integrand dt) int))))
+  int)
+(define (solve f y0 dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (stream-map f y))
+  y)
+;Exercise 3.77:
+;(define (integral delayed-integrand initial-value dt)
+;  (cons-stream
+;    initial-value
+;    (let ((integrand (force delayed-integrand)))
+;      (if (stream-null?           the-empty-stream
+;          (integral (stream-cdr integrand)
+;                    (+ (* dt (stream-car integrand))
+;                       initial-value)
+;                    dt)))))
+;Exercise 3.78:
+(define (solve-2nd a b dt y0 dy0)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (add-streams (scale-stream b y) (scale-stream a dy))))
+;Exercise 3.79:
+(define (solve-2nd-1 a b dt y0 dyo)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (stream-map f dy y)))
+;Exercise 3.80:
+(define (RLC R L C dt)
+  (define (circuit vC0 iL0)
+    (define vC-stream (integral (delay dvC) vC0 dt))
+    (define iL-stream (integral (delay diL) iL0 dt))
+    (define dvC 
+      (scale-stream iL-stream (- (/ 1 C))))
+    (define diL 
+      (add-streams (scale-stream vC-stream (/ 1 L)) (scale-stream iL-stream (- (/ R L)))))
+    (define (circstates s1 s2)
+      (cons-stream (cons (stream-car s1) (stream-car s2)) (circstates (stream-cdr s1) (stream-cdr s2)))) 
+    (circstates vC-stream iL-stream))
+  circuit)
+;==========================3.5.5 Modularity of Functional Programs and Modularity of Objects==========================
+;pulled this code from stack exchange. the book doesn't implement random-init or rand-update...
+(define random-init
+  (let ((a 69069) (c 1) (m (expt 2 32)) (seed 19380110))
+    (lambda (new-seed)
+      (if (pair? new-seed)
+          (set! seed (car new-seed))
+          (set! seed (modulo (+ (* seed a) c) m))))
+      (* 1.0 (/ seed m))))
+(define (rand-update num)
+  (let ((a 69069) (c 1) (m (expt 2 32)))
+    (lambda (new-seed)
+      (if (pair? new-seed)
+          (set! num (car new-seed))
+          (set! num (modulo (+ (* num a) c) m))))
+      (* 1.0 (/ num m))))
+(define random-numbers
+  (cons-stream 
+    random-init
+    (stream-map rand-update random-numbers)))
+(define cesaro-stream
+  (map-successive-pairs
+    (lambda (r1 r2) (= (gcd r1 r2) 1))
+    random-numbers))
+(define (map-successive-pairs f s)
+  (cons-stream
+    (f (stream-car s) (stream-car (stream-cdr s)))
+    (map-successive-pairs f (stream-cdr (stream-cdr s)))))
