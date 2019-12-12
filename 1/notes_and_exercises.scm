@@ -5098,15 +5098,6 @@ guess
 ;Exercise 3.82:
 ;so, a predicate defines a region, and we enclose that region in a rectangle. We run monte-carlo experiments in the rectangle to get the proportion of randomly selected points which lie in the region.
 ;Then, the integral is the area of the rectangle times the proportion of points in the region...
-(define (monte-carlo experiment-stream passed failed)
-  (define (next passed failed)
-    (cons-stream
-      (/ passed (+ passed failed))
-      (monte-carlo
-        (stream-cdr experiment-stream) passed failed)))
-  (if (stream-car experiment-stream)
-      (next (+ passed 1) failed)
-      (next passed (+ failed 1))))
 (define (rand-in-range-stream lower-bound upper-bound)
   (cons-stream (random-in-range lower-bound upper-bound) (rand-in-range-stream lower-bound upper-bound)))
 (define (estimate-integral P x1 x2 y1 y2)
