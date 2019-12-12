@@ -5041,30 +5041,99 @@ guess
     (circstates vC-stream iL-stream))
   circuit)
 ;==========================3.5.5 Modularity of Functional Programs and Modularity of Objects==========================
-;pulled this code from stack exchange. the book doesn't implement random-init or rand-update...
-(define random-init
-  (let ((a 69069) (c 1) (m (expt 2 32)) (seed 19380110))
-    (lambda (new-seed)
-      (if (pair? new-seed)
-          (set! seed (car new-seed))
-          (set! seed (modulo (+ (* seed a) c) m))))
-      (* 1.0 (/ seed m))))
+(define random-init 1)
 (define (rand-update num)
-  (let ((a 69069) (c 1) (m (expt 2 32)))
-    (lambda (new-seed)
-      (if (pair? new-seed)
-          (set! num (car new-seed))
-          (set! num (modulo (+ (* num a) c) m))))
-      (* 1.0 (/ num m))))
+  (let ((a (+ num 1)) (m (expt 2 10)))
+    (modulo (+ (* num a) 1) m)))
 (define random-numbers
   (cons-stream 
     random-init
     (stream-map rand-update random-numbers)))
-(define cesaro-stream
-  (map-successive-pairs
-    (lambda (r1 r2) (= (gcd r1 r2) 1))
-    random-numbers))
 (define (map-successive-pairs f s)
   (cons-stream
     (f (stream-car s) (stream-car (stream-cdr s)))
     (map-successive-pairs f (stream-cdr (stream-cdr s)))))
+(define cesaro-stream
+  (map-successive-pairs
+    (lambda (r1 r2) (= (gcd r1 r2) 1))
+    random-numbers))
+
+(define (monte-carlo experiment-stream passed failed)
+  (define (next passed failed)
+    (cons-stream
+      (/ passed (+ passed failed))
+      (monte-carlo
+        (stream-cdr experiment-stream) passed failed)))
+  (if (stream-car experiment-stream)
+      (next (+ passed 1) failed)
+      (next passed (+ failed 1))))
+(define pi
+  (stream-map
+    (lambda (p) (sqrt (/ 6 p)))
+    (monte-carlo cesaro-stream 0 0)))
+;Exercise 3.81:
+;this is inchmeal implementation. I had another one that was a lot uglier that I removed because I prefer this one, even though this one doesn't really keep with the requirements stated in the  book of having this
+;be an implementation completely like the local state variable one but with streams... 
+(define (pre-rand-stream default-value upperbound)
+  (define (rand-gen num)
+    (let ((a (+ num 1) ))
+      (remainder (+ (* num a) 1) upperbound)))
+  (define (new-num msg old-num)
+    (cond ((and (pair? msg) (eq? (car msg) 'reset) (number? (cadr msg)))
+           cadr-msg)
+          ((eq? msg 'reset)
+           default-value)
+          ((eq? msg 'generate)
+           (rand-update old-num))))
+  (define (make-randseq msgs)
+    (define randseq
+      (cons-stream (new-num (stream-car msgs) default-value)
+                   (stream-map new-num randseq (stream-cdr msgs))))
+    randseq)
+  make-randseq) 
+(define (list->stream L)
+  (if (null? L)
+      the-empty-stream
+      (cons-stream (car L) (list->stream (cdr L)))))
+;Exercise 3.82:
+;so, a predicate defines a region, and we enclose that region in a rectangle. We run monte-carlo experiments in the rectangle to get the proportion of randomly selected points which lie in the region.
+;Then, the integral is the area of the rectangle times the proportion of points in the region...
+(define (monte-carlo experiment-stream passed failed)
+  (define (next passed failed)
+    (cons-stream
+      (/ passed (+ passed failed))
+      (monte-carlo
+        (stream-cdr experiment-stream) passed failed)))
+  (if (stream-car experiment-stream)
+      (next (+ passed 1) failed)
+      (next passed (+ failed 1))))
+(define (estimate-integral P x1 x2 y1 y2 trials)
+  (monte-carlo Predicate-experiment-stream 0 0)) 
+(define (estimate-integral P x1 x2 y1 y2 trials)
+  (define (exper)
+    (let ((x (random-in-range x1 x2))
+          (y (random-in-range y1 y2)))
+      (P x y)))
+  (let ((area-rectangle (* (- x2 x1) (- y2 y1))))
+    (* area-rectangle (monte-carlo trials exper))))
+;should return #t if point is in area and #f otherwise.
+(define (rand-in-range-stream lower-bound upper-bound)
+  (cons-stream (random-in-range lower-bound upper-bound) (rand-in-range-stream lower-bound upper-bound)))
+(define (in-unit-circle? x y)
+  (<= (+ (square x) (square y)) 1))
+(define (estimate-integral P x1 x2 y1 y2)
+  (define test-point-stream 
+    (stream-map (lambda (x y) (P x y)) (rand-in-range-stream x1 x2) (rand-in-range-stream y1 y2)))
+  (scale-stream (monte-carlo test-point-stream 0 0) (* (- x2 x1) (- y2 y1)))) 
+(define pi-stream (estimate-integral in-unit-circle? -1 1 -1 1))
+;=======A functional-programming view of time=======
+(define (stream-withdraw balance amount-stream)
+  (cons-stream
+    balance
+    (stream-withdraw (- balance (stream-car amount-stream))
+                     (stream-cdr amount-stream))))
+;=============4.Metalinguistic Abstraction=============
+
+
+
+
