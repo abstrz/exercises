@@ -5072,8 +5072,8 @@ guess
     (lambda (p) (sqrt (/ 6 p)))
     (monte-carlo cesaro-stream 0 0)))
 ;Exercise 3.81:
-;this is inchmeal implementation. I had another one that was a lot uglier that I removed because I prefer this one, even though this one doesn't really keep with the requirements stated in the  book of having this
-;be an implementation completely like the local state variable one but with streams... 
+;this is inchmeal implementation. I had another one that was a lot uglier that I removed because I prefer this one, even though this one doesn't really keep with the requirements stated in the  book of having this be a 
+;functional implementation of the object oriented one, but whatever...
 (define (pre-rand-stream default-value upperbound)
   (define (rand-gen num)
     (let ((a (+ num 1) ))
@@ -5107,24 +5107,14 @@ guess
   (if (stream-car experiment-stream)
       (next (+ passed 1) failed)
       (next passed (+ failed 1))))
-(define (estimate-integral P x1 x2 y1 y2 trials)
-  (monte-carlo Predicate-experiment-stream 0 0)) 
-(define (estimate-integral P x1 x2 y1 y2 trials)
-  (define (exper)
-    (let ((x (random-in-range x1 x2))
-          (y (random-in-range y1 y2)))
-      (P x y)))
-  (let ((area-rectangle (* (- x2 x1) (- y2 y1))))
-    (* area-rectangle (monte-carlo trials exper))))
-;should return #t if point is in area and #f otherwise.
 (define (rand-in-range-stream lower-bound upper-bound)
   (cons-stream (random-in-range lower-bound upper-bound) (rand-in-range-stream lower-bound upper-bound)))
-(define (in-unit-circle? x y)
-  (<= (+ (square x) (square y)) 1))
 (define (estimate-integral P x1 x2 y1 y2)
   (define test-point-stream 
     (stream-map (lambda (x y) (P x y)) (rand-in-range-stream x1 x2) (rand-in-range-stream y1 y2)))
   (scale-stream (monte-carlo test-point-stream 0 0) (* (- x2 x1) (- y2 y1)))) 
+(define (in-unit-circle? x y)
+  (<= (+ (square x) (square y)) 1))
 (define pi-stream (estimate-integral in-unit-circle? -1 1 -1 1))
 ;=======A functional-programming view of time=======
 (define (stream-withdraw balance amount-stream)
