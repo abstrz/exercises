@@ -5180,11 +5180,11 @@ guess
         (cons (evald-exp (list-of-values (rest-operands exps) env))))))
 ;can just write a method that reverses the list, and then evaluate using list-of-values-lr. Downside is that then list-of-values-rl takes at least O(n) time to evaluate... 
 (define (reverse-list l)
-  (define (iter index li result)
-    (if (= index 0)
+  (define (iter li result)
+    (if (null? li)
         result
-        (iter (- index 1) (cdr li) (cons (car li) result))))
-  (iter (length l) l '()))
+        (iter (cdr li) (cons (car li) result))))
+  (iter l '()))
 (define (list-of-values-rl exps env)
   (let ((reversed-exps (reverse-list exps)))
     (list-of-values-lr reversed-exps env)))
