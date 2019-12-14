@@ -5187,5 +5187,5 @@ guess
   (iter (length l) l '()))
 (define (list-of-values-rl exps env)
   (let ((reversed-exps (reverse-list exps)))
-    (list-of-values-lr reversed-exps env))))
+    (list-of-values-lr reversed-exps env)))
 ;4.1.2 Representing Expressions
