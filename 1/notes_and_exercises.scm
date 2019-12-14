@@ -5114,7 +5114,78 @@ guess
     (stream-withdraw (- balance (stream-car amount-stream))
                      (stream-cdr amount-stream))))
 ;=============4.Metalinguistic Abstraction=============
-
-
-
-
+;=============4.1 Metalinguistic Abstraction=============
+;=============4.1.1 The Core of the Evaluator=============
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        ((application? exp)
+         (apply (eval (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else 
+          (error "Unknown expression type: EVAL" exp))))
+(define (apply procedure arguments)
+  (cond ((primitive-procedure? procedure)
+         (apply-primitive-procedure procedure arguments))
+        ((compound-procedure? procedure)
+         (eval-sequence
+           (procedure-body procedure)
+           (extend-environment
+             (procedure-parameters procedure)
+             arguments
+             (procedure-environment procedure))))
+        (else
+          (error
+            "Uknown procedure type: APPLY" procedure))))
+(define (list-of-values exps env)
+    (if (no-operands? exps)
+        '()
+        (cons (eval (first-operand exps) env)
+              (list-of-values (rest-operands exps) env))))
+;we interpret the `if` as being outside of the language being implemented. (eval (if-predicate exp) env) yields a predicate in the language being implemented. true? translates that to something
+;intelligible outside of the language being implemented... thus true? translates a predicate from the language being implemented to the implementation language.
+(define (eval-if exp env)
+  (if (true? (eval (if-predicate exp) env))
+      (eval (if-consequent exp) env)
+      (eval (if-alternative exp) env)))
+(define (eval-sequence exps env)
+  (cond ((last-exp? exps)
+         (eval (first-exp exps) env))
+        (else
+          (eval (first-exp exps) env)
+          (eval-sequence (rest-exps exps) env))))
+(define (eval-assignment exp env)
+  (set-variable-value! (assignment-variable exp)
+                       (eval (assignment-value exp) env)
+                       env)
+  'ok)
+(define (eval-definition exp env)
+  (define-variable! (definition-variable exp)
+                    (eval (definition-value exp) env)
+                    env)
+  'ok)
+;Exercise 4.1:
+;the following forces the first element in cons to be evaluated first, then the second, and so on, irrespective of whether or not cons is implemented to evaluate from left to right or right to left:
+(define (list-of-values-lr exps env)
+  (if (no-operands? exps)
+      '()
+      (let ((evald-exp (eval (first-operand exps) env)))
+        (cons (evald-exp (list-of-values (rest-operands exps) env))))))
+;can just write a method that reverses the list, and then evaluate using list-of-values-lr. Downside is that then list-of-values-rl takes at least O(n) time to evaluate... 
+(define (reverse-list l)
+  (define (iter index li result)
+    (if (= index 0)
+        result
+        (iter (- index 1) (cdr li) (cons (car li) result))))
+  (iter (length l) l '()))
+(define (list-of-values-rl exps env)
+  (let ((reversed-exps (reverse-list exps)))
+    (list-of-values-lr reversed-exps env))))
+;4.1.2 Representing Expressions
