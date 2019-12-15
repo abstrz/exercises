@@ -5364,7 +5364,7 @@ guess
   (let ((e (eval (first-exp exps) env)))
     (cond ((not e) #f) ;if e is false return false 
           ((and (last-exp? exps) e) #t) ;if e is the last expression and it is true, then return true. 
-          (else (eval-and (rest-exps exps) env))))))
+          (else (eval-and (rest-exps exps) env)))))
 (define (eval-and exp env)
   (eval-and-exps (and-expressions exp) env))
 ;(or exp_1 exp_2 exp_3 exp_4 exp_5 ...)
@@ -5378,7 +5378,7 @@ guess
       (let ((e (eval (first-exp exps) env)))
         (if e 
             #t  ;if any expression is true, we return true
-            (eval-or (rest-exps exps) env))))))  ;else, try next ones. if none are true, we will eventually run (eval-or '() env), at which point we will return false, as required.
+            (eval-or (rest-exps exps) env)))))  ;else, try next ones. if none are true, we will eventually run (eval-or '() env), at which point we will return false, as required.
 (define (eval-or exp env)
   (eval-or-exps (or-expressions exp) env))
 
