@@ -5143,7 +5143,7 @@ guess
              (procedure-environment procedure))))
         (else
           (error
-            "Uknown procedure type: APPLY" procedure))))
+            "Unknown procedure type: APPLY" procedure))))
 (define (list-of-values exps env)
     (if (no-operands? exps)
         '()
@@ -5189,3 +5189,234 @@ guess
   (let ((reversed-exps (reverse-list exps)))
     (list-of-values-lr reversed-exps env)))
 ;4.1.2 Representing Expressions
+;The only self-evaluating items are numbers and strings:
+(define (self-evaluating? exp)
+  (cond ((number? exp) #t)
+        ((string? exp) #t)
+        (else #f)))
+;Varaibles are represented by symbols
+(define (variable? exp) (symbol? exp))
+;Quotations have the form (quote <text-of-quotation>)
+(define (quoted? exp) (tagged-list? exp 'quote))
+(define (text-of-quotation exp) (cadr exp))
+;quoted? is defined in terms of the procedure tagged-list?, which identifies lists beginning with a designated symbol:
+(define (tagged-list exp tag)
+  (if (pair? exp)
+      (eq? (car exp) tag)
+      #f))
+;Assignments have the form (set! <var> <val>)
+(define (assignment? exp) (tagged-list? exp 'set!))
+(define (assignment-variable exp) (cadr exp))
+(define (assigment-value exp) (caddr exp))
+;Definitions have the form
+;(define <var> <value>) or
+;(define (<var> <parameter_1> ... <parameter_n>) <body>)
+;The latter form is syntactic sugar for
+;(define <var>
+;  (lambda (<parameter_1>...<parameter_n>)
+;    <body>))
+;The corresponding syntax procedures are the following:
+(define (definition? exp) (tagged-list exp 'define))
+(define (definition-variable exp)
+  (if (symbol? (cadr exp))
+      (cadr exp)
+      (caadr exp)))
+(define (definition-value exp)
+  (if (symbol? (cadr exp))
+      (caddr exp)
+      (make-lambda (cdadr exp) ;formal params
+                   (cddr exp)))) ;body
+;lambda expressions are lists that begin with the symbol lambda
+(define (lambda? exp) (tagged-list? exp 'lambda))
+(define (lambda-parameters exp) (cadr exp))
+(define (lambda-body exp) (cddr exp))
+;We also provide a constructor for lambda expressions, whic his used by definition-value above:
+(define (make-lambda parameters body)
+  (cons 'lambda (cons parameters body)))
+;Conditionals begin with if and have a predicate, a consequent, and an alternative. 
+(define (if? exp) (tagged-list? exp 'if))
+(define (if-predicate exp) (cadr exp))
+(define (if-consequent exp) (caddr exp))
+(define (if-alternative exp)
+  (if (not (null? (cdddr exp)))
+      (cadddr exp)
+      'false))
+;We provide a constructor for if expressions, used by cond->if to transform `cond` expressions to `if` expressions:
+(define (make-if predicate consequent alternative)
+  (list 'if predicate consequence alternative))
+;begin packages a seq  of expressions into a single expression. We incldue syntax operations on begin expressions to extract the actual sequence from the begin expression, as well as selectors that return the first expression and the rest of the expressions in the sequence.
+(define (begin? exp) (tagged-list? exp 'begin))
+(define (begin-actions exp) (cdr exp))
+(define (last-exp? seq) (null? (cdr seq)))
+(define (first-exp seq) (car seq))
+(define (rest-exps seq) (cdr seq))
+;We also include a constructor sequence->exp (for use by cond->if) that transforms a seq into a single exp, using begin if necessary:
+(define (sequence->exp seq)
+  (cond ((null? seq) seq)
+        ((last-exp? seq) (first-exp seq))
+        (else (make-begin seq))))
+(define (make-begin seq) (cons 'begin seq))
+;A procedure application is any compound expression that is not one of the above expression types. The car of the expression is the operator, and the cdr is the list of operands.
+(define (application? exp) (pair? exp))
+(define (operator exp) (car exp))
+(define (operands exp) (cdr exp))
+(define (no-operands? ops) (null? ops))
+(define (first-operand ops) (car ops))
+(define (rest-operands ops) (cdr ops))
+;We include syntax procedures that extract the parts of a cond expression, and a procedure cond->if that transforms cond expressions into if expressions.
+(define (cond? exp) (tagged-list? exp 'cond))
+(define (cond-clauses exp) (cdr exp))
+(define (cond-else-clause? clause)
+  (eq? (cond-predicate clause) 'else))
+(define (cond-predicate clause) (car clause))
+(define (cond-actions clause) (cdr clause))
+(define (cond->if exp) (expand-clauses (cond-clauses exp)))
+(define (expand-clauses clauses)
+  (if (null? clauses)
+      'false
+      (let ((first (car clauses))
+            (rest (cdr clauses)))
+        (if (cond-else-clause? first)
+            (if (null? rest)
+                (sequence->exp (cond-actions first))
+                (error "ELSE clause isn't last: COND->IF" clauses))
+            (make-if (cond-predicate first)
+                     (sequence->exp (cond-actions first))
+                     (expand-clauses rest))))))
+;Exercise 4.2:
+;a:The evaluator will interpret (define x 3) as an application in Louis's implementation, and so we would get
+;(apply (eval define env) (list-of-values (x 3) env))
+;since define is a symbol, it is self evaluating, so we get
+;(apply define (list-of-values (x 3) env))
+;(list-of-values (x 3) env) is (cons (eval x env) (eval 3 env)) which is (cons x 3)
+;so we get (apply define (cons x 3)) = (define cons x 3), which is not a well defined expression.
+;The main issue with Louis's change is that we wrote eval thinking that an application is any expression that is not any of the other above ones,
+;but when Louis makes the change, suddenly definitions, assignments, if statements, lambda expressions, and begin statements will be interpreted as evaluations and not applications,
+;which creates bugs and causes the program to crash. The change we make in b. is to narrow down what we mean by an application by having them start with the keyword `call`.
+;b:
+(define (eval-louis exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((application-louis? exp)
+         (apply (eval (operator-louis exp) env)
+                (list-of-values (operands-louis exp) env)))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        (else 
+          (error "Unknown expression type: EVAL" exp))))
+;Exercise 4.3:
+(define (install-eval-package)
+  (define (eval-quoted exp env)  ;we don't need to pass env to eval-quoted, but writing it this way so when we implement eval, we just need one if statement. Makes it cleaner in the end.
+    (text-of-quotation exp))
+  (define (eval-assignment exp env)
+    (set-variable-value! (assignment-variable exp)
+                         (eval (assignment-value exp) env)
+                         env)
+    'ok)
+  (define (eval-definition exp env)
+    (define-variable! (definition-variable exp)
+                      (eval (definition-value exp) env)
+                      env)
+    'ok)
+  (define (eval-if exp env)
+    (if (true? (eval (if-predicate exp) env))
+        (eval (if-consequent exp) env)
+        (eval (if-alternative exp) env)))
+  (define (eval-lambda exp env)
+    (make-procedure (lambda-parameters exp) (lambda-body exp) env))
+  (define (eval-begin exp env)
+    (eval-sequence (begin-actions exp) env))
+  (define (eval-application exp env)
+    (apply (eval (operator exp) env) (list-of-values (operands exp) env)))
+  (put 'eval 'quote eval-variable)
+  (put 'eval 'assignment eval-assignment)
+  (put 'eval 'definition eval-definition)
+  (put 'eval 'if eval-if)
+  (put 'eval 'lambda eval-lambda)
+  (put 'eval 'begin eval-begin)
+  (put 'eval 'application eval-application)
+  'ok)
+(define (dd-eval exp env)
+  (cond ((self-evaluating? exp) exp)  ;no tag, so handle it directly.
+        ((variable? exp) (lookup-variable-value exp env))  ;variable doesn't have a tag, so can't use data-directed style, unless we change how we express variables, but that is not worth the work.
+        (else (let ((eval-proc (get 'eval (car exp))))
+                (if eval-proc  ;if there is a proc with the type of exp apply it, else by definition of application expression as pair that is not one of above types, exp is an application expression.
+                    (eval-proc exp env)
+                    ((get 'eval 'application) exp env))))))
+;Exercise 4.4
+;(and exp_1 exp_2 exp_3 exp_4 exp_5 ...)
+(define (and? exp)
+  (tagged-list? exp 'and))
+(define (and-expressions exp)
+  (cdr exp))
+(define (first-exp exps)
+  (car exps))
+(define (rest-exps exps)
+  (cdr exps))
+(define (last-exp? exps)
+  (null? (rest-exps exps)))
+(define (eval-and-exps exps env)
+  (let ((e (eval (first-exp exps) env)))
+    (cond ((not e) #f) ;if e is false return false 
+          ((and (last-exp? exps) e) #t) ;if e is the last expression and it is true, then return true. 
+          (else (eval-and (rest-exps exps) env))))))
+(define (eval-and exp env)
+  (eval-and-exps (and-expressions exp) env))
+;(or exp_1 exp_2 exp_3 exp_4 exp_5 ...)
+(define (or? exp)
+  (tagged-list? exp 'or))
+(define (or-expressions exp) ;same as begin and and versions, but... question specified to define appropriate syntax procedures, so although redundant I am attempting to satisfy constraints of question.
+  (cdr exp))
+(define (eval-or-exps exps env)
+  (if (null? exps)
+      #f
+      (let ((e (eval (first-exp exps) env)))
+        (if e 
+            #t  ;if any expression is true, we return true
+            (eval-or (rest-exps exps) env))))))  ;else, try next ones. if none are true, we will eventually run (eval-or '() env), at which point we will return false, as required.
+(define (eval-or exp env)
+  (eval-or-exps (or-expressions exp) env))
+
+;We could write and/or as derived if statement expressions...
+;(and e1 e2 ... en) -> (if (not e1)
+;                          #f
+;                          (if (not e2)
+;                              #f
+;                              ...
+;                                 (if (not en)
+;                                     #f
+;                                     #t)...))
+;(or e1 e2 ... en) ->  (if e1
+;                          #t
+;                          (if e2
+;                              #t
+;                              ...
+;                                 (if en
+;                                     #t
+;                                     #f)...))
+;All we have to do is transform the syntax, and then eval as if they are simply if statements.
+(define (and->if exps)
+  (if (null? exps)
+      '#t
+      (let ((first (first-exp exps))
+            (rest (rest-exps exps)))
+        (make-if (list 'not first) '#f (and->if rest)))))
+(define (eval-and exp env)
+  (eval-if (and->if (and-expressions exp)) env))
+(define (or->if exps)
+  (if (null? exps)
+      '#f
+      (let ((first (first-exp exps))
+            (rest (rest-exps exps)))
+        (make-if first #t (or->if exps)))))
+(define (eval-or exp env)
+  (eval-or (or->if (or-expressions exp)) env))
+;Very interesting. We can manipulate the syntax and then interpret it given forms we know, or we can interpret it using our language directly as a special form... 
+;If we interpret it as its own special form... we increase the complexity of our interpreter, if we interpret it as a derived form... we might increase run time...
+;if we can keep the interpreter as small as possible and have it run quickly, we've got the best of both worlds... 
+
