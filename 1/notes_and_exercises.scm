@@ -5243,7 +5243,7 @@ guess
       'false))
 ;We provide a constructor for if expressions, used by cond->if to transform `cond` expressions to `if` expressions:
 (define (make-if predicate consequent alternative)
-  (list 'if predicate consequence alternative))
+  (list 'if predicate consequent alternative))
 ;begin packages a seq  of expressions into a single expression. We incldue syntax operations on begin expressions to extract the actual sequence from the begin expression, as well as selectors that return the first expression and the rest of the expressions in the sequence.
 (define (begin? exp) (tagged-list? exp 'begin))
 (define (begin-actions exp) (cdr exp))
@@ -5413,7 +5413,7 @@ guess
       '#f
       (let ((first (first-exp exps))
             (rest (rest-exps exps)))
-        (make-if first #t (or->if exps)))))
+        (make-if first '#t (or->if rest)))))
 (define (eval-or exp env)
   (eval-or (or->if (or-expressions exp)) env))
 ;Very interesting. We can manipulate the syntax and then interpret it given forms we know, or we can interpret it using our language directly as a special form... 
