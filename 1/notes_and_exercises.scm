@@ -5555,10 +5555,22 @@
                 (list-of-values (operands exp) env)))
         (else 
           (error "Unknown expression type: EVAL" exp))))
+;Exercise 4.9:
+;both of the following implementations are derived forms from basic if and begin statements, and thus can easily be syntactically manipulated to be evaluated by our evaluator!
 
-;Exercises 4.9:
-(define (for index upperbound inc proc)
-  proc
-  (when (< index upperbound)
-    (for (inc index) upperbound inc proc)))
+;for(x=0; x<10; x++){
+;  stuff as a function of x}
+(define (for i m inc proc)
+  (if (< i m)
+      (begin (proc i)
+             (for (inc i) m inc proc))))
+;do {
+;  stuff;
+;}while(cond);
+;pred and prod take one argument
+(define (do-while i pred proc)
+  (if (pred i)
+      (begin (proc i)
+             (do-while (proc i) pred proc))))
+
 
