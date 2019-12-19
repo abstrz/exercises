@@ -23,7 +23,7 @@
     (if (= n 0)
         result
         (iter (- n 1) (cons element result))))
-  (iter size '()))
+  (iter size ()))
 ;=============1.2.4 Exponentiation=============================
 ;;recursive definition
 ;(define (expt_rec b n)
@@ -201,8 +201,8 @@
 (define (product-it term a next b)
   (define (iter a result)
     (if (> a b)
-result
-(iter (next a) (* result (term a)))))
+        result
+        (iter (next a) (* result (term a)))))
   (iter a 1))
 ;Exercise 1.32.a:
 (define (accumulate combiner null-value term a next b )
@@ -216,18 +216,18 @@ result
 ;Exercise 1.32.b:
 (define (accumulate_it combiner null-value term a next b)
   (define (iter a result)
-    (if (a>b)
-result
-(iter (next a) (combiner result (term a))))
-  (iter a null-value)))
+    (if (> a b)
+        result
+        (iter (next a) (combiner result (term a)))))
+    (iter a null-value))
 ;Exercise 1.33.a
 (define (filtered-accumulate filter combiner null-value term a next b)
   (cond ((> a b) 
- null-value)
+         null-value)
         ((filter a) 
          (combiner (term a) (filtered-accumulate filter combiner null-value term (next a) next b)))
-(else 
-  (filtered-accumulate filter combiner null-value term (next a) next b))))
+        (else 
+          (filtered-accumulate filter combiner null-value term (next a) next b))))
 (define (sum-square-primes a b)
   (filtered-accumulate prime? + 0 square a inc b))
 ;Euclid's Algorithm for GCD
@@ -261,13 +261,13 @@ result
 (define (f x y) 
   ((lambda (a b)
      (+ (* x (square a))
-(* y b)
-(* a b)))
+        (* y b)
+        (* a b)))
    (+ 1 (* x y))
    (- 1 y)))
 (define (f x y)
   (let ((a (+ 1 (* x y)))
-(b (- 1 y)))
+        (b (- 1 y)))
     (+ (* x (square a))
        (* y b)
        (* a b))))
@@ -276,26 +276,26 @@ result
 (define (search f neg-point pos-point)
   (let ((midpoint (average neg-point pos-point)))
     (if (close-enough? neg-point pos-point)
-midpoint
-(let ((test-value (f midpoint)))
-  (cond ((positive? test-value) 
-(search f neg-point midpoint))
-((negative? test-value)
- (search f midpoint pos-point))
-(else midpoint))))))
+        midpoint
+        (let ((test-value (f midpoint)))
+          (cond ((positive? test-value) 
+                 (search f neg-point midpoint))
+                ((negative? test-value)
+                 (search f midpoint pos-point))
+                (else midpoint))))))
 ;Extend functionality of search to check the signs of the function at the endpoints, and proceed accordingly. 
 (define (half-interval-method f a b)
   (let ((a-value (f a))
-(b-value (f b)))
+        (b-value (f b)))
     (cond ((and (negative? a-value) (positive? b-value))
-   (search f a b))
-  ((and (negative? b-value) (positive? a-value))
-   (search f b a))
-   (else 
-     (error "Values are not of the opposite sign" a b)))))
+           (search f a b))
+          ((and (negative? b-value) (positive? a-value))
+           (search f b a))
+          (else 
+            (error "Values are not of the opposite sign" a b)))))
 (define tolerance 0.00001)
 (define (fixed-point f first-guess)
-    (define (close-enough? v1 v2)
+  (define (close-enough? v1 v2)
     (< (abs (- v1 v2)) tolerance))
   (define (try guess)
     (newline)
@@ -303,8 +303,8 @@ midpoint
     ;modifier so that the next guess is the average of the previous one and (f guess).
     (let ((next (f guess)))
       (if (close-enough? guess next)
-  next
-  (try next))))
+          next
+          (try next))))
   (try first-guess))
 ;Exercise 1.35:
 (define (golden_ratio n)
@@ -326,22 +326,22 @@ midpoint
 (define (cont-frac_it n d k)
   (define (iter i result)
     (if (= i 1)
-result
-(iter (dec i) (/ (n (dec i)) (+ (d (dec i)) result)))))
+        result
+        (iter (dec i) (/ (n (dec i)) (+ (d (dec i)) result)))))
   (iter k (/ (n k) (d k))))
 ;Exercise 1.38
 (define (e-cf k)
   (define (d i)
     (cond ((= i 2) 2.0)
-  ((= (remainder i 3) 2) (* (/ 2 3) (+ i 1.0)))
-  (else 1)))
+          ((= (remainder i 3) 2) (* (/ 2 3) (+ i 1.0)))
+          (else 1)))
   (cont-frac (lambda (i) 1.0) d k))
 ;Exercise 1.39
 (define (tan-cf x k)
   (define (n i)
     (if (= i 1) 
-x
-(- (square x))))
+        x
+        (- (square x))))
   (define (d i)
     (- (* 2.0 i) 1.0))
   (cont-frac n d k))
@@ -389,8 +389,8 @@ x
 (define (iterative-improve good-enough? improve)
   (define (f guess) 
     (if (good-enough? guess)
-guess
-(f (improve guess))))
+        guess
+        (f (improve guess))))
   f)
 (define (sqrt-custom n) 
   ((iterative-improve 
@@ -450,8 +450,8 @@ guess
   (cdr z))
 (define (midpoint-segment l)
   (make-point
-   (average (x-point (start-segment l)) (x-point (end-segment l)))
-   (average (y-point (start-segment l)) (y-point (end-segment l)))))
+    (average (x-point (start-segment l)) (x-point (end-segment l)))
+    (average (y-point (start-segment l)) (y-point (end-segment l)))))
 (define (print-point p)
   (newline)
   (display "(")
@@ -541,7 +541,7 @@ guess
       (mul-interval
         x
         (make-interval (/ 1.0 (upper-bound y))
-                   (/ 1.0 (lower-bound y))))
+                       (/ 1.0 (lower-bound y))))
       (error "Second parameter to div-interval  must be an interval with non zero end points!")))
 ;Exercise 2.7
 (define (make-interval a b) (cons a b))
@@ -702,15 +702,15 @@ guess
         answer
         (iter (cdr things)
               (append answer
-                    (list (square (car things)))))))
+                      (list (square (car things)))))))
   (iter items ()))
 ;Exercise 2.23:
 (define (for-each func items)
   (func (list-ref items 0))
   (newline)
-  (if (not (null? (cdr items))) 
-      (for-each func (cdr items)) 
-      ))
+  (when (not (null? (cdr items))) 
+      (for-each func (cdr items))))
+      
 ;=============2.2.2 Hierarchical Structures ==============
 (define (count-leaves x)
   (cond ((null? x) 0)
@@ -1151,7 +1151,7 @@ guess
 ;      set
 ;      (cons x set)))
 ;(define (intersection-set set1 set2)
-;  (cond ((or (null? set1) (null? set2)) '())
+;  (cond ((or (null? set1) (null? set2)) ())
 ;        ((element-of-set? (car set1) set2)
 ;         (cons (car set1) (intersection-set (cdr set1) set2)))
 ;        (else (intersection-set (cdr set1) set2))))
@@ -1166,7 +1166,7 @@ guess
 ;(define (adjoin-set x set)
 ;  (cons x set))
 ;(define (intersection-set set1 set2)
-;  (cond ((or (null? set1) (null? set2)) '())
+;  (cond ((or (null? set1) (null? set2)) ())
 ;        ((element-of-set? (car set1) set2)
 ;         (cons (car set1) (intersection-set (cdr set1) set2)))
 ;        (else (intersection-set (cdr set1) set2))))
@@ -1180,7 +1180,7 @@ guess
 ;        (else (element-of-set? x (cdr set)))))
 ;(define (intersection-set set1 set2)
 ;  (if (or (null? set1) (null? set2))
-;      '()
+;      ()
 ;      (let ((x1 (car set1)) (x2 (car set2)))
 ;        (cond ((= x1 x2)
 ;               (cons x1 (intersection-set (cdr set1) (cdr set2))))
@@ -1213,12 +1213,12 @@ guess
         ((> x (entry set))
          (element-of-set? x (right-branch set)))))
 (define (adjoin-set x set)
-  (cond ((null? set) (make-tree x '() '()))
+  (cond ((null? set) (make-tree x () ()))
         ((= x (entry set)) set)
         ((< x (entry set))
-        (make-tree (entry set)
-                   (adjoin-set x (left-branch set))
-                   (right-branch set)))
+         (make-tree (entry set)
+                    (adjoin-set x (left-branch set))
+                    (right-branch set)))
         ((> x (entry set))
          (make-tree (entry set)
                     (left-branch set)
@@ -1227,7 +1227,7 @@ guess
 
 (define (tree->list-1 tree)
   (if (null? tree) 
-      '()
+      ()
       (append (tree->list-1 (left-branch tree))
               (cons (entry tree)
                     (tree->list-1 (right-branch tree))))))
@@ -1238,7 +1238,7 @@ guess
         (copy-to-list (left-branch tree)
                       (cons (entry tree)
                             (copy-to-list (right-branch tree) result-list)))))
-  (copy-to-list tree '()))
+  (copy-to-list tree ()))
 (define (tree->list-2-timed tree starttime)
   (tree->list-2 tree)
   (- (runtime) starttime))
@@ -1249,7 +1249,7 @@ guess
   (car (partial-tree elements (length elements))))
 (define (partial-tree elts n)
   (if (= n 0)
-      (cons '() elts)
+      (cons () elts)
       (let ((left-size (quotient (- n 1) 2)))
         (let ((left-result
                 (partial-tree elts left-size)))
@@ -1280,10 +1280,10 @@ guess
       (list->tree union-list))))
 (define (intersection-set set1 set2)
   (if (or (and (null? (car set1)) (null? (cadr set1))) (and (null? (car set2)) (null? (cadr set2))))
-      '()
+      ()
       (let ((list1 (tree->list-2 set1)) (list2 (tree->list-2 set2)))
         (if (or (null? set1) (null? set2) )
-            '()
+            ()
             (let ((x1 (car set1)) (x2 (car set2)))
               (cond ((= x1 x2)
                      (list->tree (cons x1 (intersection-set (cdr set1) (cdr set2)))))
@@ -1305,7 +1305,7 @@ guess
          (lookup given-key (left-branch set-of-records)))
         ((> given-key (car (entry set-of-records)))
          (lookup given-key (right-branch set-of-records)))))
-  ;============== 2.3.4. Example: Huffman Ecoding Trees ===================
+;============== 2.3.4. Example: Huffman Ecoding Trees ===================
 ;Encoding
 (define (make-leaf symbol weight) (list 'leaf symbol weight))
 (define (leaf? object) (eq? (car object) 'leaf))
@@ -1327,7 +1327,7 @@ guess
 (define (decode bits tree)
   (define (decode-1 bits current-branch)
     (if (null? bits)
-        '()
+        ()
         (let ((next-branch
                 (choose-branch (car bits) current-branch)))
           (if (leaf? next-branch)
@@ -1346,7 +1346,7 @@ guess
                     (adjoin-set x (cdr set))))))
 (define (make-leaf-set pairs)
   (if (null? pairs)
-      '()
+      ()
       (let ((pair (car pairs)))
         (adjoin-set (make-leaf (car pair)
                                (cadr pair))
@@ -1363,7 +1363,7 @@ guess
 ;Exercise 2.68:
 (define (encode message tree)
   (if (null? message)
-      '()
+      ()
       (append (encode-symbol (car message) tree)
               (encode (cdr message) tree))))
 ;order of growth of encode-symbol???
@@ -1377,12 +1377,12 @@ guess
   (define (symbol-trail symbol tree trail)
     (cond ((null? tree) trail)
           ((leaf? tree)
-           (if (eq? (symbol-leaf tree) symbol) trail))
+           (when (eq? (symbol-leaf tree) symbol) trail))
           ((memq symbol (symbols (left-branch tree))) (symbol-trail symbol (left-branch tree) (append trail (list 0))))
           ((memq symbol (symbols (right-branch tree))) (symbol-trail symbol (right-branch tree) (append trail (list 1))))
           (else (error "The symbol isn't represented in the language!:" symbol))))
-  (symbol-trail symbol tree '()))
- ;Exercise 2.69: 
+  (symbol-trail symbol tree ()))
+;Exercise 2.69: 
 (define (generate-huffman-tree pairs)
   (successive-merge (make-leaf-set pairs)))
 (define (successive-merge pairs) 
@@ -1580,9 +1580,9 @@ guess
 ;b) Now, I just assume that each record is structured such that each division can implement and has implemented their own get-salary method, that takes as argument the employee's record and returns the employee's salary. Thus:
 (define (get-salary employee personnel-file)
   ((get 'get-salary personnel-file) (get-record employee personnel-file)))
-;c) I'm assuming that each individual divisions get-record method returns '() if the employee is not employed in that division, and so the method that we implemented in part a) of this question returns '() in that case, too. We have:
+;c) I'm assuming that each individual divisions get-record method returns () if the employee is not employed in that division, and so the method that we implemented in part a) of this question returns () in that case, too. We have:
 (define (find-employee-record employee division-files)
-  (cond ((null? division-files) '())
+  (cond ((null? division-files) ())
         ((not (null? (get-record employee (car division-files))))
          (get-record employee (car division-files)))
         (else (find-employee-record employee (cdr division-files)))))
@@ -1606,7 +1606,8 @@ guess
            (* r (sin a)))
           ((eq? op 'magnitude) r)
           ((eq? op 'angle) a)
-          (else (error "Unknown op: MAKE-FROM-MAG-ANG" op)))))
+          (else (error "Unknown op: MAKE-FROM-MAG-ANG" op))))
+  dispatch)
 ;Exercise 2.76
 ;Explicit dispatch:
 ;  new types:
@@ -1723,7 +1724,7 @@ guess
     (and (= (real-part z) 0) (= (imag-part z) 0)))
   (define (make-from-mag-ang r a)
     (cons (* r (cos a)) (* r (sin a))))
-  
+
   ;;interface to the rest of the system
   (define (tag x) (attach-tax 'rectangular x))
   (put 'real-part '(rectangular) real-part)
@@ -1845,7 +1846,7 @@ guess
     (let ((proc (get op type-tags)))
       (if proc
           (apply proc (map contents args))
-          (if (= (length args) 2)
+          (when (= (length args) 2)
               (let ((type1 (car type-tags))
                     (type2 (cadr type-tags))
                     (a1 (car args))
@@ -1993,16 +1994,16 @@ guess
 (define (apply-generic op . args)
   (define (higher-type type1 type2)
     (cond ;;if one is the lowest type, then not that one.
-          ((eq? type1 'integer) type2)
-          ((eq? type2 'integer) type1)
-          ;;if one is the highest type, then that one. 
-          ((eq? type1 'complex) type1)
-          ((eq? type2 'complex) type2)
-          ;;type1 is either 'real or 'rational, so check for that.
-          ((eq? type1 'real) type1)
-          ((eq? type1 'rational) type2)
-          ;;handle error
-          (else "One of the types are not supported!:" (list type1 type2))))
+      ((eq? type1 'integer) type2)
+      ((eq? type2 'integer) type1)
+      ;;if one is the highest type, then that one. 
+      ((eq? type1 'complex) type1)
+      ((eq? type2 'complex) type2)
+      ;;type1 is either 'real or 'rational, so check for that.
+      ((eq? type1 'real) type1)
+      ((eq? type1 'rational) type2)
+      ;;handle error
+      (else "One of the types are not supported!:" (list type1 type2))))
   (define (higher-type? type1 type2)
     (if (eq? (higher-type type1 type2) type1)
         #t
@@ -2022,7 +2023,7 @@ guess
     (cond ((null? args) ())
           ((eq? (type-tag (car args)) type)
            (cons (car args) (raise-args type (cdr args))))
-           (else (raise-to-type type (car args)) (raise-args type (cdr args)))))
+          (else (raise-to-type type (car args)) (raise-args type (cdr args)))))
   (define (generate-list-of-n-copies element n)
     (define (iter n l)
       (if (= n 1)
@@ -2254,69 +2255,69 @@ guess
 ;Exercise 2.88:
 ;We could do this in two separate ways. We already have a sub procedure for every type below poly, so we could 
 ;just use that procedure on coefficients to define sub-terms. The following code implements this solution.
-(define (install-polynomial-package)
-  <stuff>
-  (define (sub-terms l1 l2)
-    (cond ((empty-termlist? l1) l2)
-          ((empty-termlist? l2) l1)
-          (else
-            (let ((t1 (first-term l1))
-                  (t2 (first-term l2)))
-              (cond ((> (order t1) (order t2))
-                     (adjoin-term
-                       t1 (sub-terms (rest-terms l1) l2)))
-                    ((< (order t1) (order t2))
-                     (adjoin-term
-                       t2 (sub-terms (rest-terms l1) l2)))
-                    (else
-                      (adjoin-term
-                        (make-term (order t1)
-                                   (sub (coeff t1) (coeff t2)))
-                        (sub-terms (rest-terms l1)
-                                   (rest-terms l2)))))))))
-  (define (sub-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (sub-terms (term-list p1) (term-list p2)))
-        (error "Polys not in same var: ADD-POLY:" (list p1 p2))))
-  (put 'sub '(polynomial polynomial)
-       (lambda (p1 p2) (tag (sub-poly p1 p2))))
-  'done)
+;(define (install-polynomial-package)
+;  <stuff>
+;  (define (sub-terms l1 l2)
+;    (cond ((empty-termlist? l1) l2)
+;          ((empty-termlist? l2) l1)
+;          (else
+;            (let ((t1 (first-term l1))
+;                  (t2 (first-term l2)))
+;              (cond ((> (order t1) (order t2))
+;                     (adjoin-term
+;                       t1 (sub-terms (rest-terms l1) l2)))
+;                    ((< (order t1) (order t2))
+;                     (adjoin-term
+;                       t2 (sub-terms (rest-terms l1) l2)))
+;                    (else
+;                      (adjoin-term
+;                        (make-term (order t1)
+;                                   (sub (coeff t1) (coeff t2)))
+;                        (sub-terms (rest-terms l1)
+;                                   (rest-terms l2)))))))))
+;  (define (sub-poly p1 p2)
+;    (if (same-variable? (variable p1) (variable p2))
+;        (make-poly (variable p1)
+;                   (sub-terms (term-list p1) (term-list p2)))
+;        (error "Polys not in same var: ADD-POLY:" (list p1 p2))))
+;  (put 'sub '(polynomial polynomial)
+;       (lambda (p1 p2) (tag (sub-poly p1 p2))))
+;  'done)
 ;An alternative solution, as suggested by the hint, is the following:
-(define (install-scheme-number-package)
-  <stuff>
-  (put 'minus '(scheme-number) -)
-  'done)
-(define (install-rational-package)
-  <stuff>
-  (define (minus r)
-    (make-rat (- (numer r)) (denom r)))
-  (put 'minus '(rational) 
-       (lambda (r) (tag (minus r))))
-  'done)
-(define (install-complex-package)
-  <stuff>
-  (define (minus z)
-    (make-from-real-imag (- (real-part z)) (- (imag-part z))))
-  (put 'minus '(complex) 
-       (lambda (z) (tag (minus z))))
-  'done)
-(define (install-polynomial-package)
-  <stuff>
-  (define (minus p)
-    (define (minus-term-list L)
-      (if (null? L)
-          ()
-          (cons (make-term (order (first-term L)) (minus (coeff (first-term L)))) (minus-term-list (rest-terms L)))))
-
-    (make-poly (variable p) (minus-term-list (term-list p))))
-  (define (sub-poly p1 p2)
-    (add-poly p1 (minus p2)))
-  (put 'minus '(polynomial) minus)
-  (put 'sub '(polynomial polynomial) sub-poly)
-  'done)
-(define (minus p)
-  (apply-generic 'minus p))
+;(define (install-scheme-number-package)
+;  <stuff>
+;  (put 'minus '(scheme-number) -)
+;  'done)
+;(define (install-rational-package)
+;  <stuff>
+;  (define (minus r)
+;    (make-rat (- (numer r)) (denom r)))
+;  (put 'minus '(rational) 
+;       (lambda (r) (tag (minus r))))
+;  'done)
+;(define (install-complex-package)
+;  <stuff>
+;  (define (minus z)
+;    (make-from-real-imag (- (real-part z)) (- (imag-part z))))
+;  (put 'minus '(complex) 
+;       (lambda (z) (tag (minus z))))
+;  'done)
+;(define (install-polynomial-package)
+;  <stuff>
+;  (define (minus p)
+;    (define (minus-term-list L)
+;      (if (null? L)
+;          ()
+;          (cons (make-term (order (first-term L)) (minus (coeff (first-term L)))) (minus-term-list (rest-terms L)))))
+;
+;    (make-poly (variable p) (minus-term-list (term-list p))))
+;  (define (sub-poly p1 p2)
+;    (add-poly p1 (minus p2)))
+;  (put 'minus '(polynomial) minus)
+;  (put 'sub '(polynomial polynomial) sub-poly)
+;  'done)
+;(define (minus p)
+;  (apply-generic 'minus p))
 ;The minus procedure is a useful generalization for our entire system, not just for this one exercise of defining sub for polynomials,
 ;so I think it is preferable. 
 ;Exercise 2.89:
@@ -2336,7 +2337,7 @@ guess
     (if (=zero? (coeff term))
         term-list
         (cons term term-list)))
-  (define (the-empty-termlist) '())
+  (define (the-empty-termlist) ())
   (define (first-term term-list) (car term-list))
   (define (rest-terms term-list) (cdr term-list))
   (define (empty-termlist? term-list) (null? term-list))
@@ -2353,12 +2354,12 @@ guess
                     ((< (order t1) (order t2))
                      (adjoin-term
                        t2 (add-terms (rest-terms l1) l2)))
-                     (else
-                       (adjoin-term
-                         (make-term (order t1)
-                                    (add (coeff t1) (coeff t2)))
-                         (add-terms (rest-terms l1)
-                                    (rest-terms l2)))))))))
+                    (else
+                      (adjoin-term
+                        (make-term (order t1)
+                                   (add (coeff t1) (coeff t2)))
+                        (add-terms (rest-terms l1)
+                                   (rest-terms l2)))))))))
   (define (minus p)
     (define (minus-term-list L)
       (if (null? L)
@@ -2561,150 +2562,150 @@ guess
 ;Our y->x procedure must parce through each such a_n(x),
 ;generating new terms recursively as it goes along.
 ;This is my first attempt. Need to change it to be more general.
-(define (install-sparse-package)
-  <stuff>
-  (define (y->x p)
-    (define (expand-sparse var1 var2 n q)
-      ;let q= b_mx^m + ... + b_0.
-      ;Generates a new term-list
-      (define (build-term-list L)
-        (cons (make-term (order (first-term L)) (make-poly var2 (make-term n (coeff (first-term L))))) (build-term-list (rest-terms L))))
-      (make-poly var1 (build-term-list (term-list q))))
-    (define (expand-dense var1 var2 n q)
-      ;let q= b_mx^m + ... + b_0.
-      ;(make-poly var1 ((m (make-poly var2 (n b_m))) (m-1 (make-poly var2 (n b_{m-1}))) ... (0 (make-poly var2 (0 b_0)))))
-      ;Generates a new term-list
-      (define (build-term-list L)
-        (cons (make-term (- (length (rest-terms L)) 1) (make-poly var2 (make-term n (car L)))) (build-term-list (rest-terms L))))
-      (make-poly var1 (build-term-list (term-list q))))
-    (if (eq? (variable p) 'x)
-        p
-        ;expand p and rearrange. 
-        (let ((L (term-list p)))
-          (let ((t1 (first-term L)))
-            (let ((t1-c (coeff t1))
-                  (t1-o (order t1)))
-              (let ((rest-poly (make-poly (variable p) (rest-terms (term-list p)))))
-                (cond ((eq? (type-tag t1-c) 'sparse)
-                       (add (expand-sparse 'x 'y t1-o t1-c) (y->x rest-poly)))
-                      ((eq? (type-tag t1-c) 'dense)
-                       (add (expand-dense 'x 'y t1-0 t1-c) (y->x rest-poly)))
-                      ((eq? (type-tag t1-c) 'polynomial)
-                       (if (eq? (type-tag (cdr t1-c)) 'sparse)
-                           (add (expand-sparse 'x 'y t1-o (contents t1-c)) (y->x rest-roly))
-                           (add (expand-dense 'x 'y t1-o (contents t1-c)) (y->x rest-poly))))
-                      (else
-                        (add (make-poly 'x (make-term 0 (make-poly 'y (list t1)))) (y->x rest-poly))))))))))
-  ;I'm only writing the algebraic operations that are different, and omitting put statements since those are unchanged.
-  (define (add-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (add-terms (term-list p1) (term-list p2)))
+;(define (install-sparse-package)
+;  <stuff>
+;  (define (y->x p)
+;    (define (expand-sparse var1 var2 n q)
+;      ;let q= b_mx^m + ... + b_0.
+;      ;Generates a new term-list
+;      (define (build-term-list L)
+;        (cons (make-term (order (first-term L)) (make-poly var2 (make-term n (coeff (first-term L))))) (build-term-list (rest-terms L))))
+;      (make-poly var1 (build-term-list (term-list q))))
+;    (define (expand-dense var1 var2 n q)
+;      ;let q= b_mx^m + ... + b_0.
+;      ;(make-poly var1 ((m (make-poly var2 (n b_m))) (m-1 (make-poly var2 (n b_{m-1}))) ... (0 (make-poly var2 (0 b_0)))))
+;      ;Generates a new term-list
+;      (define (build-term-list L)
+;        (cons (make-term (- (length (rest-terms L)) 1) (make-poly var2 (make-term n (car L)))) (build-term-list (rest-terms L))))
+;      (make-poly var1 (build-term-list (term-list q))))
+;    (if (eq? (variable p) 'x)
+;        p
+;        ;expand p and rearrange. 
+;        (let ((L (term-list p)))
+;          (let ((t1 (first-term L)))
+;            (let ((t1-c (coeff t1))
+;                  (t1-o (order t1)))
+;              (let ((rest-poly (make-poly (variable p) (rest-terms (term-list p)))))
+;                (cond ((eq? (type-tag t1-c) 'sparse)
+;                       (add (expand-sparse 'x 'y t1-o t1-c) (y->x rest-poly)))
+;                      ((eq? (type-tag t1-c) 'dense)
+;                       (add (expand-dense 'x 'y t1-0 t1-c) (y->x rest-poly)))
+;                      ((eq? (type-tag t1-c) 'polynomial)
+;                       (if (eq? (type-tag (cdr t1-c)) 'sparse)
+;                           (add (expand-sparse 'x 'y t1-o (contents t1-c)) (y->x rest-roly))
+;                           (add (expand-dense 'x 'y t1-o (contents t1-c)) (y->x rest-poly))))
+;                      (else
+;                        (add (make-poly 'x (make-term 0 (make-poly 'y (list t1)))) (y->x rest-poly))))))))))
+;  ;I'm only writing the algebraic operations that are different, and omitting put statements since those are unchanged.
+;  (define (add-poly p1 p2)
+;    (if (same-variable? (variable p1) (variable p2))
+;        (make-poly (variable p1)
+;                   (add-terms (term-list p1) (term-list p2)))
+;
+;        ;assume only 'x and 'y variables are possible.
+;        (if (eq? (variable p1) 'y)
+;            (add-poly (y-> x p1) p2)
+;            (add-poly p1 (y->x p2)))))
+;  (define (mul-poly p1 p2)
+;    (if (same-variable? (variable p1) (variable p2))
+;        (make-poly (variable p1)
+;                   (mul-terms (term-list p1) (term-list p2)))
+;        ;assume only 'x and 'y variables are possible.
+;        (if (eq? (variable p1) 'y)
+;            (mul-poly (y-> x p1) p2)
+;            (mul-poly p1 (y->x p2))))))
 
-        ;assume only 'x and 'y variables are possible.
-        (if (eq? (variable p1) 'y)
-            (add-poly (y-> x p1) p2)
-            (add-poly p1 (y->x p2)))))
-  (define (mul-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (mul-terms (term-list p1) (term-list p2)))
-        ;assume only 'x and 'y variables are possible.
-        (if (eq? (variable p1) 'y)
-            (mul-poly (y-> x p1) p2)
-            (mul-poly p1 (y->x p2))))))
-
-(define (install-dense-package)
-
-  <stuff>
-  ;Here the polynomial p(y)=a_n(x)y^n + a_{n-1}y^{n-1} + \dots + a_0(x) is represented simply as
-  ;(dense y (a_n(x) a_{n-1}(x) ... a_0(x)))
-  ;Now, the issue is that... we can't just blindly build term lists, and then sum them, because then we lose track of degree... We need a way around this,
-  ;maybe we can build by degree. By that I mean we can write a procedure that takes in a polynomial in y and a number n, and expands
-  ;and returns the coefficient of order n of the same polynomial considered as being in the variable x...Then, we could just recursively build a list of all the 
-  ;degree coefficients, and that would be the full expansion of the polynomial in y considered as a polynomial in x, and that would be our final output. 
-  (define (y->x p)
-    ;p is a polynomial in y. As above, let p(y)=a_n(x)y^n + a_{n-1}y^{n-1} + \dots + a_0(x). Then,
-    ;as a dense polynomial, it just has term-list (a_n(x) a_{n-1}(x) ... a_0(x))
-    ;Now, our goal is to go through this list, expanding each polynomial in x, and pulling out degree n terms. 
-    ;Later, we will think about how we can find the maximum degree, and then recursively, build our fully expanded term list. One problem at a time.
-    (define (element-then-k-zeros element k)
-      (define (iter i result)
-        (if (= i 0)
-            result
-            (iter (- i 1) (append result (list 0)))))
-      (iter k (list element)))
-    (define (build-n-degree-term p n)
-      ;L looks like (a_n(x) a_{n-1}(x) ... a_0(x))
-      (define (parse-sparse-poly a k)
-        (let ((L-a (term-list a)))
-          (if (= (order (first-term L-a)) n)
-              (mul-poly (make-poly 'y (element-then-k-zeros 1 (+ k 1))) (first-term L-a))
-              (parse-sparse-poly (make-poly (variable a) (rest-terms L-a))))))
-      (define (parse-dense-poly a k)
-        (let ((L-a (term-list a)))
-          (if ((= (- (length (rest-terms (term-list L-a))) 1) n))
-              (mul-poly (make-poly 'y (element-then-k-zeros 1 (+ k 1))) (first-term L-a))
-              (parse-dense-poly (make-poly (variable a) (rest-terms L-a))))))
-      (let ((L (term-list p)))
-        (let ((ord (- (length L) 1))
-              (a (first-term L)))
-          ;ord is the power of y.
-          (cond (((type-tag a) 'sparse)
-                 (add (parse-sparse-poly a ord) (build-n-degree-term (make-poly (variable p) (rest-terms L)))))
-                (((type-tag a) 'dense)
-                 (add (parse-dense-poly a ord) (build-n-degree-term (make-poly (variable p) (rest-terms L)))))
-                (((type-tag a) 'polynomial)
-                 (if (eq? (type-tag (contents a)) 'sparse)
-                     (add (parse-sparse-poly (contents a) ord) (build-n-degree-term (make-poly (variable p) (rest-terms L))))
-                     (add (parse-dense-poly (contents a) ord) (build-n-degree-term (make-poly (variable p) (rest-terms L))))))
-                (else
-                  (add a (build-n-degree-term (make-poly (variable p) (rest-terms L)))))))))
-    ;now, we just need to find the maximum power of x in p(y)'s expansion. For that we can write a method that iterates through the coefficients,
-    ;and checks. 
-    (define (max-power-var p var)
-      (define (max-power-sparse a min-bound)
-        (let ((L (term-list a)))
-          (let ((t1 (first-term L)))
-            (let ((ord (order t1)))
-              (if (> ord min-bound)
-                  (max ord (max-power-sparse (make-poly var (rest-terms L)) ord))
-                  (max min-bound (max-power-sparse (make-poly var (rest-terms L)) min-bound)))))))
-      (define (max-power-dense a)
-        (- (length (term-list a)) 1))
-      (let ((L (term-list p)))
-        (let ((a (first-term L)))
-          (cond ((eq? (type-tag a) 'sparse)
-                 (max (max-power-sparse a 0) (max-power-var (make-poly (variable p) (rest-terms L)) var)))
-                ((eq? (type-tag a) 'dense)
-                 (max (max-power-dense a 0) (max-power-var (make-poly (variable p) (rest-terms L)) var)))
-                ((eq? (type-tag a) 'polynomial)
-                 (if (eq? (type-tag (contents a)) 'sparse)
-                     (max (max-power-sparse (contents a) 0) (max-power-var (make-poly (variable p) (rest-terms L)) var))
-                     (max (max-power-dense (contents a) 0) (max-power-var (make-poly (variable p) (rest-terms L)) var))))
-                (else 
-                  (max 0 (max-power-var (make-poly (variable p) (rest-terms L)) var)))))))
-    (define (build-term-list p i)
-      (if (= i 0)
-          ()
-          (cons (build-n-degree-term p i) (build-term-list p (- i 1)))))
-    (let ((max-power (max-power-var p (variable p))))
-      (let ((term-list (build-term-list p max-power)))
-        (make-poly 'x term-list))))
-  (define (add-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (add-terms (term-list p1) (term-list p2)))
-        (if (eq? (variable p1) 'y)
-            (add-poly (y->x p1) p2)
-            (add-poly p1 (y->x p2)))))
-  (define (mul-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (mul-terms (term-list p1) (term-list p2))) 
-        (if (eq? (variable p1) 'y)
-            (mul-poly (y->x p1) p2)
-            (mul-poly p1 (y->x p2))))))
+;(define (install-dense-package)
+;
+;  <stuff>
+;  ;Here the polynomial p(y)=a_n(x)y^n + a_{n-1}y^{n-1} + \dots + a_0(x) is represented simply as
+;  ;(dense y (a_n(x) a_{n-1}(x) ... a_0(x)))
+;  ;Now, the issue is that... we can't just blindly build term lists, and then sum them, because then we lose track of degree... We need a way around this,
+;  ;maybe we can build by degree. By that I mean we can write a procedure that takes in a polynomial in y and a number n, and expands
+;  ;and returns the coefficient of order n of the same polynomial considered as being in the variable x...Then, we could just recursively build a list of all the 
+;  ;degree coefficients, and that would be the full expansion of the polynomial in y considered as a polynomial in x, and that would be our final output. 
+;  (define (y->x p)
+;    ;p is a polynomial in y. As above, let p(y)=a_n(x)y^n + a_{n-1}y^{n-1} + \dots + a_0(x). Then,
+;    ;as a dense polynomial, it just has term-list (a_n(x) a_{n-1}(x) ... a_0(x))
+;    ;Now, our goal is to go through this list, expanding each polynomial in x, and pulling out degree n terms. 
+;    ;Later, we will think about how we can find the maximum degree, and then recursively, build our fully expanded term list. One problem at a time.
+;    (define (element-then-k-zeros element k)
+;      (define (iter i result)
+;        (if (= i 0)
+;            result
+;            (iter (- i 1) (append result (list 0)))))
+;      (iter k (list element)))
+;    (define (build-n-degree-term p n)
+;      ;L looks like (a_n(x) a_{n-1}(x) ... a_0(x))
+;      (define (parse-sparse-poly a k)
+;        (let ((L-a (term-list a)))
+;          (if (= (order (first-term L-a)) n)
+;              (mul-poly (make-poly 'y (element-then-k-zeros 1 (+ k 1))) (first-term L-a))
+;              (parse-sparse-poly (make-poly (variable a) (rest-terms L-a))))))
+;      (define (parse-dense-poly a k)
+;        (let ((L-a (term-list a)))
+;          (if ((= (- (length (rest-terms (term-list L-a))) 1) n))
+;              (mul-poly (make-poly 'y (element-then-k-zeros 1 (+ k 1))) (first-term L-a))
+;              (parse-dense-poly (make-poly (variable a) (rest-terms L-a))))))
+;      (let ((L (term-list p)))
+;        (let ((ord (- (length L) 1))
+;              (a (first-term L)))
+;          ;ord is the power of y.
+;          (cond (((type-tag a) 'sparse)
+;                 (add (parse-sparse-poly a ord) (build-n-degree-term (make-poly (variable p) (rest-terms L)))))
+;                (((type-tag a) 'dense)
+;                 (add (parse-dense-poly a ord) (build-n-degree-term (make-poly (variable p) (rest-terms L)))))
+;                (((type-tag a) 'polynomial)
+;                 (if (eq? (type-tag (contents a)) 'sparse)
+;                     (add (parse-sparse-poly (contents a) ord) (build-n-degree-term (make-poly (variable p) (rest-terms L))))
+;                     (add (parse-dense-poly (contents a) ord) (build-n-degree-term (make-poly (variable p) (rest-terms L))))))
+;                (else
+;                  (add a (build-n-degree-term (make-poly (variable p) (rest-terms L)))))))))
+;    ;now, we just need to find the maximum power of x in p(y)'s expansion. For that we can write a method that iterates through the coefficients,
+;    ;and checks. 
+;    (define (max-power-var p var)
+;      (define (max-power-sparse a min-bound)
+;        (let ((L (term-list a)))
+;          (let ((t1 (first-term L)))
+;            (let ((ord (order t1)))
+;              (if (> ord min-bound)
+;                  (max ord (max-power-sparse (make-poly var (rest-terms L)) ord))
+;                  (max min-bound (max-power-sparse (make-poly var (rest-terms L)) min-bound)))))))
+;      (define (max-power-dense a)
+;        (- (length (term-list a)) 1))
+;      (let ((L (term-list p)))
+;        (let ((a (first-term L)))
+;          (cond ((eq? (type-tag a) 'sparse)
+;                 (max (max-power-sparse a 0) (max-power-var (make-poly (variable p) (rest-terms L)) var)))
+;                ((eq? (type-tag a) 'dense)
+;                 (max (max-power-dense a 0) (max-power-var (make-poly (variable p) (rest-terms L)) var)))
+;                ((eq? (type-tag a) 'polynomial)
+;                 (if (eq? (type-tag (contents a)) 'sparse)
+;                     (max (max-power-sparse (contents a) 0) (max-power-var (make-poly (variable p) (rest-terms L)) var))
+;                     (max (max-power-dense (contents a) 0) (max-power-var (make-poly (variable p) (rest-terms L)) var))))
+;                (else 
+;                  (max 0 (max-power-var (make-poly (variable p) (rest-terms L)) var)))))))
+;    (define (build-term-list p i)
+;      (if (= i 0)
+;          ()
+;          (cons (build-n-degree-term p i) (build-term-list p (- i 1)))))
+;    (let ((max-power (max-power-var p (variable p))))
+;      (let ((term-list (build-term-list p max-power)))
+;        (make-poly 'x term-list))))
+;  (define (add-poly p1 p2)
+;    (if (same-variable? (variable p1) (variable p2))
+;        (make-poly (variable p1)
+;                   (add-terms (term-list p1) (term-list p2)))
+;        (if (eq? (variable p1) 'y)
+;            (add-poly (y->x p1) p2)
+;            (add-poly p1 (y->x p2)))))
+;  (define (mul-poly p1 p2)
+;    (if (same-variable? (variable p1) (variable p2))
+;        (make-poly (variable p1)
+;                   (mul-terms (term-list p1) (term-list p2))) 
+;        (if (eq? (variable p1) 'y)
+;            (mul-poly (y->x p1) p2)
+;            (mul-poly p1 (y->x p2))))))
 ;the install-polynomial-package procedure is unchanged, since addition and multiplication at that level are defined recursively by their definitions at the lower levels(in sparse and dense implementations)
 ;=====================================
 ;Extended exercise; Rational functions
@@ -2720,11 +2721,11 @@ guess
 (define (install-rational-package)
   <stuff>
   ;;internal procedures
-    (define (make-rat n d)
-      (let ((g (greatest-common-divisor n d)))
-        (let ((a (div n g))
-              (b (div d g)))
-           (cons a b))))
+  (define (make-rat n d)
+    (let ((g (greatest-common-divisor n d)))
+      (let ((a (div n g))
+            (b (div d g)))
+        (cons a b))))
   (define (numer x)
     (car x))
   (define (denom x)
@@ -2759,60 +2760,60 @@ guess
 ;tested it out on paper, because we dont actually have
 ;a get and put method, I cant actually run this code... 
 ;Exercise 2.94:
-(define (install-scheme-number-package)
-  <stuff>
-  (put 'greatest-common-divisor '(scheme-number scheme-number) 
-       (lambda (a b) (tag (gcd a b))))
-  'done)
+;(define (install-scheme-number-package)
+;  <stuff>
+;  (put 'greatest-common-divisor '(scheme-number scheme-number) 
+;       (lambda (a b) (tag (gcd a b))))
+;  'done)
 ;We assume that polynomials are always represented as sparse polynomials,
 ;and so that all the methods that we've written so far for sparse polynomials
 ;are tucked under <stuff> below.
-(define (install-polynomial-package)
-  <stuff>
-  (define (div-terms L1 L2)
-    (if (empty-termlist? L1)
-        (list (the-empty-termlist) (the-empty-termlist))
-        (let ((t1 (first-term L1))
-              (t2 (first-term L2)))
-          (if (> (order t2) (order t1))
-              (list (the-empty-term-list) L1)
-              (let ((new-c (div (coeff t1) (coeff t2)))
-                    (new-o (- (order t1) (order t2))))
-                (let ((rest-of-result
-                        ;build list of terms for result. 
-                        (let ((qtnt (make-term new-o new-c)))
-                          (let ((rmdr (add-terms L1 (minus (mul-terms qtnt L2)))))
-                            (if (< (order (first-term rmdr)) (order t2))
-                                ;keep return object consistently a list of two objects,
-                                ;the first representing the quotient and the second the remainder.
-                                ;the actual final remainder is computer from the final quotient,
-                                ;which is being recursively build, here.
-                                (list () ())
-                                (let ((next-qtnt-c (div (coeff (first-term rmdr)) (coeff t2)))
-                                      (next-qtnt-o (- (order (first-term-rmdr)) (order t2))))
-                                  (let ((next-qtnt (make-term next-qtnt-o next-qtnt-c)))
-                                    (let ((next-rmdr (add-terms rmdr (minus (mul-terms next-qtnt L2)))))
-                                      (cons next-qtnt (car (div-terms next-rmdr L2)))))))))))
-                  (let ((final-quotient (cons result rest-of-result)))
-                    (let ((final-rmdr (add-terms L1 (minus (mul-terms final-quotient L2)))))
-                      (list final-quotient final-rmdr)))))))))
-  (define (gcd-terms a b)
-    (if (empty-termlist? b)
-        (mul-terms (make-poly (variable a) (make-term 0 (/ 1 (gen-gcd-for-question a)))) a)
-        (gcd-terms b (pseudoremainder-terms a b))))
-  (define (remainder-terms a b)
-    (cadr (div-terms a b)))
-  (define (pseudoremainder-terms a b)
-    (define (integerizing-factor p q)
-      (expt (first-term (term-list q)) (+ 1 (- (order (first-term (term-list p))) (order (first-term (term-list q)))))))
-    (cadr (div-terms (mul-terms (make-poly (variable a) (make-term 0 (integerizing-factor a b))) a) b)))
-  (define (gcd-poly a b)
-    (if (eq? (variable a) (variable b))
-        (make-poly (variable a) (gcd-terms (term-list a) (term-list-b)))
-        (error "Polynomials not in the same variable!": (list (variable a) (variable b)))))
-  (put 'greatest-common-divisor '(polynomial polynomial) 
-       (lambda (p q) (tag (gcd-poly p q))))
-  'done)
+;(define (install-polynomial-package)
+;  <stuff>
+;  (define (div-terms L1 L2)
+;    (if (empty-termlist? L1)
+;        (list (the-empty-termlist) (the-empty-termlist))
+;        (let ((t1 (first-term L1))
+;              (t2 (first-term L2)))
+;          (if (> (order t2) (order t1))
+;              (list (the-empty-term-list) L1)
+;              (let ((new-c (div (coeff t1) (coeff t2)))
+;                    (new-o (- (order t1) (order t2))))
+;                (let ((rest-of-result
+;                        ;build list of terms for result. 
+;                        (let ((qtnt (make-term new-o new-c)))
+;                          (let ((rmdr (add-terms L1 (minus (mul-terms qtnt L2)))))
+;                            (if (< (order (first-term rmdr)) (order t2))
+;                                ;keep return object consistently a list of two objects,
+;                                ;the first representing the quotient and the second the remainder.
+;                                ;the actual final remainder is computer from the final quotient,
+;                                ;which is being recursively build, here.
+;                                (list () ())
+;                                (let ((next-qtnt-c (div (coeff (first-term rmdr)) (coeff t2)))
+;                                      (next-qtnt-o (- (order (first-term-rmdr)) (order t2))))
+;                                  (let ((next-qtnt (make-term next-qtnt-o next-qtnt-c)))
+;                                    (let ((next-rmdr (add-terms rmdr (minus (mul-terms next-qtnt L2)))))
+;                                      (cons next-qtnt (car (div-terms next-rmdr L2)))))))))))
+;                  (let ((final-quotient (cons result rest-of-result)))
+;                    (let ((final-rmdr (add-terms L1 (minus (mul-terms final-quotient L2)))))
+;                      (list final-quotient final-rmdr)))))))))
+;  (define (gcd-terms a b)
+;    (if (empty-termlist? b)
+;        (mul-terms (make-poly (variable a) (make-term 0 (/ 1 (gen-gcd-for-question a)))) a)
+;        (gcd-terms b (pseudoremainder-terms a b))))
+;  (define (remainder-terms a b)
+;    (cadr (div-terms a b)))
+;  (define (pseudoremainder-terms a b)
+;    (define (integerizing-factor p q)
+;      (expt (first-term (term-list q)) (+ 1 (- (order (first-term (term-list p))) (order (first-term (term-list q)))))))
+;    (cadr (div-terms (mul-terms (make-poly (variable a) (make-term 0 (integerizing-factor a b))) a) b)))
+;  (define (gcd-poly a b)
+;    (if (eq? (variable a) (variable b))
+;        (make-poly (variable a) (gcd-terms (term-list a) (term-list-b)))
+;        (error "Polynomials not in the same variable!": (list (variable a) (variable b)))))
+;  (put 'greatest-common-divisor '(polynomial polynomial) 
+;       (lambda (p q) (tag (gcd-poly p q))))
+;  'done)
 ;Checked it out on paper. It's the euclidean algorithm. assumed div-terms works, this works.
 ;I can't actually check if it works until we implement get and put. That is done sometime in the next chapter.
 ;Exercise 2.95
@@ -2835,60 +2836,60 @@ guess
 ;according to the other of the terms, we aren't assured that the first term will be of the highest order,
 ;so we have to find the max value, term by term.
 ;b
-(define (install-scheme-package)
-  <stuff>
-  (define (reduce-integers n d)
-    (let ((g (gcd n d)))
-      (list (/ n g) (/ d g))))
-  (put 'reduce '(scheme-number scheme-number) reduce-integers)
-  'done)
-(define (install-polynomial-package)
-  <stuff>
-  (define (term-list->order l)
-    (define (recursive-checker l running-max)
-      (cond ((null? l) running-max)
-            ((> (order (first-term l)) running-max)
-             (recursive-checker (cdr l) (order (first-term l))))
-            (else (recursive-checker (cdr l) running-max))))
-    (recursive-checker l 0))
-  ;assuming (eq? (variable n) (variable d)) 
-  (define (reduce-terms n d)
-    (let ((g (gcd-terms n d)))
-      (let ((O2 (term-list->order g))
-            (O1 (max (term-list->order n) (term-list->order d))))
-        (let ((c (expt (coeff (first-term g)) (+ 1 (- O1 O2)))))
-          (let ((c-as-term-list (list (make-term 0 c))))
-            (let ((n_ (mul-terms n c-as-term-list))
-                  (d_ (mul-terms d c-as-term-list)))
-              ;Since by defn g | n_,d_, and since div-terms returns a list whose first coordinate is the quotient and second is the remainder,
-              ;we get the following definitions for nn and dd.
-              (let ((nn_ (car (div-terms n_ g)))
-                    (dd_ (car (div-terms d_ g))))
-                ;let gg be the gcd of the coefficients of the numerator and the denominator
-                (let ((gg (gen-gcd-for-question (append nn_ dd_))))
-                  (let ((gg-as-term-list (list (make-term 0 gg))))
-                    (let ((nn (div-terms nn_ gg-as-term-list))
-                          (dd (div-terms dd_ gg-as-term-list)))
-                      (list nn dd)))))))))))
-  (define (reduce-poly p q)
-    (if (eq? (variable p) (variable q))
-        (let ((term-lists (reduce-term (term-list p) (term-list q))))
-          (list (make-poly (variable p) (car term-lists))
-                (make-poly (variable q) (cadr term-lists))))
-        (error "THE POLYNOMIALS MUST BE IN THE SAME VARIABLE!")))
-  (put 'reduce '(polynomial polynomial) reduce-poly)
-  'done)
-(define (reduce p q)
-  (apply-generic 'reduce p q))
-(define (install-rational-package)
-  <stuff>
-  (define (make-rat n d)
-    (let ((reduced (reduce n d)))
-      (cons (car reduced) (cadr reduced))))
-  (define (tag x) (attach-tag 'rational x))
-  (put 'make '(rational)
-       (lambda (p q) (tag (make-rat p q))))
-  'done)
+;(define (install-scheme-package)
+;  <stuff>
+;  (define (reduce-integers n d)
+;    (let ((g (gcd n d)))
+;      (list (/ n g) (/ d g))))
+;  (put 'reduce '(scheme-number scheme-number) reduce-integers)
+;  'done)
+;(define (install-polynomial-package)
+;  <stuff>
+;  (define (term-list->order l)
+;    (define (recursive-checker l running-max)
+;      (cond ((null? l) running-max)
+;            ((> (order (first-term l)) running-max)
+;             (recursive-checker (cdr l) (order (first-term l))))
+;            (else (recursive-checker (cdr l) running-max))))
+;    (recursive-checker l 0))
+;  ;assuming (eq? (variable n) (variable d)) 
+;  (define (reduce-terms n d)
+;    (let ((g (gcd-terms n d)))
+;      (let ((O2 (term-list->order g))
+;            (O1 (max (term-list->order n) (term-list->order d))))
+;        (let ((c (expt (coeff (first-term g)) (+ 1 (- O1 O2)))))
+;          (let ((c-as-term-list (list (make-term 0 c))))
+;            (let ((n_ (mul-terms n c-as-term-list))
+;                  (d_ (mul-terms d c-as-term-list)))
+;              ;Since by defn g | n_,d_, and since div-terms returns a list whose first coordinate is the quotient and second is the remainder,
+;              ;we get the following definitions for nn and dd.
+;              (let ((nn_ (car (div-terms n_ g)))
+;                    (dd_ (car (div-terms d_ g))))
+;                ;let gg be the gcd of the coefficients of the numerator and the denominator
+;                (let ((gg (gen-gcd-for-question (append nn_ dd_))))
+;                  (let ((gg-as-term-list (list (make-term 0 gg))))
+;                    (let ((nn (div-terms nn_ gg-as-term-list))
+;                          (dd (div-terms dd_ gg-as-term-list)))
+;                      (list nn dd)))))))))))
+;  (define (reduce-poly p q)
+;    (if (eq? (variable p) (variable q))
+;        (let ((term-lists (reduce-term (term-list p) (term-list q))))
+;          (list (make-poly (variable p) (car term-lists))
+;                (make-poly (variable q) (cadr term-lists))))
+;        (error "THE POLYNOMIALS MUST BE IN THE SAME VARIABLE!")))
+;  (put 'reduce '(polynomial polynomial) reduce-poly)
+;  'done)
+;(define (reduce p q)
+;  (apply-generic 'reduce p q))
+;(define (install-rational-package)
+;  <stuff>
+;  (define (make-rat n d)
+;    (let ((reduced (reduce n d)))
+;      (cons (car reduced) (cadr reduced))))
+;  (define (tag x) (attach-tag 'rational x))
+;  (put 'make '(rational)
+;       (lambda (p q) (tag (make-rat p q))))
+;  'done)
 ;=========== 3. Modularity, Objects, and State ============
 ;=========== 3.1 Assignment and Local State ===============
 ;=========== 3.1.1 Local State Variables ==================
@@ -3204,7 +3205,6 @@ guess
 ;(define z (cons 'c ()))
 ;(define w (cons 'b z))
 ;(define x (cons 'a w))
-(set-cdr! z x)
 ;now (make-pair x) is infinite. 
 ;Exercise 3.17:
 ;need a procedure that checks to see if current object is equal to object in a list.
@@ -3265,13 +3265,13 @@ guess
 (define (empty-queue? queue)
   (null? (front-ptr queue)))
 (define (make-queue)
-  (cons '() '()))
+  (cons () ()))
 (define (front-queue queue)
   (if (empty-queue? queue)
       (error "FRONT called with an empty queue" queue)
       (car (front-ptr queue))))
 (define (insert-queue! queue item)
-  (let ((new-pair (cons item '())))
+  (let ((new-pair (cons item ())))
     (cond ((empty-queue? queue)
            (set-front-ptr! queue new-pair)
            (set-rear-ptr! queue new-pair)
@@ -3762,7 +3762,7 @@ guess
 ;==Representing wires==
 (define (make-wire)
   (let ((signal-value 0)
-        (action-procedures '()))
+        (action-procedures ()))
     (define (set-my-signal! new-value)
       (if (not (= signal-value new-value))
           (begin (set! signal-value new-value)
@@ -4038,7 +4038,7 @@ guess
 (define (make-connector)
   (let ((value #f)
         (informant #f)
-        (constraints '()))
+        (constraints ()))
     (define (set-my-value newval setter)
       (cond ((not (has-value? me))
              (set! value newval)
@@ -5145,10 +5145,10 @@ guess
           (error
             "Unknown procedure type: APPLY" procedure))))
 (define (list-of-values exps env)
-    (if (no-operands? exps)
-        '()
-        (cons (eval (first-operand exps) env)
-              (list-of-values (rest-operands exps) env))))
+  (if (no-operands? exps)
+      ()
+      (cons (eval (first-operand exps) env)
+            (list-of-values (rest-operands exps) env))))
 ;we interpret the `if` as being outside of the language being implemented. (eval (if-predicate exp) env) yields a predicate in the language being implemented. true? translates that to something
 ;intelligible outside of the language being implemented... thus true? translates a predicate from the language being implemented to the implementation language.
 (define (eval-if exp env)
@@ -5175,7 +5175,7 @@ guess
 ;the following forces the first element in cons to be evaluated first, then the second, and so on, irrespective of whether or not cons is implemented to evaluate from left to right or right to left:
 (define (list-of-values-lr exps env)
   (if (no-operands? exps)
-      '()
+      ()
       (let ((evald-exp (eval (first-operand exps) env)))
         (cons (evald-exp (list-of-values (rest-operands exps) env))))))
 ;can just write a method that reverses the list, and then evaluate using list-of-values-lr. Downside is that then list-of-values-rl takes at least O(n) time to evaluate... 
@@ -5184,7 +5184,7 @@ guess
     (if (null? li)
         result
         (iter (cdr li) (cons (car li) result))))
-  (iter l '()))
+  (iter l ()))
 (define (list-of-values-rl exps env)
   (let ((reversed-exps (reverse-list exps)))
     (list-of-values-lr reversed-exps env)))
@@ -5378,7 +5378,7 @@ guess
       (let ((e (eval (first-exp exps) env)))
         (if e 
             #t  ;if any expression is true, we return true
-            (eval-or (rest-exps exps) env)))))  ;else, try next ones. if none are true, we will eventually run (eval-or '() env), at which point we will return false, as required.
+            (eval-or (rest-exps exps) env)))))  ;else, try next ones. if none are true, we will eventually run (eval-or () env), at which point we will return false, as required.
 (define (eval-or exp env)
   (eval-or-exps (or-expressions exp) env))
 
@@ -5419,4 +5419,146 @@ guess
 ;Very interesting. We can manipulate the syntax and then interpret it given forms we know, or we can interpret it using our language directly as a special form... 
 ;If we interpret it as its own special form... we increase the complexity of our interpreter, if we interpret it as a derived form... we might increase run time...
 ;if we can keep the interpreter as small as possible and have it run quickly, we've got the best of both worlds... 
+;Exercise 4.5:
+;(cond (<test>) <recipient>) should become (<recipient> (<test>)) so 
+;(if <test>
+;  (<recipient> (<test>))
+;(cond (<exp1> <val1>)
+;      (<exp2> <val2>)
+;      ...
+;      (<expn> <valn>))
+(define (cond-=>-clause? clause)
+  (eq? (car (cond-actions clause)) '=>))
+(define (test=>resp clause)
+  (list (cadr (cond-actions clause)) (cond-predicate clause)))
+(define (expand-clauses clauses)
+  (if (null? clauses)
+      'false
+      (let ((first (car clauses))
+            (rest (cdr clauses)))
+        (if (cond-else-clause? first)
+            (if (null? rest)
+                (sequence->exp (cond-actions first)) ;turn the sequence of actions into an expression
+                (error "ELSE clause isn't last: COND->IF" clauses))
+            (if (cond-=>-clause? first)
+                (make-if (cond-predicate first) 
+                         (test=>resp first)
+                         (expand-clauses rest))
+                (make-if (cond-predicate first)
+                         (sequence->exp (cond-actions first))
+                         (expand-clauses rest)))))))
+(define test '(cond (<test> => <recipient>) ((< 3 5) (* 3 5)) ((eq? 'a 'b) (display 'false)) (else 'poop)))
+(define clauses (cond-clauses test))
+(define clause (car clauses))
+;Exercise 4.6:
+;(let ((<var1> <exp1>) ... (<varn> <expn>)) ==> ((lambda (<var1> ... <varn>)
+;                                                 <body>)
+;                                                <exp1>
+;                                                ...
+;                                                <expn>)
+;  <body>)
+(define test '(let* ((<var1> <exp1>) (<var2> <exp2>) (<var3> <exp3>))
+                <body>))
+(define (let-varexps exp)
+  (car (cdr exp)))
+(define (let-vars varexps)
+  (if (null? varexps)
+      ()
+      (cons (caar varexps) (let-vars (cdr varexps)))))
+(define (let-exps varexps)
+  (if (null? varexps)
+      ()
+      (cons (cadar varexps) (let-exps (cdr varexps)))))
+(define (let-body exp)
+  (caddr exp))
+(define (let->combination exp)
+  (cons (make-lambda (let-vars (let-varexps exp)) (let-body exp)) (let-exps (let-varexps exp))))
+;Exercise 4.7:
+;(let* ((x 3) (y (+ x 2)) (z (+ x y 5))) => (let ((x 3))
+;                                             (let (y (+ x 2))
+;                                               (let (z (+ x y 5))
+;                                                 (* x z))))
+;  (* x z))
+(define (varexps->nested varexps body)
+  (if (null? varexps)
+      body
+      (list 'let (list (car varexps)) (varexps->nested (cdr varexps) body))))
+(define (let*->nested-lets exp)
+  (varexps->nested (let-varexps exp) (let-body exp)))
+
+;If we add the clause to deal with let* after the clause to deal with let, then we don't need anything more. To eval let* we call our evaluator on our let expression, which in turn calls our
+;evaluator on our lambda expression, which is then explicitly evaluated. 
+
+;Exercise 4.8
+;(let <var> <bindings> <body>) => (begin (define (<var> named-let-vars) <body>)
+;                                        (<var> named-let-exps))
+(define (let-varexps exp)
+  (car (cdr exp)))
+(define (let-vars varexps)
+  (if (null? varexps)
+      ()
+      (cons (caar varexps) (let-vars (cdr varexps)))))
+(define (let-exps varexps)
+  (if (null? varexps)
+      ()
+      (cons (cadar varexps) (let-exps (cdr varexps)))))
+(define (let-body exp)
+  (caddr exp))
+;selectors for named-let
+(define (named-let-varexps exp)
+  (caddr exp))
+(define (named-let-vars varexps)
+  (let-vars varexps))
+(define (named-let-exps varexps)
+  (let-exps varexps))
+(define (named-let-proc exp)
+  (cadr exp))
+(define (named-let-body exp)
+  (cadddr exp))
+
+(define (named-let->begin-seq exp)
+  (make-begin
+    (list (list 'define (cons (named-let-proc exp) (named-let-vars (named-let-varexps exp))) (named-let-body exp))
+          (cons (named-let-proc exp) (named-let-exps (named-let-varexps exp))))))
+(define (let->combination exp)
+  (cond ((= (length exp) 4)
+         (named-let->begin-seq exp))
+        ((= (length exp) 3)
+         (cons (make-lambda (let-vars (let-varexps exp)) (list (let-body exp))) (let-exps (let-varexps exp))))
+        (else (error "Unsupported LET format!"))))
+
+;I am going to adjust the evaluator here for the last three sections
+
+(define (let? exp) (tagged-list? exp 'let))
+(define (let*? exp) (tagged-list? exp 'let*))
+
+(define (eval-let exp env)
+  (eval (let->combination exp) env))
+
+(define (eval-let* exp env)
+  (eval (let*->nested-lets exp) env))
+
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        ((let? exp) (eval-let exp env))
+        ((let*? exp) (eval-let* exp env))
+        ((application? exp)
+         (apply (eval (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else 
+          (error "Unknown expression type: EVAL" exp))))
+
+;Exercises 4.9:
+(define (for index upperbound inc proc)
+  proc
+  (when (< index upperbound)
+    (for (inc index) upperbound inc proc)))
 
