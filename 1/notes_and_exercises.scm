@@ -5567,10 +5567,116 @@
 ;do {
 ;  stuff;
 ;}while(cond);
-;pred and prod take one argument
+;pred and proc take one argument
 (define (do-while i pred proc)
   (if (pred i)
       (begin (proc i)
-             (do-while (proc i) pred proc))))
+             (do-while (proc i) pred proc)))) 
 
+;Exercise 4.10:
+;All we need to do is add or change syntax coercers. Then we can define new syntax to our hearts content, since we can always remanipulate the syntax back to a form that the evaluator 
+;understands. 
+;for example we can do assignments by (assign <variable> <value>) by writing
+(define (assign->set! exp)
+  (cons 'set! (cdr exp)))
+;or we can redefine DEFINE statements by defun, and manipulate that in our interpreting language by:
+(define (defun->define exp)
+  (cons 'define (cdr exp)))
+;and so on... 
+;we are free to change the syntax of our language as we please, since we can always write procedures in lisp to manipulate the syntax back to one that the scheme interpreter understands.
+;We just need to change the eval-assignment and eval-definition procedures to handle the new syntax!
 
+;================4.1.3 Evaluator Data Structures================
+
+(define (true? x) (not (eq? x false)))
+(define (false? x) (eq? x false))
+
+;We assume the existence of:
+
+;(apply-primitive-procedure <proc> <args>)
+;applies the given primitive procedure to the argument values in the list <args> and returns the result of the application
+
+;(primitive-procedure? <proc>)
+;tests whether <proc> is a primitive procedure
+
+(define (make-procedure parameters body env)
+  (list 'procedure parameters body env))
+
+(define (compound-procedure? p)
+  (tagged-list? p 'procedurwe))
+
+(define (procedure-parameters o) (cadr p))
+
+(define (procedure-body p) (caddr p))
+
+(define (procedure-environment p) (cadddr p))
+
+(define (enclosing-environment env) (cdr env))
+(define (first-frame env) (car env))
+(define the-empty-environment '())
+(define (make-frame variables values)
+  (cons variables values))
+(define (frame-variables frame) (car frame))
+(define (frame-values frame) (cdr frame))
+(define (add-binding-to-frame! var val frame)
+  (set-car! frame (cons var (car frame)))
+  (set-cdr! frame (cons val (cdr frame))))
+(define (extend-environment vars vals base-env)
+  (if (= (length vars) (length vals))
+      (cons (make-frame vars vals) base-env)
+      (if (< (length vars) (length vals))
+          (error "Too many arguments supplied" vars vals)
+          (error "Too few arguments supplied" vars fals))))
+(define (lookup-variable-value var env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars)) (car vals))
+            (else (scan (cdr vars) (cdr vals)))))))
+
+(define (set-variable-value! var val env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars)) (set-car! vals val))
+            (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+        (error "Unbound variable: SET!" var)
+        (let ((frame (first-frame env)))
+          (scan (frame-variables frame)
+                (frame-values frame)))))
+  (env-loop env))
+
+(define (define-variable! var val env)
+  (let ((frame (first-frame env)))
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (add-binding-to-frame! var val frame))
+            ((eq? var (car vars)) (set-car! vals val))
+            (else (scan (cdr vars) (cdr vals)))))
+    (scan (frame-variables frame) (frame-values frame))))
+
+;Exercise 4.11:
+(define (make-frame variables values)
+  (if (not (= (length variables) (length values)))
+      (error "Gotta' give the same same number of variables as values!" variables values)
+      (if (null? variables)
+          ()
+          (cons (cons (car variables) (car values)) (make-frame (cdr variables) (cdr values))))))
+(define vars '(x y z)) 
+(define vals '(1 2 3))
+(define test (make-frame vars vals))
+(define (frame-variables frame)
+  (if (null? frame)
+      ()
+      (cons (caar frame) (frame-variables (cdr frame)))))
+(define (frame-values frame)
+  (if (null? frame)
+      ()
+      (cons (cdar frame) (frame-values (cdr frame)))))
+(define (add-binding-to-frame! var val frame)
+  (if (null? (cdr frame))
+      (set-cdr! frame (list (cons var val)))
+      (add-binding-to-frame! var val (cdr frame))))
