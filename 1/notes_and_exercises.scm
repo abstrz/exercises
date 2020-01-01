@@ -5823,13 +5823,13 @@
 ;in the driver-loop gives the correct output of (a c e)
 
 ;now if we take Louis' approach and make map a primitive of our language
-(define primitive-procedures
-  (list (list 'car car)
-        (list 'cdr cdr)
-        (list 'cons cons)
-        (list 'null? null?)
-        (list 'map map)))
-(define the-global-environment (setup-environment))
+;(define primitive-procedures
+;  (list (list 'car car)
+;        (list 'cdr cdr)
+;        (list 'cons cons)
+;        (list 'null? null?)
+;        (list 'map map)))
+;(define the-global-environment (setup-environment))
 ;evaluating (map (lambda (x) (car x)) '((a b) (c d) (e f)))
 ;in the driver-loop gives "The object (), passed as the first argument to car, is not the correct type."
 
