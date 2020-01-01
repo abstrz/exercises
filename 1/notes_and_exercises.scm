@@ -5131,6 +5131,10 @@
                 (list-of-values (operands exp) env)))
         (else 
           (error "Unknown expression type: EVAL" exp))))
+;save a copy of the apply procedure implemented in scheme.
+(define apply-in-underlying-scheme
+  apply)
+;implement the metacircular evaluator apply procedure.
 (define (apply procedure arguments)
   (cond ((primitive-procedure? procedure)
          (apply-primitive-procedure procedure arguments))
@@ -5200,7 +5204,7 @@
 (define (quoted? exp) (tagged-list? exp 'quote))
 (define (text-of-quotation exp) (cadr exp))
 ;quoted? is defined in terms of the procedure tagged-list?, which identifies lists beginning with a designated symbol:
-(define (tagged-list exp tag)
+(define (tagged-list? exp tag)
   (if (pair? exp)
       (eq? (car exp) tag)
       #f))
@@ -5216,7 +5220,7 @@
 ;  (lambda (<parameter_1>...<parameter_n>)
 ;    <body>))
 ;The corresponding syntax procedures are the following:
-(define (definition? exp) (tagged-list exp 'define))
+(define (definition? exp) (tagged-list? exp 'define))
 (define (definition-variable exp)
   (if (symbol? (cadr exp))
       (cadr exp)
@@ -5603,9 +5607,9 @@
   (list 'procedure parameters body env))
 
 (define (compound-procedure? p)
-  (tagged-list? p 'procedurwe))
+  (tagged-list? p 'procedure))
 
-(define (procedure-parameters o) (cadr p))
+(define (procedure-parameters p) (cadr p))
 
 (define (procedure-body p) (caddr p))
 
@@ -5627,36 +5631,36 @@
       (if (< (length vars) (length vals))
           (error "Too many arguments supplied" vars vals)
           (error "Too few arguments supplied" vars fals))))
-(define (lookup-variable-value var env)
-  (define (env-loop env)
-    (define (scan vars vals)
-      (cond ((null? vars)
-             (env-loop (enclosing-environment env)))
-            ((eq? var (car vars)) (car vals))
-            (else (scan (cdr vars) (cdr vals)))))))
+;(define (lookup-variable-value var env)
+;  (define (env-loop env)
+;    (define (scan vars vals)
+;      (cond ((null? vars)
+;             (env-loop (enclosing-environment env)))
+;            ((eq? var (car vars)) (car vals))
+;            (else (scan (cdr vars) (cdr vals)))))))
+;
+;(define (set-variable-value! var val env)
+;  (define (env-loop env)
+;    (define (scan vars vals)
+;      (cond ((null? vars)
+;             (env-loop (enclosing-environment env)))
+;            ((eq? var (car vars)) (set-car! vals val))
+;            (else (scan (cdr vars) (cdr vals)))))
+;    (if (eq? env the-empty-environment)
+;        (error "Unbound variable: SET!" var)
+;        (let ((frame (first-frame env)))
+;          (scan (frame-variables frame)
+;                (frame-values frame)))))
+;  (env-loop env))
 
-(define (set-variable-value! var val env)
-  (define (env-loop env)
-    (define (scan vars vals)
-      (cond ((null? vars)
-             (env-loop (enclosing-environment env)))
-            ((eq? var (car vars)) (set-car! vals val))
-            (else (scan (cdr vars) (cdr vals)))))
-    (if (eq? env the-empty-environment)
-        (error "Unbound variable: SET!" var)
-        (let ((frame (first-frame env)))
-          (scan (frame-variables frame)
-                (frame-values frame)))))
-  (env-loop env))
-
-(define (define-variable! var val env)
-  (let ((frame (first-frame env)))
-    (define (scan vars vals)
-      (cond ((null? vars)
-             (add-binding-to-frame! var val frame))
-            ((eq? var (car vars)) (set-car! vals val))
-            (else (scan (cdr vars) (cdr vals)))))
-    (scan (frame-variables frame) (frame-values frame))))
+;(define (define-variable! var val env)
+;  (let ((frame (first-frame env)))
+;    (define (scan vars vals)
+;      (cond ((null? vars)
+;             (add-binding-to-frame! var val frame))
+;            ((eq? var (car vars)) (set-car! vals val))
+;            (else (scan (cdr vars) (cdr vals)))))
+;    (scan (frame-variables frame) (frame-values frame))))
 
 ;Exercise 4.11:
 ;(define (make-frame variables values)
@@ -5683,8 +5687,7 @@
 ;      (set-cdr! frame (list (cons var val)))
 ;      (add-binding-to-frame! var val (cdr frame))))
 ;Exercise 4.12:
-;one procedure will take a frame and a var and return the subframe starting from that var with that val.
-;memq for frames
+;returns the subframe whose first variable is var, with corresponding values. 
 (define (sub-frame var frame)
   (cond ((null? (frame-variables frame)) #f)
         ((eq? (car (frame-variables frame)) var) frame)
@@ -5714,8 +5717,8 @@
              (lambda (x y) (add-binding-to-frame! var val x))
              var
              env))
-
 ;Exercise 4.13:
+
 (define (make-unbound-frame! var frame)
   (define (unbind var vars vals)
     (cond ((and (eq? (cadr vars) var) (null? (cddr vars)))
@@ -5750,3 +5753,117 @@
       (let ((frame (first-frame env)))
         (begin (make-unbound-frame! var frame))
         (make-unbound! var (enclosing-environment env)))))
+;4.1.4. Running the Evaluator as a Program:
+(define primitive-procedures
+  (list (list 'car car)
+        (list 'cdr cdr)
+        (list 'cons cons)
+        (list 'null? null?)))
+(define (primitive-procedure-names)
+  (map car primitive-procedures))
+(define (primitive-procedure-objects)
+  (map (lambda (proc) (list 'primitive (cadr proc))) primitive-procedures))
+
+(define (setup-environment)
+  (let ((initial-env
+          (extend-environment (primitive-procedure-names)
+                              (primitive-procedure-objects)
+                              the-empty-environment)))
+    (define-variable! 'true true initial-env)
+    (define-variable! 'false false initial-env)
+    initial-env))
+(define the-global-environment (setup-environment))
+
+;primitive-procedures are of the form (primitive <implementation-in-lisp>)
+(define (primitive-procedure? proc)
+  (tagged-list? proc 'primitive))
+(define (primitive-implementation proc) (cadr proc))
+
+
+(define (apply-primitive-procedure proc args)
+  (apply-in-underlying-scheme (primitive-implementation proc) args))
+
+;driver-loop is a read-eval-print loop, which means it is a program that reads input evaluates it and prints the result, then restarts.
+
+(define input-prompt ";;; M-Eval input:")
+(define output-prompt ";;; M-Eval value:")
+(define (driver-loop)
+  (prompt-for-input input-prompt)
+  (let ((input (read)))
+    (if (not (or (eq? input 'q) (eq? input 'quit)))
+        (begin (let ((output (eval input the-global-environment)))
+                 (announce-output output-prompt)
+                 (user-print output))
+                 (driver-loop)))))
+
+(define (prompt-for-input string)
+  (newline) (newline) (display string) (newline))
+(define (announce-output string)
+  (newline) (display string) (newline))
+
+;define our own print procedure to avoid printing environment part of compound procedures, which may contain cycles.
+(define (user-print object)
+  (if (compound-procedure? object)
+      (display (list 'compound-procedure
+                     (procedure-parameters object)
+                     (procedure-body object)
+                     '<procedure-env>))
+      (display object)))
+
+;Exercise 4.14:
+;We assume Louis and Eva are evaluating expressions made up of the primitives of the subset of Scheme which we've implemented thus far...
+;Let's consider what's happening. Suppose first we type in the definition of map:
+;(eval '(define (map proc l)
+;         (if (null? l)
+;             '()
+;             (cons (proc (car l)) (map proc (cdr l)))))
+;      the-global-environment)
+
+;evaluating (map (lambda (x) (car x)) '((a b) (c d) (e f)))
+;in the driver-loop gives the correct output of (a c e)
+
+;now if we take Louis' approach and make map a primitive of our language
+(define primitive-procedures
+  (list (list 'car car)
+        (list 'cdr cdr)
+        (list 'cons cons)
+        (list 'null? null?)
+        (list 'map map)))
+(define the-global-environment (setup-environment))
+;evaluating (map (lambda (x) (car x)) '((a b) (c d) (e f)))
+;in the driver-loop gives "The object (), passed as the first argument to car, is not the correct type."
+
+;Why?
+
+;Well, let's see...
+;evaluating our expression in the driver-loop is just running the following eval, saving it, and displaying it:
+
+;(eval '(map (lambda (x) (car x)) '((a b) (c d) (e f))) the-global-environment)
+
+;now, that is an application, so eval directs the evaluation to
+;
+;(apply (eval (operator '(map (lambda (x) (car x)) '((a b) (c d) (e f)))) the-global-environment)
+;       (list-of-values (operands '(map (lambda (x) (car x)) '((a b) (c d) (e f)))) the-global-environment))
+
+;(eval (operator '(map (lambda (x) (car x)) '((a b) (c d) (e f)))) the-global-environment) returns
+;(primitive #[compiled-procedure 16 ("list" #x5f) #x1a #xbfac42])
+;namely, a primitive procedure.
+
+;(list-of-values (operands '(map (lambda (x) (car x)) '((a b) (c d) (e f)))) the-global-environment) returns
+;((procedure (x) ((car x)) (((false true car cdr cons null? map) #f #t (primitive #[compiled-procedure 12 ("list" #x1) #x1a #xbee762]) (primitive #[compiled-procedure 13 ("list" #x2) #x1a #xbee7d2]) (primitive #[compiled-procedure 14 ("list" #x3) #x14 #xbee83c]) (primitive #[compiled-procedure 15 ("list" #x5) #x14 #xbee8dc]) (primitive #[compiled-procedure 16 ("list" #x5f) #x1a #xbfac42])))) ((a b) (c d) (e f)))
+
+;which is just the complex-procedure generated by the lambda and then the list of lists '((a b) (c d) (e f))
+
+;now, then, apply sees that the procedure is primitive, and so runs apply-primitive-procedure
+;(apply-primitive-procedure 
+;  (eval 'map the-global-environment) 
+;  (list-of-values '((lambda (x) (car x)) '((a b) (c d) (e f))) the-global-environment))
+;(apply-in-underlying-scheme
+;  map
+;  (list-of-values '((lambda (x) (car x)) '((a b) (c d) (e f))) the-global-environment))
+
+;but now apply-in-underlying-scheme accepts scheme syntax, but our data structure for expressions is different than that of scheme, hence the error. 
+
+;===============4.1.5 Data as Programs===============
+
+
