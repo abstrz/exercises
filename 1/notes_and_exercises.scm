@@ -6130,20 +6130,14 @@
    x))
 ;a: done.
 ;b:
+;We wish to rewrite the following using lambdas only:
 (define (f x)
   (define (even? n)
     (if (= n 0) true (odd? (- n 1))))
   (define (odd? n)
     (if (= n 0) false (even? (- n 1))))
   (even? x))
-;turns into:
-
-;Lets understand what
-;((lambda (n)
-;     ((lambda (fact) (fact fact n))
-;      (lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1)))))))
-;   x)
-;does
+;Before we do that, let's understand what the body of (fact x) above does:
 ;((lambda (n)
 ;     ((lambda (fact) (fact fact n))
 ;      (lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1)))))))
@@ -6151,7 +6145,7 @@
 ;=(substitute x in for n)
 ;((lambda (fact) (fact fact x))
 ; (lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1))))))
-;=(substitute operand lambda for (fact)
+;=(substitute operand lambda for (fact))
 ;((lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1))))) (lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1))))) x)
 ;=(substitute in the first operand lambda for ft in body of operator lambda and x for k in same body)
 ;(if (= x 1) 1 (* x ((lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1))))) (lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1))))) (- x 1))))
