@@ -5865,5 +5865,235 @@
 ;but now apply-in-underlying-scheme accepts scheme syntax, but our data structure for expressions is different than that of scheme, hence the error. 
 
 ;===============4.1.5 Data as Programs===============
+;Exercise 4.15:
+;Show that there cannot exist a procedure halts? that correctly determines whether p halts on a for any procedure p and object a.
+;If you had such a procedure halts?, you could implement the following program:
+;(define (run-forever) (run-forever))
+;(define (try p)
+;  (if (halts? p p) (run-forever) 'halted))
+;then consider evaluating (try try)...
+;
+;Okay, so if we run (try try) and it halts, then (halts? try try) is false, so (try try) does not halt, contradiction.
+;                                 it doesnt halt, (halts? try try) is true, which means (try try) halts, contradiction.
+;thus no such halts? procedure can exist!
+
+;===============4.1.6 Internal Definitions===============
+;motivating example for reworking handling of internal definitions:
+;(define (f x)
+;  (define (even? n) (if (= n 0) true (odd? (- n 1))))
+;  (define (odd? n) (if (= n 0) false (even? (- n 1))))
+;  <rest of body of f>)
+;if we evaluate expressions that use even? odd? before they are defined, we will run into errors. To avoid this, we alter the syntax of lambda expressions like so:
+;(lambda <vars>     ---------> (lambda <vars>
+;  (define u <e1>)               (let ((u '*unassigned*)
+;  (define v <e2>)                     (v '*unassigned*))
+;  <e3>)                           (set! u <e1>)
+;                                  (set! v <e2>) 
+;                                  <e3>))
+;Exercise 4.16
+;a: 
+(define (lookup-variable-value var env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars)) 
+             (if (eq? (car vals) '*unassigned*)
+                 (error "The value of the variable is not assigned!" var)
+                 (car vals)))
+            (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+        (error "Unbound variable" var)
+        (let ((frame (first-frame env)))
+          (scan (frame-variables frame)
+                (frame-values frame)))))
+  (env-loop env))
+
+;b:
+(define (internaldefs exps)
+  (cond ((null? exps) ())
+        ((definition? (first-exp exps)) (cons (first-exp exps) (internaldefs (rest-exps exps))))
+        (else (internaldefs (rest-exps exps)))))
+(define (no-defs-exps exps)
+  (cond ((null? exps) ())
+        ((definition? (first-exp exps)) (no-defs-exps (rest-exps exps)))
+        (else (cons (first-exp exps) (no-defs-exps (rest-exps exps))))))
+(define (defs->var-unassigned-pairs defs)
+  (if (null? defs)
+      ()
+      (let ((def (car defs)))
+        (cons (list (definition-variable def) '*unassigned*) (defs->var-unassigned-pairs (cdr defs))))))
+(define (defs->set!-statements defs)
+  (if (null? defs)
+      ()
+      (let ((def (car defs)))
+        (cons (list 'set! (definition-variable def) (definition-value def)) (defs->set!-statements (cdr defs))))))
+
+(define (scan-out-defines body)
+  (let ((defs (internaldefs (lambda-body body)))
+        (nodefs (no-defs-exps (lambda-body body))))
+    (let ((unassigned-pairs (defs->var-unassigned-pairs defs))
+          (set!-statements (defs->set!-statements defs)))
+      (append (append (list 'let unassigned-pairs) set!-statements) nodefs))))
+
+;c:
+;if we implement the change in procedure-body, then each time we retrieve the procedure-body the computation has to be made, which is a waste of resources...
+;also, in the global-environment lambda functions will be represented differently than they are used when they are retrieved, which does more to confuse than anything... 
+;thus I will make the change to make-procedure and not procedure-body:
+(define (make-procedure parameters body env)
+  (list 'procedure parameters (scan-out-defines (make-lambda parameters body)) env))
+
+;Exercise 4.17:
+;Did this on paper. Suppose we have
+;(define t1 (lambda <vars> (define u <e1>) (define u <e2>) <e3>))
+;then evaluating (t1 args) would lead to us creating a new environment where vars:args, and the body is evaluated. Thus when <e3> is evaluated, we have just created one new frame, 
+;which points to the global environment.
+;OTOH
+;(define t2 (lambda <vars> (let ((u '*unassigned*) (v '*unassigned*)) (set! u <e1>) (set! v <e2>) <e3>)))
+;then evaluating (t2 args) would lead to us creating a new environment where vars:args, then the body is evaluated, but the let in the body is syntactic sugar for
+;((lambda (u v) (set! u <e1>) (set! v <e2>) <e3>) '*unassigned* '*unassigned*), which when evaluated creates a new environment where u and v are both bound to *unassigned*, pointing to the
+;environment in which the lambda was called, which is the environment where vars are bound to args (which points to the-global-environment). We then finally evaluate 
+;(set! u <e1>) (set! u <e2>) <e3>, 
+;so by the time <e3> is evaluated in this second case, we have constructed two frames.
+;This extra frame makes no difference in the behavior of a correct program because of our way of interacting with the environment. We search for a variable value from the most recent frame, to the oldest, so if a variable value can be found in one way of writing the program so can it in the other. definitions will be made a frame out, but that doesnt change anything since the definition values are searched for by the lookup-variable-value procedure which as was just described can find variables values irrespective of how we write the program... if a variable value can be set! in the first way it can also be set in the second and vice versa, too... 
+
+;Assuming that our interpreter evaluates expressions from left to right, the following will work:
+(define (scan-out-defines-1 body)
+  (let ((defs (internaldefs (lambda-body body)))
+        (nodefs (no-defs-exps (lambda-body body))))
+    (append defs nodefs)))
+
+;Exercise 4.18:
+;The procedure will look like
+;(lambda (f y0 dt)
+;  (let ((y '*unassigned*) (dy '*unassigned*))
+;    (let ((a (integral (delay dy) y0 dt)) (b (stream-map f y)))
+;      (set! y a) 
+;      (set! dy b))
+;    y))
+;This will not work, as (stream-map f y) will attempt to run on the first element of y, which is still '*unassigned* at the moment when it is evaluated, triggering an error.
+
+;If they are scanned out as shown in the text, we would get:
+
+;(lambda (f y0 dt)
+;  (let ((y '*unassigned*) (dy '*unassigned*))
+;    (set! y (integral (delay dy) y0 dt))
+;    (set! dy (stream-map f y))
+;    y))
+
+;This does work, as when y is set, dy is not evaluated, therefore its value is not retrieved, rather the evaluation of (delay dy) returns (lambda () dy)
+;Then, when dy! is set to (stream-map f y), we get (cons-stream (f (stream-car y)) (stream-map f (stream-cdr y))),
+;and (stream-car y) returns y0, which is well-defined, and so we get
+;(cons-stream (f y0) (stream-map f (stream-cdr y))).
+;Now, when we return y, we have the (force (delay dy)) forcing us to lookup the variable value of dy, which is (cons-stream (f y0) (stream-map f (stream-cdr y)))
+
+;Exercise 4.19:
+;Let's take a look at Ben's perspective, i.e. sequentially evaluating the expressions:
+;Ben is right, if the interpreter evaluates sequentially, because then we would have a set to 1 off bat, and so b would be set to 11, then a would be changed to 5, and (f x) would output 16.
+;((lambda (a)
+;  (define (f x) 
+;    (define b (+ a x))
+;    (define a 5)
+;    (+ a b)
+;  (f 10))) 1)
+
+;Let's take a look at Alyssas argument by evaluating the procedure as we would in Exercise 4.16:
+;(lambda (a)
+;  (define (f x) 
+;    (define b (+ a x))
+;    (define a 5)
+;    (+ a b)
+;  (f 10)))
+;becomes
+;(lambda (a)
+;  (let ((f '*unassigned*))
+;    (set! f (lambda (x) 
+;              (define b (+ a x))
+;              (define a 5)
+;              (+ a b)))
+;    (f 10)))
+;becomes
+;(lambda (a)
+;  (let ((f ' *unassigned*))
+;    (set! f (lambda (x)
+;              (let ((b '*unassigned*) (a '*unassigned*))
+;                (set! b (+ a x))
+;                (set! a 5)
+;                (+ a b))))
+;    (f 10)))
+;Thus, Alyssa is right. If we evaluate by the mechanism introducing in exercise 4.16 we would get an error, as b would be set when a is undefined.
+
+;Let's consider Eva's view:
+;(lambda (a)
+;  (define (f x) 
+;    (define b (+ a x))
+;    (define a 5)
+;    (+ a b)
+;  (f 10)))
+;;Well, if the definitions occur first and are simultaneous, then indeed a would be set to 5 at the same time as b would be set to 15, and so indeed (+ a b) would return 20.
+;So if the evaluator worked as Eva suggests, she would be right.
+
+;Well, it seems like all three are right depending on how the evaluator behaves, which boils down to implementation... 
+
+;Finally, passing the following into the MIT Scheme interpreter produces the error "Can't define name; already free: a" error.
+;(define test 
+;  (lambda (a) 
+;    (define (f x)
+;      (define b (+ a x))
+;      (define a 5)
+;      (+ a b))
+;    (f 10)))
+;so the MIT-Scheme interpreter doesn't allow you to define variables in environments where those variables are already defined... Our interpreter specifies that we set! variable values
+;when the variables are already bound in the environment that we wish to define them... 
 
 
+;Now to try to devise a way to make the interpreter work as Eva prefers...
+
+;Perhaps the interpreter can type check operands and see if definitions exist locally which would make the types correct before executing any operations on operands of a given type..
+;but... that would require further expanding the syntax of our language, and even then we might produce new bugs... so...
+
+;Exercise 4.20:
+;a:
+;(letrec ((<var1> <exp1>) ... (<varn> <expn>)) <body>) --> (let ((<var1> '*unassigned*) (<var2> '*unassigned*) ... (<varn> '*unassigned*))
+;                                                            (set! <var1> <exp1>)
+;                                                            (set! <var2> <exp2>)
+;                                                            ...
+;                                                            (set! <varn> <expn>)
+;                                                            <body>)
+
+;We will define syntax selectors.
+
+(define (letrec-bindings exp)
+  (cadr exp))
+(define (letrec-body exp)
+  (cddr exp))
+
+(define (letrec-unassigned-variables bindings)
+  (if (null? bindings)
+      ()
+      (let ((binding (car bindings)))
+        (cons (list (car binding) '*unassigned*) (letrec-unassigned-variables (cdr bindings))))))
+(define (letrec-set-variable-values bindings)
+  (if (null? bindings)
+      ()
+      (let ((binding (car bindings)))
+        (cons (list 'set! (car binding) (cadr binding)) (letrec-set-variable-values (cdr bindings))))))
+
+(define (letrec->let exp)
+  (let ((bindings (letrec-bindings exp))
+        (body (letrec-body exp)))
+    (let ((unassigned-variables (letrec-unassigned-variables bindings))
+          (set-expressions (letrec-set-variable-values bindings)))
+      (append (append (list 'let unassigned-variables) set-expressions) body))))
+
+(define test '(letrec ((<var1> <exp1>) (<var2> <exp2>) (<var3> <exp3>)) <body>))
+
+;b
+;(define (f x)
+;  (letrec
+;    ((even? (lambda (n)
+;              (if (= n 0) true (odd? (- n 1)))))
+;     (odd? (lambda (n)
+;             (if (= n 0) false (even? (- n 1))))))
+;    <rest of body of f>))
+;Drew the environments on paper.     
