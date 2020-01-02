@@ -6145,7 +6145,7 @@
 ;=(substitute x in for n)
 ;((lambda (fact) (fact fact x))
 ; (lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1))))))
-;=(substitute operand lambda for (fact))
+;=(substitute operand lambda for fact)
 ;((lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1))))) (lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1))))) x)
 ;=(substitute in the first operand lambda for ft in body of operator lambda and x for k in same body)
 ;(if (= x 1) 1 (* x ((lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1))))) (lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1))))) (- x 1))))
