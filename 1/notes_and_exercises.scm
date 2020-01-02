@@ -6137,7 +6137,7 @@
   (define (odd? n)
     (if (= n 0) false (even? (- n 1))))
   (even? x))
-;Before we do that, let's understand what the body of (fact x) above does:
+;Before we do that, let's understand what the body of f does:
 ;((lambda (n)
 ;     ((lambda (fact) (fact fact n))
 ;      (lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1)))))))
