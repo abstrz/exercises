@@ -6159,4 +6159,169 @@
    (lambda (ev? od? n)
      (if (= n 0) false (ev? ev? od? (- n 1))))))
 ;===============4.1.7 Separating Syntactic Analysis From Execution===============
+;Lets see exactly how the following is evaluated by following conceptually the code of our implementation (we assume arithmetic operators are primitives in the-global-environment for simplicity).
+;(eval '(define (factorial n) 
+;         (if (= n 1) 1 (* n (factorial (- n 1))))) the-global-environment)
+;=
+;(eval-definition '(define (factorial n) 
+;                    (if (= n 1) 1 (* n (factorial (- n 1))))) the-global-environment)
+;=
+;(define-variable! 'factorial '(proc n (if (= n 1) 1 (* n (factorial (- n 1)))) the-global-environment)))
+;so that our environment looks like (((factorial <stuff>) ((proc n (if (= n 1) 1 (* n (factorial (- n 1)))) the-global-environment) <stuff>)) <rest-frames>)
+;Now consider:
+;(eval '(factorial 4) the-global-environment)
+;=
+;(apply (proc n (if (= n 1) 1 (* n (factorial (- n 1)))) the-global-environment) (4))
+;=
+;Let env' be (((n) (4)) ((factorial <stuff>) ((proc n (if (= n 1) 1 (* n (factorial (- n 1)))) the-global-environment) <stuff>)) <rest-frames>),
+;More generally, let's just add a prime whenever we expand the previous environment by the parameters and argument of the call we are currently computing, for simplicity.
+;=
+;(eval-sequence 
+;  (if (= n 1) 1 (* n (factorial (- n 1)))) env')  
+;and now this would trigger the following operations, with the last being the return value of the eval-sequence procedure:
+;(eval '(* n (factorial (- n 1))) env')
+;Now, as mentioned, we assume * is a primitive in our language, so we get
+;=
+;(apply-in-underlying-scheme * (list-of-values n (factorial (- n 1)) env'))
+;=
+;(apply-in-underlying-scheme * (4 (eval '(factorial (- n 1)) env')))
+;=
+;(apply-in-underlying-scheme * (4 (apply-in-underlying-scheme * (3 (eval '(factorial (- n 2)) env'')))))
+;=
+;...
+;=
+;(apply-in-underlying-scheme * (4 (apply-in-underlying-scheme * (3 (apply-in-underlying-scheme * (2 (eval '(factorial (-n 3)) env''')))))))
+;now the final eval returns 1, and we are done.
+;We see that a case analysis and syntax analysis was done by eval on factorial 4 times, ignoring any syntax parsing and case analysis that would be done on the subtraction subexpressions.
+;We increase efficiency by separating syntax analysis from execution:
 
+(define (eval exp env) ((analyze exp) env))
+
+(define (analyze exp)
+  (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
+        ((quoted? exp) (analyze-quoted exp))
+        ((variable? exp) (analyze-variable exp))
+        ((assignment? exp) (analyze-assignment exp))
+        ((definition? exp) (analyze-definition exp))
+        ((if? exp) (analyze-if exp))
+        ((lambda? exp) (analyze-lambda exp))
+        ((begin? exp) (analyze-sequence (begin-actions exp)))
+        ((cond? exp) (analyze (cond->if exp)))
+        ((application? exp) (analyze-application exp))
+        (else (error "Unknown expression type: ANALYZE" exp))))
+
+;Self evaluating expression
+(define (analyze-self-evaluating exp)
+  (lambda (env) exp))
+
+;Quoted expression
+(define (analyze-quoted)
+  (let ((qval (text-of-quotation exp)))
+    (lambda (env) qval)))
+
+;Variable expression (lookup of variable depends on environment so done in execution step)
+(define (analyze-variable exp)
+  (lambda (env) (lookup-variable-value exp env)))
+
+;Assignment expression 
+
+(define (analyze-assignment exp)
+  (let ((var (assignment-variable exp))
+        (vproc (analyze (assignment-value exp))))
+    (lambda (env)
+      (set-variable-value! var (vproc env) env)
+      'ok)))
+(define (analyze-definiton exp)
+  (let ((var (definition-variable exp))
+        (vproc (analyze (definition-value exp))))
+    (lambda (env)
+      (define-variable! var (vproc env) env)
+      'ok)))
+
+;if expressions
+
+(define (analyze-if exp)
+  (let ((pproc (analyze (if-predicate exp)))
+        (cproc (analyze (if-consequent exp)))
+        (aproc (analyze (if-alternative exp))))
+    (lambda (env) (if (true? (pproc env))
+                    (cproc env)
+                    (aproc env)))))
+
+;lambda expressions
+
+(define (analyze-lambda exp)
+  (let ((vars (lambda-parameters exp))
+        (bproc (analyze-sequence (lambda-body exp))))
+    (lambda (env) (make-procedure vars bproc env))))
+
+;sequence expressions
+;Takes (exp1 exp2 ... expn) and outputs (lambda (env) (lambda (env) (... (lambda (env) (exp1 env) (exp2 env)) ...) (expn-1 env)) (expn env))
+(define (analyze-sequence exps)
+  (define (sequentially proc1 proc2)
+    (lambda (env) (proc1 env) (proc2 env)))
+  (define (loop first-proc rest-procs)
+    (if (null? rest-procs)
+        first-proc
+        (loop (sequentially first-proc (car rest-procs))
+              (cdr rest-procs))))
+  (let ((procs (map analyze exps)))
+    (if (null? procs) (error "Empty sequence: ANALYZE"))
+    (loop (car procs) (cdr procs))))
+
+;application expressions
+(define (analyze-application exp)
+  (let ((fproc (analyze (operator exp)))
+        (aprocs (map analyze (operands exp))))
+    (lambda (env)
+      (execute-application
+        (fproc env)
+        (map (lambda (aproc) (aproc env))
+             aprocs)))))
+;execute-apply is analog of apply in this new system
+(define (execute-application proc args)
+  (cond ((primitive-procedure? proc)
+         (apply-primitive-procedure proc args))
+        ((compound-procedure? proc)
+         ((procedure-body proc)
+          (extend-environment
+            (procedure-parameters proc)
+            args
+            (procedure-environment proc))))
+        (else 
+          (error "Unknown procedure type: EXECTUE-APPLICATION"
+                 proc))))
+;Exercise 4.22:          
+;Recall the let->combination procedure that we implemented in exercise 4.6, which does the following syntax manipulation:
+;(let ((<var1> <exp1>) ... (<varn> <expn>)) <body>) ---> ((lambda (<var1> ... <varn>) body) <exp1> ... <expn>)
+;We use this syntactic transformation to implement analyze-let as a derived form of analyze-application:
+(define (analyze-let exp)
+  (analyze-application (let->combination exp)))
+
+;Exercise 4.23:
+;Lets put the two procedures side by side. We have our first implementation:
+;(define (analyze-sequence exps)
+;  (define (sequentially proc1 proc2)
+;    (lambda (env) (proc1 env) (proc2 env)))
+;  (define (loop first-proc rest-procs)
+;    (if (null? rest-procs)
+;        first-proc
+;        (loop (sequentially first-proc (car rest-procs))
+;              (cdr rest-procs))))
+;  (let ((procs (map analyze exps)))
+;    (if (null? procs) (error "Empty sequence: ANALYZE"))
+;    (loop (car procs) (cdr procs))))
+;and then we have the second implementation:
+(define (analyze-sequence exps)
+  (define (execute-sequence procs env)
+    (cond ((null? (cdr procs))
+           ((car procs) env))
+          (else
+            ((car procs) env)
+            (execute-sequence (cdr procs) env))))
+  (let ((procs (map analyze exps)))
+    (if (null? procs)
+      (error "Empty sequence: ANALYZE"))
+    (lambda (env)
+      (execute-sequence procs env))))
+;<NOT YET COMPLETED REST OF EXERCISE>
