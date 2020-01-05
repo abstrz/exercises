@@ -6366,22 +6366,26 @@
 ;Design and carry out some experiments to compare the speed of the original metacircular evaluator with the version in this section.
 
 ;=============================<Not done yet!!!!>=============================
-(define (install-primitive-arithmetic)
+(define (install-primitive-arithmetic env)
   (define-variable! '= (list 'primitive =) env)
   (define-variable! '+ (list 'primitive +) env)
   (define-variable! '- (list 'primitive -) env)
   (define-variable! '* (list 'primitive *) env)
-  (define-variable! '/ (list 'primitive /) env))
-(define (install-primitive-not)
-  (define-variable! 'not (list 'primitive not) env))
+  (define-variable! '/ (list 'primitive /) env)
+  'ok)
+(define (install-primitive-not env)
+  (define-variable! 'not (list 'primitive not) env)
+  'ok)
 
-(define (install-primitive-eq?)
-  (define-variable! 'eq? (list 'primitive eq?) env))
-(define (install-false?-true?)
+(define (install-primitive-eq? env)
+  (define-variable! 'eq? (list 'primitive eq?) env)
+  'ok)
+(define (install-false?-true? env)
   (eval '(define (false? x) (eq? x false)) env)
-  (eval '(define (true? x) (not (false? x))) env))
+  (eval '(define (true? x) (not (false? x))) env)
+  'ok)
 
-(define (get-package m)
+(define (get-package m eval)
   (define (fib env)
     (eval '(define (fib n)
              (if (= n 0) 
@@ -6396,35 +6400,66 @@
           env))
 
   (define (append env)
-    (eval '(define (append l1 l2)
-             (if (null? l1) l2 (cons (car l1) (append (cdr l1) l2))))
+    (eval '(define (append x y)
+             (if (null? x) 
+                 y 
+                 (cons (car x) (append (cdr x) y))))
           env))
   (cond ((eq? m 'fib) fib)
         ((eq? m 'fact) fact)
         ((eq? m 'append) append)))
 
+(define (install-packages-to-env eval env)
+  (install-primitive-arithmetic env)
+  (install-primitive-not env)
+  (install-primitive-eq? env)
+  (install-false?-true? env)
+  ((get-package 'fib eval) env)
+  ((get-package 'fact eval) env)
+  ((get-package 'append eval) env))
+(define (test-env eval) 
+  (let ((initial-env (setup-environment)))
+    (install-packages-to-env eval initial-env)
+    initial-env))
+;(define (test-evall-env 
+;  (let ((initial-env (setup-environment)))
+;    (install-packages-to-env evall initial-env)
+;    initial-env))
 
-(define (eval-procedures)
 
-  (eval '(fib 5) test-env))
+(define (test-seq eval env)
+  (eval '(fib 10) env)
+  (eval '(fact 10) env)
+  (eval '(append '(a b c d e) '(f g h i j)) env))
 
-(define (n-calls prod n)
+
+(define (n-calls prod eval env n)
   (if (= n 0)
     'done
-    (begin (prod)
-           (n-calls prod (- n 1)))))
+    (begin (prod eval env)
+           (n-calls prod eval env (- n 1)))))
 
-(define (timed-eval n)
+(define (timed eval n)
   (let ((starttime (runtime)))
-    (n-calls eval-list n)
+    (n-calls test-seq eval (test-env eval) n)
     (- (runtime) starttime)))
 
-(define (timed-evall n)
-  (let ((starttime (runtime)))
-    (n-calls evall-list n)
-    (- (runtime) starttime)))
+;(define (timed-evall n)
+;  (let ((starttime (runtime)))
+;    (n-calls test-seq evall test-evall-env n)
+;    (- (runtime) starttime)))
 
-(define (difference-evals n)
-  (- (timed-eval n) (timed-evall n)))
+(define (%diff-evals eval1 eval2 n)
+  (let ((teval (timed eval1 n))
+        (tevall (timed eval2 n)))
+    (abs (/ (- tevall teval) teval))))
 
+;(%diff-eval eval evall 50) returns  .35
+;(%diff-eval eval evall 100) returns .44 
+;(%diff-eval eval evall 200) returns .44
+;(%diff-evals eval evall 400) returns .44
+;(%diff-evals eval evall 800) returns .44
 
+;Thus evall is roughly .44 percent faster than eval! We've achieved a nice efficiency boost by performing more of the syntactical analysis on expressions, before executing them...
+
+;========================== 4.2 Variations on a Scheme - Lazy Evaluation ==========================
