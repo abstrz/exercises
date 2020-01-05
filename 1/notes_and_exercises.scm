@@ -5211,7 +5211,7 @@
 ;Assignments have the form (set! <var> <val>)
 (define (assignment? exp) (tagged-list? exp 'set!))
 (define (assignment-variable exp) (cadr exp))
-(define (assigment-value exp) (caddr exp))
+(define (assignment-value exp) (caddr exp))
 ;Definitions have the form
 ;(define <var> <value>) or
 ;(define (<var> <parameter_1> ... <parameter_n>) <body>)
@@ -5287,6 +5287,9 @@
             (make-if (cond-predicate first)
                      (sequence->exp (cond-actions first))
                      (expand-clauses rest))))))
+
+;(cond ((<pred1> <seq1> <seq2> ... <seqn1>) (<pred2> <seq1> <seq2> ... <seqn2>) ... (<predm>  <seq1> <seq2> ... <seqnm>)))
+;(expand-clauses (cond ((<pred1> <seq1> <seq2> ... <seqn1>) (<pred2> <seq1> <seq2> ... <seqn2>) ... (<predm>  <seq1> <seq2> ... <seqnm>))))
 ;Exercise 4.2:
 ;a:The evaluator will interpret (define x 3) as an application in Louis's implementation, and so we would get
 ;(apply (eval define env) (list-of-values (x 3) env))
@@ -5631,36 +5634,41 @@
       (if (< (length vars) (length vals))
           (error "Too many arguments supplied" vars vals)
           (error "Too few arguments supplied" vars fals))))
-;(define (lookup-variable-value var env)
-;  (define (env-loop env)
-;    (define (scan vars vals)
-;      (cond ((null? vars)
-;             (env-loop (enclosing-environment env)))
-;            ((eq? var (car vars)) (car vals))
-;            (else (scan (cdr vars) (cdr vals)))))))
-;
-;(define (set-variable-value! var val env)
-;  (define (env-loop env)
-;    (define (scan vars vals)
-;      (cond ((null? vars)
-;             (env-loop (enclosing-environment env)))
-;            ((eq? var (car vars)) (set-car! vals val))
-;            (else (scan (cdr vars) (cdr vals)))))
-;    (if (eq? env the-empty-environment)
-;        (error "Unbound variable: SET!" var)
-;        (let ((frame (first-frame env)))
-;          (scan (frame-variables frame)
-;                (frame-values frame)))))
-;  (env-loop env))
+(define (lookup-variable-value var env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars)) (car vals))
+            (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+      (error "Didn't find variable:" var)
+      (let ((frame (first-frame env)))
+        (let ((vars (frame-variables frame))
+              (vals (frame-values frame)))
+          (scan vars vals))))))
+(define (set-variable-value! var val env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars)) (set-car! vals val))
+            (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+        (error "Unbound variable: SET!" var)
+        (let ((frame (first-frame env)))
+          (scan (frame-variables frame)
+                (frame-values frame)))))
+  (env-loop env))
 
-;(define (define-variable! var val env)
-;  (let ((frame (first-frame env)))
-;    (define (scan vars vals)
-;      (cond ((null? vars)
-;             (add-binding-to-frame! var val frame))
-;            ((eq? var (car vars)) (set-car! vals val))
-;            (else (scan (cdr vars) (cdr vals)))))
-;    (scan (frame-variables frame) (frame-values frame))))
+(define (define-variable! var val env)
+  (let ((frame (first-frame env)))
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (add-binding-to-frame! var val frame))
+            ((eq? var (car vars)) (set-car! vals val))
+            (else (scan (cdr vars) (cdr vals)))))
+    (scan (frame-variables frame) (frame-values frame))))
 
 ;Exercise 4.11:
 ;(define (make-frame variables values)
@@ -5688,35 +5696,35 @@
 ;      (add-binding-to-frame! var val (cdr frame))))
 ;Exercise 4.12:
 ;returns the subframe whose first variable is var, with corresponding values. 
-(define (sub-frame var frame)
-  (cond ((null? (frame-variables frame)) #f)
-        ((eq? (car (frame-variables frame)) var) frame)
-        (else (sub-frame var (make-frame (cdr (frame-variables frame)) (cdr (frame-values frame)))))))
-
-;prodnotfound is a procedure that takes two arguments. The first argument tells us what to do with the current frame and the second argument tells us what to do with the enclosing environment.
-(define (eval-loop prodfound prodnotfound var env)
-  (let ((frame (first-frame env)))
-    (let ((subframe (sub-frame var frame)))
-      (if subframe
-          (prodfound subframe)
-          (prodnotfound frame (enclosing-environment env)))))) 
-
-(define (lookup-variable-value var env)
-  (eval-loop (lambda (x) (car (frame-values x))) 
-             (lambda (x y) (lookup-variable-value var y))
-             var
-             env))
-
-(define (set-variable-value! var val env)
-  (eval-loop (lambda (x) (set-car! (frame-values x) val))
-             (lambda (x y) (set-variable-value! var val y))
-             var
-             env))
-(define (define-variable! var val env)
-  (eval-loop (lambda (x) (set-car! (frame-values x) val))
-             (lambda (x y) (add-binding-to-frame! var val x))
-             var
-             env))
+;(define (sub-frame var frame)
+;  (cond ((null? (frame-variables frame)) #f)
+;        ((eq? (car (frame-variables frame)) var) frame)
+;        (else (sub-frame var (make-frame (cdr (frame-variables frame)) (cdr (frame-values frame)))))))
+;
+;;prodnotfound is a procedure that takes two arguments. The first argument tells us what to do with the current frame and the second argument tells us what to do with the enclosing environment.
+;(define (eval-loop prodfound prodnotfound var env)
+;  (let ((frame (first-frame env)))
+;    (let ((subframe (sub-frame var frame)))
+;      (if subframe
+;          (prodfound subframe)
+;          (prodnotfound frame (enclosing-environment env)))))) 
+;
+;(define (lookup-variable-value var env)
+;  (eval-loop (lambda (x) (car (frame-values x))) 
+;             (lambda (x y) (lookup-variable-value var y))
+;             var
+;             env))
+;
+;(define (set-variable-value! var val env)
+;  (eval-loop (lambda (x) (set-car! (frame-values x) val))
+;             (lambda (x y) (set-variable-value! var val y))
+;             var
+;             env))
+;(define (define-variable! var val env)
+;  (eval-loop (lambda (x) (set-car! (frame-values x) val))
+;             (lambda (x y) (add-binding-to-frame! var val x))
+;             var
+;             env))
 ;Exercise 4.13:
 
 (define (make-unbound-frame! var frame)
@@ -5940,8 +5948,8 @@
 ;if we implement the change in procedure-body, then each time we retrieve the procedure-body the computation has to be made, which is a waste of resources...
 ;also, in the global-environment lambda functions will be represented differently than they are used when they are retrieved, which does more to confuse than anything... 
 ;thus I will make the change to make-procedure and not procedure-body:
-(define (make-procedure parameters body env)
-  (list 'procedure parameters (scan-out-defines (make-lambda parameters body)) env))
+;(define (make-procedure parameters body env)
+;  (list 'procedure parameters (scan-out-defines (make-lambda parameters body)) env))
 
 ;Exercise 4.17:
 ;Did this on paper. Suppose we have
@@ -6195,7 +6203,7 @@
 ;We see that a case analysis and syntax analysis was done by eval on factorial 4 times, ignoring any syntax parsing and case analysis that would be done on the subtraction subexpressions.
 ;We increase efficiency by separating syntax analysis from execution:
 
-(define (eval exp env) ((analyze exp) env))
+(define (evall exp env) ((analyze exp) env))
 
 (define (analyze exp)
   (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
@@ -6215,7 +6223,7 @@
   (lambda (env) exp))
 
 ;Quoted expression
-(define (analyze-quoted)
+(define (analyze-quoted exp)
   (let ((qval (text-of-quotation exp)))
     (lambda (env) qval)))
 
@@ -6231,7 +6239,7 @@
     (lambda (env)
       (set-variable-value! var (vproc env) env)
       'ok)))
-(define (analyze-definiton exp)
+(define (analyze-definition exp)
   (let ((var (definition-variable exp))
         (vproc (analyze (definition-value exp))))
     (lambda (env)
@@ -6254,6 +6262,7 @@
   (let ((vars (lambda-parameters exp))
         (bproc (analyze-sequence (lambda-body exp))))
     (lambda (env) (make-procedure vars bproc env))))
+
 
 ;sequence expressions
 ;Takes (exp1 exp2 ... expn) and outputs (lambda (env) (lambda (env) (... (lambda (env) (exp1 env) (exp2 env)) ...) (expn-1 env)) (expn env))
@@ -6300,7 +6309,7 @@
 
 ;Exercise 4.23:
 ;Lets put the two procedures side by side. We have our first implementation:
-;(define (analyze-sequence exps)
+;(define (analyze-sequence1 exps)
 ;  (define (sequentially proc1 proc2)
 ;    (lambda (env) (proc1 env) (proc2 env)))
 ;  (define (loop first-proc rest-procs)
@@ -6312,16 +6321,110 @@
 ;    (if (null? procs) (error "Empty sequence: ANALYZE"))
 ;    (loop (car procs) (cdr procs))))
 ;and then we have the second implementation:
-(define (analyze-sequence exps)
-  (define (execute-sequence procs env)
-    (cond ((null? (cdr procs))
-           ((car procs) env))
-          (else
-            ((car procs) env)
-            (execute-sequence (cdr procs) env))))
-  (let ((procs (map analyze exps)))
-    (if (null? procs)
-      (error "Empty sequence: ANALYZE"))
-    (lambda (env)
-      (execute-sequence procs env))))
-;<NOT YET COMPLETED REST OF EXERCISE>
+;(define (analyze-sequence2 exps)
+;  (define (execute-sequence procs env)
+;    (cond ((null? (cdr procs))
+;           ((car procs) env))
+;          (else
+;            ((car procs) env)
+;            (execute-sequence (cdr procs) env))))
+;  (let ((procs (map analyze exps)))
+;    (if (null? procs)
+;      (error "Empty sequence: ANALYZE"))
+;    (lambda (env)
+;      (execute-sequence procs env))))
+
+;Okay, now lets analyze a sequence of one expression (exp1). Let analyzed-expi= (analyze expi). Then:
+;
+;(analyze-sequence1 (exp1))
+;=(loop analyzed-exp1 ())
+;=analyzed-exp1
+
+;(analyze-sequence2 (exp2))
+;=(lambda (env) (execute-sequence (analyzed-exp1) env))
+
+;Thus, the first procedure simply returns the executable procedure, whereas the second returns a procedure that takes an environment as argument then loops through and executes the sequence...
+;The first procedure is already doing more work at analysis time than at runtime.
+
+;Lets look at (exp1 exp2):
+;
+;(analyze-sequence1 (exp1 exp2))
+;=(loop analyzed-exp1 (analyzed-exp2))
+;=(loop (sequentially analyzed-exp1 analyzed-exp2) ())
+;=(loop (lambda (env) (analyzed-exp1 env) (analyzed-exp2 env)) ())
+;=(lambda (env) (analyzed-exp1 env) (analyzed-exp2 env))
+
+;(analyze-sequence2 (exp1 exp2))
+;=(lambda (env) (execute-sequence (analyzed-exp1 analyzed-exp2) env))
+
+;At runtime, the first procedure takes an environment as an argument and applies it to the whole sequence, left to right,
+;            whereas the second procedure takes an environment as argument, then recursively loops through the sequence, calling each analyzed expression, one by one, as it loops.
+;
+;Thus, the first procedure does more work at analysis time and less work at runtime... as Eva claimed.
+
+;Exercise 4.24:
+;Design and carry out some experiments to compare the speed of the original metacircular evaluator with the version in this section.
+
+;=============================<Not done yet!!!!>=============================
+(define (install-primitive-arithmetic)
+  (define-variable! '= (list 'primitive =) env)
+  (define-variable! '+ (list 'primitive +) env)
+  (define-variable! '- (list 'primitive -) env)
+  (define-variable! '* (list 'primitive *) env)
+  (define-variable! '/ (list 'primitive /) env))
+(define (install-primitive-not)
+  (define-variable! 'not (list 'primitive not) env))
+
+(define (install-primitive-eq?)
+  (define-variable! 'eq? (list 'primitive eq?) env))
+(define (install-false?-true?)
+  (eval '(define (false? x) (eq? x false)) env)
+  (eval '(define (true? x) (not (false? x))) env))
+
+(define (get-package m)
+  (define (fib env)
+    (eval '(define (fib n)
+             (if (= n 0) 
+               0
+               (if (= n 1) 
+                 1
+                 (+ (fib (- n 1)) (fib (- n 2))))))
+          env))
+  (define (fact env)
+    (eval '(define (fact n)
+             (if (= n 1) 1 (* n (fact (- n 1))))) 
+          env))
+
+  (define (append env)
+    (eval '(define (append l1 l2)
+             (if (null? l1) l2 (cons (car l1) (append (cdr l1) l2))))
+          env))
+  (cond ((eq? m 'fib) fib)
+        ((eq? m 'fact) fact)
+        ((eq? m 'append) append)))
+
+
+(define (eval-procedures)
+
+  (eval '(fib 5) test-env))
+
+(define (n-calls prod n)
+  (if (= n 0)
+    'done
+    (begin (prod)
+           (n-calls prod (- n 1)))))
+
+(define (timed-eval n)
+  (let ((starttime (runtime)))
+    (n-calls eval-list n)
+    (- (runtime) starttime)))
+
+(define (timed-evall n)
+  (let ((starttime (runtime)))
+    (n-calls evall-list n)
+    (- (runtime) starttime)))
+
+(define (difference-evals n)
+  (- (timed-eval n) (timed-evall n)))
+
+
