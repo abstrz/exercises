@@ -1,29 +1,3 @@
-;=============Common and simple procedures====================
-(define (inc x)
-    (+ x 1))
-(define (dec x)
-    (- x 1))
-(define (identity x)
-  x)
-(define (cube x) (* x x x))
-(define (close-enough? x y) (< (abs (- x y)) 0.001))
-(define (average x y) (/ (+ x y) 2))
-(define (logB B x)
-  (/ (log x) (log B)))
-(define (gen-gcd . args)
-  (define (rec l)
-    (cond ((= (length l) 1) (car l)) 
-          ((= (length l) 2) (gcd (car l) (cadr l)))
-          ((> (length l) 2) (gcd (gcd (car l) (cadr l)) (rec (cddr l))))))
-  (if (< (length args) 2) 
-      (error "You need to provide at least two arguments. You gave:" (length args))
-      (rec args)))
-(define (copies-list element size)
-  (define (iter n result)
-    (if (= n 0)
-        result
-        (iter (- n 1) (cons element result))))
-  (iter size ()))
 ;=============1.2.4 Exponentiation=============================
 ;;recursive definition
 ;(define (expt_rec b n)
@@ -3424,76 +3398,76 @@
 ;      *:42
 ;the subtables dont get a *table* symbol as the first car, but rather just the subtable name.
 ;drawing a box and pointer graph of the table makes everything clear! 
-(define (make-table)
-  (let ((local-table (list '*table*)))
-    (define (lookup key-1 key-2)
-      (let ((subtable
-              (assoc key-1 (cdr local-table))))
-        (if subtable
-            (let ((record
-                    (assoc key-2 (cdr subtable))))
-              (if record
-                  (cdr record)
-                  false))
-            false)))
-    (define (insert! key-1 key-2 value)
-      (let ((subtable (assoc key-1 (cdr local-table))))
-        (if subtable
-            (let ((record (assoc key-2 (cdr subtable))))
-              (if record
-                  (set-cdr! record value)
-                  (set-cdr! subtable
-                            (cons (cons key-2 value)
-                                  (cdr subtable)))))
-            (set-cdr! local-table
-                      (cons (list key-1
-                                  (cons key-2 value))
-                            (cdr local-table)))))
-      'ok)
-    (define (dispatch m)
-      (cond ((eq? m 'lookup-proc) lookup)
-            ((eq? m 'insert-proc!) insert!)
-            (else (error "Unknown operation: TABLE" m))))
-    dispatch))
-(define operation-table (make-table))
-(define get (operation-table 'lookup-proc))
-(define put (operation-table 'insert-proc!))
-;Exercise 3.24
-(define (make-table-1 same-key?)
-  (let ((local-table (list '*table*)))
-    (define (equ? key records)
-      (cond ((null? records) false)
-            ((same-key? key (caar records)) (car records))
-            (else (equ? key (cdr records)))))
-    (define (lookup key-1 key-2 local-table)
-      (let ((subtable
-              (equ? key-1 (cdr local-table))))
-        (if subtable
-            (let ((record
-                    (equ? key-2 (cdr subtable))))
-              (if record
-                  (cdr record)
-                  false))
-            false)))
-    (define (insert! key-1 key-2 value local-table)
-      (let ((subtable (equ? key-1 (cdr local-table))))
-        (if subtable
-            (let ((record (equ? key-2 (cdr subtable))))
-              (if record
-                  (set-cdr! record value)
-                  (set-cdr! subtable
-                            (cons (cons key-2 value)
-                                  (cdr subtable)))))
-            (set-cdr! local-table
-                      (cons (list key-1
-                                  (cons key-2 value))
-                            (cdr local-table)))))
-      'ok)
-    (define (dispatch m)
-      (cond ((eq? m 'lookup-proc) lookup)
-            ((eq? m 'insert-proc!) insert!)
-            (else (error "Unknown operation: TABLE" m))))
-    dispatch))
+;(define (make-table)
+;  (let ((local-table (list '*table*)))
+;    (define (lookup key-1 key-2)
+;      (let ((subtable
+;              (assoc key-1 (cdr local-table))))
+;        (if subtable
+;            (let ((record
+;                    (assoc key-2 (cdr subtable))))
+;              (if record
+;                  (cdr record)
+;                  false))
+;            false)))
+;    (define (insert! key-1 key-2 value)
+;      (let ((subtable (assoc key-1 (cdr local-table))))
+;        (if subtable
+;            (let ((record (assoc key-2 (cdr subtable))))
+;              (if record
+;                  (set-cdr! record value)
+;                  (set-cdr! subtable
+;                            (cons (cons key-2 value)
+;                                  (cdr subtable)))))
+;            (set-cdr! local-table
+;                      (cons (list key-1
+;                                  (cons key-2 value))
+;                            (cdr local-table)))))
+;      'ok)
+;    (define (dispatch m)
+;      (cond ((eq? m 'lookup-proc) lookup)
+;            ((eq? m 'insert-proc!) insert!)
+;            (else (error "Unknown operation: TABLE" m))))
+;    dispatch))
+;(define operation-table (make-table))
+;(define get (operation-table 'lookup-proc))
+;(define put (operation-table 'insert-proc!))
+;;Exercise 3.24
+;(define (make-table-1 same-key?)
+;  (let ((local-table (list '*table*)))
+;    (define (equ? key records)
+;      (cond ((null? records) false)
+;            ((same-key? key (caar records)) (car records))
+;            (else (equ? key (cdr records)))))
+;    (define (lookup key-1 key-2 local-table)
+;      (let ((subtable
+;              (equ? key-1 (cdr local-table))))
+;        (if subtable
+;            (let ((record
+;                    (equ? key-2 (cdr subtable))))
+;              (if record
+;                  (cdr record)
+;                  false))
+;            false)))
+;    (define (insert! key-1 key-2 value local-table)
+;      (let ((subtable (equ? key-1 (cdr local-table))))
+;        (if subtable
+;            (let ((record (equ? key-2 (cdr subtable))))
+;              (if record
+;                  (set-cdr! record value)
+;                  (set-cdr! subtable
+;                            (cons (cons key-2 value)
+;                                  (cdr subtable)))))
+;            (set-cdr! local-table
+;                      (cons (list key-1
+;                                  (cons key-2 value))
+;                            (cdr local-table)))))
+;      'ok)
+;    (define (dispatch m)
+;      (cond ((eq? m 'lookup-proc) lookup)
+;            ((eq? m 'insert-proc!) insert!)
+;            (else (error "Unknown operation: TABLE" m))))
+;    dispatch))
 ;Exercise 3.25:
 (define (make-table-generalized)
   (let ((local-table (list '*table*)))
@@ -5116,21 +5090,21 @@
 ;=============4.Metalinguistic Abstraction=============
 ;=============4.1 Metalinguistic Abstraction=============
 ;=============4.1.1 The Core of the Evaluator=============
-(define (eval exp env)
-  (cond ((self-evaluating? exp) exp)
-        ((variable? exp) (lookup-variable-value exp env))
-        ((quoted? exp) (text-of-quotation exp))
-        ((assignment? exp) (eval-assignment exp env))
-        ((definition? exp) (eval-definition exp env))
-        ((if? exp) (eval-if exp env))
-        ((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
-        ((begin? exp)
-         (eval-sequence (begin-actions exp) env))
-        ((application? exp)
-         (apply (eval (operator exp) env)
-                (list-of-values (operands exp) env)))
-        (else 
-          (error "Unknown expression type: EVAL" exp))))
+;(define (eval exp env)
+;  (cond ((self-evaluating? exp) exp)
+;        ((variable? exp) (lookup-variable-value exp env))
+;        ((quoted? exp) (text-of-quotation exp))
+;        ((assignment? exp) (eval-assignment exp env))
+;        ((definition? exp) (eval-definition exp env))
+;        ((if? exp) (eval-if exp env))
+;        ((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
+;        ((begin? exp)
+;         (eval-sequence (begin-actions exp) env))
+;        ((application? exp)
+;         (apply (eval (operator exp) env)
+;                (list-of-values (operands exp) env)))
+;        (else 
+;          (error "Unknown expression type: EVAL" exp))))
 ;save a copy of the apply procedure implemented in scheme.
 (define apply-in-underlying-scheme
   apply)
@@ -5301,60 +5275,60 @@
 ;but when Louis makes the change, suddenly definitions, assignments, if statements, lambda expressions, and begin statements will be interpreted as evaluations and not applications,
 ;which creates bugs and causes the program to crash. The change we make in b. is to narrow down what we mean by an application by having them start with the keyword `call`.
 ;b:
-(define (eval-louis exp env)
-  (cond ((self-evaluating? exp) exp)
-        ((variable? exp) (lookup-variable-value exp env))
-        ((quoted? exp) (text-of-quotation exp))
-        ((application-louis? exp)
-         (apply (eval (operator-louis exp) env)
-                (list-of-values (operands-louis exp) env)))
-        ((assignment? exp) (eval-assignment exp env))
-        ((definition? exp) (eval-definition exp env))
-        ((if? exp) (eval-if exp env))
-        ((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
-        ((begin? exp)
-         (eval-sequence (begin-actions exp) env))
-        (else 
-          (error "Unknown expression type: EVAL" exp))))
+;(define (eval-louis exp env)
+;  (cond ((self-evaluating? exp) exp)
+;        ((variable? exp) (lookup-variable-value exp env))
+;        ((quoted? exp) (text-of-quotation exp))
+;        ((application-louis? exp)
+;         (apply (eval (operator-louis exp) env)
+;                (list-of-values (operands-louis exp) env)))
+;        ((assignment? exp) (eval-assignment exp env))
+;        ((definition? exp) (eval-definition exp env))
+;        ((if? exp) (eval-if exp env))
+;        ((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
+;        ((begin? exp)
+;         (eval-sequence (begin-actions exp) env))
+;        (else 
+;          (error "Unknown expression type: EVAL" exp))))
 ;Exercise 4.3:
-(define (install-eval-package)
-  (define (eval-quoted exp env)  ;we don't need to pass env to eval-quoted, but writing it this way so when we implement eval, we just need one if statement. Makes it cleaner in the end.
-    (text-of-quotation exp))
-  (define (eval-assignment exp env)
-    (set-variable-value! (assignment-variable exp)
-                         (eval (assignment-value exp) env)
-                         env)
-    'ok)
-  (define (eval-definition exp env)
-    (define-variable! (definition-variable exp)
-                      (eval (definition-value exp) env)
-                      env)
-    'ok)
-  (define (eval-if exp env)
-    (if (true? (eval (if-predicate exp) env))
-        (eval (if-consequent exp) env)
-        (eval (if-alternative exp) env)))
-  (define (eval-lambda exp env)
-    (make-procedure (lambda-parameters exp) (lambda-body exp) env))
-  (define (eval-begin exp env)
-    (eval-sequence (begin-actions exp) env))
-  (define (eval-application exp env)
-    (apply (eval (operator exp) env) (list-of-values (operands exp) env)))
-  (put 'eval 'quote eval-variable)
-  (put 'eval 'assignment eval-assignment)
-  (put 'eval 'definition eval-definition)
-  (put 'eval 'if eval-if)
-  (put 'eval 'lambda eval-lambda)
-  (put 'eval 'begin eval-begin)
-  (put 'eval 'application eval-application)
-  'ok)
-(define (dd-eval exp env)
-  (cond ((self-evaluating? exp) exp)  ;no tag, so handle it directly.
-        ((variable? exp) (lookup-variable-value exp env))  ;variable doesn't have a tag, so can't use data-directed style, unless we change how we express variables, but that is not worth the work.
-        (else (let ((eval-proc (get 'eval (car exp))))
-                (if eval-proc  ;if there is a proc with the type of exp apply it, else by definition of application expression as pair that is not one of above types, exp is an application expression.
-                    (eval-proc exp env)
-                    ((get 'eval 'application) exp env))))))
+;(define (install-eval-package)
+;  (define (eval-quoted exp env)  ;we don't need to pass env to eval-quoted, but writing it this way so when we implement eval, we just need one if statement. Makes it cleaner in the end.
+;    (text-of-quotation exp))
+;  (define (eval-assignment exp env)
+;    (set-variable-value! (assignment-variable exp)
+;                         (eval (assignment-value exp) env)
+;                         env)
+;    'ok)
+;  (define (eval-definition exp env)
+;    (define-variable! (definition-variable exp)
+;                      (eval (definition-value exp) env)
+;                      env)
+;    'ok)
+;  (define (eval-if exp env)
+;    (if (true? (eval (if-predicate exp) env))
+;        (eval (if-consequent exp) env)
+;        (eval (if-alternative exp) env)))
+;  (define (eval-lambda exp env)
+;    (make-procedure (lambda-parameters exp) (lambda-body exp) env))
+;  (define (eval-begin exp env)
+;    (eval-sequence (begin-actions exp) env))
+;  (define (eval-application exp env)
+;    (apply (eval (operator exp) env) (list-of-values (operands exp) env)))
+;  (put 'eval 'quote eval-variable)
+;  (put 'eval 'assignment eval-assignment)
+;  (put 'eval 'definition eval-definition)
+;  (put 'eval 'if eval-if)
+;  (put 'eval 'lambda eval-lambda)
+;  (put 'eval 'begin eval-begin)
+;  (put 'eval 'application eval-application)
+;  'ok)
+;(define (dd-eval exp env)
+;  (cond ((self-evaluating? exp) exp)  ;no tag, so handle it directly.
+;        ((variable? exp) (lookup-variable-value exp env))  ;variable doesn't have a tag, so can't use data-directed style, unless we change how we express variables, but that is not worth the work.
+;        (else (let ((eval-proc (get 'eval (car exp))))
+;                (if eval-proc  ;if there is a proc with the type of exp apply it, else by definition of application expression as pair that is not one of above types, exp is an application expression.
+;                    (eval-proc exp env)
+;                    ((get 'eval 'application) exp env))))))
 ;Exercise 4.4
 ;(and exp_1 exp_2 exp_3 exp_4 exp_5 ...)
 (define (and? exp)
@@ -6203,7 +6177,7 @@
 ;We see that a case analysis and syntax analysis was done by eval on factorial 4 times, ignoring any syntax parsing and case analysis that would be done on the subtraction subexpressions.
 ;We increase efficiency by separating syntax analysis from execution:
 
-(define (evall exp env) ((analyze exp) env))
+(define (eval exp env) ((analyze exp) env))
 
 (define (analyze exp)
   (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
@@ -6365,6 +6339,10 @@
 ;Exercise 4.24:
 ;Design and carry out some experiments to compare the speed of the original metacircular evaluator with the version in this section.
 
+
+;(define (average . args)
+;    (/ (sum args) (length args)))
+
 ;=============================<Not done yet!!!!>=============================
 (define (install-primitive-arithmetic env)
   (define-variable! '= (list 'primitive =) env)
@@ -6373,96 +6351,354 @@
   (define-variable! '* (list 'primitive *) env)
   (define-variable! '/ (list 'primitive /) env)
   'ok)
-(define (install-primitive-not env)
-  (define-variable! 'not (list 'primitive not) env)
+
+(define (install-primitive-modular-arithmetic env)
+  (define-variable! 'remainder (list 'primitive remainder) env)
+  (define-variable! 'quotient (list 'primitive quotient) env)
+  (define-variable! 'modulo (list 'primitive modulo) env)
   'ok)
 
-(define (install-primitive-eq? env)
+(define (install-primitive-boolean env)
+  (define-variable! 'not (list 'primitive not) env) 
+  'ok)
+
+(define (install-primitive-relations env)
+  (define-variable! '< (list 'primitive <) env)
+  (define-variable! '<= (list 'primitive <=) env)
+  (define-variable! '> (list 'primitive >) env)
+  (define-variable! '>= (list 'primitive >=) env)
   (define-variable! 'eq? (list 'primitive eq?) env)
   'ok)
 
-(define (get-package m eval)
-  (define (false? env)
-    (eval '(define (false? x) (eq? x false)) env))
-  (define (true? env)
-    (eval '(define (true? x) (not (false? x))) env))
-  (define (fib env)
-    (eval '(define (fib n)
-             (if (= n 0) 
-               0
-               (if (= n 1) 
-                 1
-                 (+ (fib (- n 1)) (fib (- n 2))))))
-          env))
-  (define (fact env)
-    (eval '(define (fact n)
-             (if (= n 1) 1 (* n (fact (- n 1))))) 
-          env))
-
-  (define (append env)
-    (eval '(define (append x y)
-             (if (null? x) 
-                 y 
-                 (cons (car x) (append (cdr x) y))))
-          env))
-  (cond ((eq? m 'false?) false?)
-        ((eq? m 'true?) true?)
-        ((eq? m 'fib) fib)
-        ((eq? m 'fact) fact)
-        ((eq? m 'append) append)))
-
-(define (install-packages-to-env eval env)
-  (install-primitive-arithmetic env)
-  (install-primitive-not env)
-  (install-primitive-eq? env)
-  ((get-package 'false? eval) env)
-  ((get-package 'true? eval) env)
-  ((get-package 'fib eval) env)
-  ((get-package 'fact eval) env)
-  ((get-package 'append eval) env))
-(define (test-env eval) 
-  (let ((initial-env (setup-environment)))
-    (install-packages-to-env eval initial-env)
-    initial-env))
-;(define (test-evall-env 
-;  (let ((initial-env (setup-environment)))
-;    (install-packages-to-env evall initial-env)
-;    initial-env))
+;==========**STORE**==========
+(define (store m eval)
+  (let ((prod-table (make-table))
+        (number_names 0))
 
 
-(define (test-seq eval env)
-  (eval '(fib 10) env)
-  (eval '(fact 10) env)
-  (eval '(append '(a b c d e) '(f g h i j)) env))
+    ;I need to use put and get statements...
+
+    ;=============Common and simple procedures====================
+    ;**common math procedures**
+    (define (inc env)
+      (define (proc env)
+        (eval '(define (inc x)
+                 (+ x 1)) 
+              env)
+        'ok)
+      (define (dispatch m)
+        (cond ((eq? m 'name) name)
+              ((eq? m 'proc) proc)
+              (else (display "I don't understand. Try either name or proc."))))
+      (if (not (in-table? names-list)) 
+        (begin (insert! 0 (cons name proc) prod-table)
+               (set! number_names (+ number_names 1))
+               dispatch)
+        dispatch))
+
+    (define (dec env)
+      (define name 'dec)
+      (define (proc env)
+        (eval '(define (dec x)
+                 (- x 1)) 
+              env)
+        'ok)
+      (define (dispatch m)
+        (cond ((eq? m 'name) name)
+              ((eq? m 'proc) proc)
+              (else (display "I don't understand. Try either name or proc."))))
+      (if (not (in-table? names-list)) 
+        (begin (insert! 1 (cons name proc) prod-table)
+               (set! number_names (+ number_names 1))
+               dispatch)
+        dispatch))
+
+    (define (identity env)
+      (define name 'identity)
+      (define (proc env)
+        (eval '(define (identity x)
+                 x)
+              env)
+        'ok)
+      (define (dispatch m)
+        (cond ((eq? m 'name) name)
+              ((eq? m 'proc) proc)
+              (else (display "I don't understand. Try either name or proc."))))
+      (if (not (in-table? names-list)) 
+        (begin (insert! 2 (cons name proc) prod-table)
+               (set! number_names (+ number_names 1))
+               dispatch)
+        dispatch))
+    (define (square env)
+      (define name 'square)
+      (define (proc env)
+        (eval '(define (square x)
+                 (* x x))
+              env)
+        'ok)
+      (define (dispatch m)
+        (cond ((eq? m 'name) name)
+              ((eq? m 'proc) proc)
+              (else (display "I don't understand. Try either name or proc."))))
+      (if (not (in-table? names-list)) 
+        (begin (insert! 3 (cons name proc) prob-table)
+               (set! number_names (+ number_names 1))
+               dispatch)
+        dispatch))
+
+    (define (cube env)
+      (define name 'cube)
+      (define (proc env)
+        (eval '(define (cube x) (* x x x))
+              env)
+        'ok)
+      (if (not (in-table? names-list)) 
+        (begin (insert! 4 (cons name proc) prod-table)
+               (set! number_names (+ number_names 1))
+               dispatch)
+        dispatch))
+
+    (define (average env)
+      (define name 'average)
+      (define (proc env)
+        (eval '(define (average . args)
+                 (/ (sum args) (length args)))
+              env)
+        'ok)
+      (define (dispatch m)
+        (cond ((eq? m 'name) name)
+              ((eq? m 'proc) proc)
+              (else (display "I don't understand. Try either name or proc."))))
+      (if (not (in-table? names-list)) 
+        (begin (insert! 5 (cons name proc) prod-table)
+               (set! number_names (+ number_names 1))
+               dispatch)
+        dispatch))
+
+    (define (logB env)
+      (define name 'logB)
+      (define (proc env)
+        (eval '(define (logB B x)
+                 (/ (log x) (log B)))
+              env))
+      (define (dispatch m)
+        (cond ((eq? m 'name) name)
+              ((eq? m 'proc) proc)
+              (else (display "I don't understand. Try either name or proc."))))
+      (if (not (in-table? names-list)) 
+        (begin (insert! 6 (cons name proc) prod-table)
+               (set! number_names (+ number_names 1))
+               dispatch)
+        dispatch))
 
 
-(define (n-calls prod eval env n)
-  (if (= n 0)
-    'done
-    (begin (prod eval env)
-           (n-calls prod eval env (- n 1)))))
+    (define (fib env)
+      (define name 'fib)
+      (define (proc env)
+        (eval '(define (fib n)
+                 (if (= n 0) 
+                   0
+                   (if (= n 1) 
+                     1
+                     (+ (fib (- n 1)) (fib (- n 2))))))
+              env))
+      (define (dispatch m)
+        (cond ((eq? m 'name) name)
+              ((eq? m 'proc) proc)
+              (else (display "I don't understand. Try either name or proc."))))
+      (if (not (in-table? names-list)) 
+        (begin (insert! 7 (cons name proc) prod-table)
+               (set! number_names (+ number_names 1))
+               dispatch)
+        dispatch))
 
-(define (timed eval n)
-  (let ((starttime (runtime)))
-    (n-calls test-seq eval (test-env eval) n)
-    (- (runtime) starttime)))
+    (define (fact env)
+      (define name 'fact)
+      (define (proc env)
+        (eval '(define (fact n)
+                 (if (= n 1) 1 (* n (fact (- n 1))))) 
+              env))
+      (define (dispatch m)
+        (cond ((eq? m 'name) name)
+              ((eq? m 'proc) proc)
+              (else (display "I don't understand. Try either name or proc."))))
+      (if (not (in-table? names-list)) 
+        (begin (insert! 8 (cons name proc) prod-table)
+               (set! number_names (+ number_names 1))
+               dispatch)
+        dispatch))
 
-;(define (timed-evall n)
-;  (let ((starttime (runtime)))
-;    (n-calls test-seq evall test-evall-env n)
-;    (- (runtime) starttime)))
+    ;**boolean procedures**
+    (define (false? env)
+      (define name 'false?)
+      (define (proc env)
+        (eval '(define (false? x) (eq? x false)) env))
+      (define (dispatch m)
+        (cond ((eq? m 'name) name)
+              ((eq? m 'proc) proc)
+              (else (display "I don't understand. Try either name or proc."))))
+      (if (not (in-table? names-list)) 
+        (begin (insert! 9 (cons name proc) prob-table)
+               (set! number_names (+ number_names 1))
+               dispatch)
+        dispatch))
+    (define (true? env)
+      (define name 'true?)
+      (define (proc env)
+        (eval '(define (true? x) (not (false? x))) env))
+      (define (dispatch m)
+        (cond ((eq? m 'name) name)
+              ((eq? m 'proc) proc)
+              (else (display "I don't understand. Try either name or proc."))))
+      (if (not (in-table? names-list)) 
+        (begin (insert! 10 (cons name proc) prob-table)
+               (set! number_names (+ number_names 1))
+               dispatch)
+        dispatch))
+    (define (and env)
+      (define name 'and)
+      (define (proc env)
+        (eval '(define (and p1 p2)
+                 (if (true? p1)
+                   (if (true? p2)
+                     true
+                     false)
+                   false))
+              env))
+      (define (dispatch m)
+        (cond ((eq? m 'name) name)
+              ((eq? m 'proc) proc)
+              (else (display "I don't understand. Try either name or proc."))))
+      (define (final-tweaks key value index table)
+        (if (lookup var table)
+          dispatch
+          (begin (insert! n (cons name proc) prod-table)
+                 (set! number_names (+ number_names 1))
+                 dispatch)))
+      (final-tweaks name proc 11 table))
+      (define (or env)
+        (define name 'or)
+        (define (proc env)
+          (eval '(define (or p1 p2)
+                   (if (true? p1)
+                     true
+                     (if (true? p2)
+                       true
+                       false)))
+                env))
+        (define (dispatch m)
+          (cond ((eq? m 'name) name)
+                ((eq? m 'proc) proc)
+                (else (display "I don't understand. Try either name or proc."))))
+        (if (not (in-table? names-list)) 
+          (begin (insert! 12 (cons name proc) prob-table)
+                 (set! number_names (+ number_names 1))
+                 dispatch)
+          dispatch))
 
-(define (%diff-evals eval1 eval2 n)
-  (let ((teval (timed eval1 n))
-        (tevall (timed eval2 n)))
-    (abs (/ (- tevall teval) teval))))
+      ;**pair procedures** 
+      (define (append env)
+        (define 'name append)
+        (define (proc env)
+          (eval '(define (append x y)
+                   (if (null? x) 
+                     y 
+                     (cons (car x) (append (cdr x) y))))
+                env))
+        (define (dispatch m)
+          (cond ((eq? m 'name) name)
+                ((eq? m 'proc) proc)
+                (else (display "I don't understand. Try either name or proc."))))
+        (if (not (in-table? names-list)) 
+          (begin (insert! 13 (cons name proc) prod-table)
+                 (set! number_names (+ number_names 1))
+                 dispatch)
+          dispatch))
 
-;(%diff-eval eval evall 50) returns  .35
-;(%diff-eval eval evall 100) returns .44 
-;(%diff-eval eval evall 200) returns .44
-;(%diff-evals eval evall 400) returns .44
-;(%diff-evals eval evall 800) returns .44
+      ;add map, filter, streams, stream-map
 
-;Thus evall is roughly .44 percent faster than eval! We've achieved a nice efficiency boost by performing more of the syntactical analysis on expressions, before executing them...
+      ;==========**Vendor**==========
+      (define (get-number-of-packages)
+        number-of-names)
+      procedure-table
+      (define (procedure-list)
+        (car procedure-table)
 
-;========================== 4.2 Variations on a Scheme - Lazy Evaluation ==========================
+        (define (vendor m)
+          (define (install-all-packages-prompt)
+            (display "Would you like to install all packages in store?")
+            (let ((input (read)))
+              (if (or (eq? input 'yes) (eq? input 'y) (eq? input 1))
+                ;<install-all-packages>
+                (begin (display "Which packages would you like me to install?")
+                       (set! input (read))
+                       ;<search-store-for-packages-in-list>))))
+                       (define (install-all-packages)
+
+
+                         (vendor m)
+
+                         )
+
+                       ;need to automate installing procedures, because there are too many of them.
+
+                       (define (install-all-from-store store env)
+
+
+
+                         (define (install-packages-to-env eval env)
+                           (install-primitive-arithmetic env)
+                           (install-primitive-not env)
+                           (install-primitive-eq? env)
+                           ((get-package 'false? eval) env)
+                           ((get-package 'true? eval) env)
+                           ((get-package 'fib eval) env)
+                           ((get-package 'fact eval) env)
+                           ((get-package 'append eval) env))
+                         (define (test-env eval) 
+                           (let ((initial-env (setup-environment)))
+                             (install-packages-to-env eval initial-env)
+                             initial-env))
+                         ;(define (test-evall-env 
+                         ;  (let ((initial-env (setup-environment)))
+                         ;    (install-packages-to-env evall initial-env)
+                         ;    initial-env))
+
+
+                         (define (test-seq eval env)
+                           (eval '(fib 10) env)
+                           (eval '(fact 10) env)
+                           (eval '(append '(a b c d e) '(f g h i j)) env))
+
+
+                         (define (n-calls prod eval env n)
+                           (if (= n 0)
+                             'done
+                             (begin (prod eval env)
+                                    (n-calls prod eval env (- n 1)))))
+
+                         (define (timed eval n)
+                           (let ((starttime (runtime)))
+                             (n-calls test-seq eval (test-env eval) n)
+                             (- (runtime) starttime)))
+
+                         ;(define (timed-evall n)
+                         ;  (let ((starttime (runtime)))
+                         ;    (n-calls test-seq evall test-evall-env n)
+                         ;    (- (runtime) starttime)))
+
+                         (define (%diff-evals eval1 eval2 n)
+                           (let ((teval (timed eval1 n))
+                                 (tevall (timed eval2 n)))
+                             (abs (/ (- tevall teval) teval))))
+
+                         ;(%diff-eval eval evall 50) returns  .28
+                         ;(%diff-eval eval evall 100) returns .44 
+                         ;(%diff-eval eval evall 200) returns .44
+                         ;(%diff-evals eval evall 400) returns .44
+                         ;(%diff-evals eval evall 800) returns .44
+
+                         ;Thus evall is roughly .44 percent faster than eval! We've achieved a nice efficiency boost by performing more of the syntactical analysis on expressions, before executing them...
+
+                         ;========================== 4.2 Variations on a Scheme - Lazy Evaluation ==========================
+                         ;===========4.2.1 Normal Order and Applicative Order===========
