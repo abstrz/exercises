@@ -6419,17 +6419,28 @@
                  (display " !")))))
 
     ;=============Common and simple procedures====================
+
     ;**common math procedures**
 
-    (define inc_item
-      (let ((inc_item 
-              (item 'inc '(define (inc x) (+ x 1)))))
-        (update store_items inc_item)))
+    (define inc_init
+      (let ((already-run? #f)
+            (inc_item ()))
+        (if already-run?
+            inc_item
+            (begin (set! inc_item (item 'inc '(define (inc x) (+ x 1))))
+                   (update store_items inc_item)))))
 
-      (define (dec_item m)
-        (item 'dec '(define (dec x) (- x 1)))) 
-      (update store_items dec_item)
+      (define (dec_init m)
+        (let ((already-run? #f)
+            (dec_item ()))
+        (if already-run?
+            inc_item
+            (begin (set! inc_item (item 'dec '(define (dec x) (- x 1))))
+                   (update store_items dec_item)))))
 
+
+
+      ;<TODO: MEMOIZE REST OF PROCEDURES>
       (define (identity_item m)
         (item 'identity '(define (identity x) x)))
       (update store_items identity_item)
