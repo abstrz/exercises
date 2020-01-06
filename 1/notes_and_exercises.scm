@@ -6369,336 +6369,220 @@
   (define-variable! '>= (list 'primitive >=) env)
   (define-variable! 'eq? (list 'primitive eq?) env)
   'ok)
+(define (install-primitives env)
+    (install-primitive-arithmetic env)
+    (install-primitive-modular-arithmetic env)
+    (install-primitive-boolean env)
+    (install-primitive-relations env))
 
+;For compound procedures we build a store
 ;==========**STORE**==========
-(define (store m eval)
-  (let ((prod-table (make-table))
-        (number_names 0))
 
+;Rewrite this so that the table entry keys are the names of the procedures, and the values are the procedure implementations...
+;NOk
 
-    ;I need to use put and get statements...
+(define (item name proc)
+  (cons name (lambda (env) (eval proc env) 'ok)))
+(define (item-name i)
+  (car i))
+(define (item-proc i)
+  (cdr i))
+(define (set-item-name! i val)
+  (set-car! i val))
+(define (set-item-proc! i val)
+  (set-cdr! i proc))
+
+(define (store eval)
+  (let ((store_items ()))
+
+    (define (search-by-name _store_items name)
+      (if (null? _store_items)
+          #f
+          (let ((_item (car _store_items)))
+            (if (eq? (item-name _item) name)
+                _item
+                (search-by-name (cdr _store_items) name)))))
+
+    (define (update _store_items item)
+      (let ((store-item (search-by-name store_items (item-name item))))
+        (if store-item 
+          ;if proc scripts differ update the one we have with the one given.
+          ((if (not (eq? (item-proc store-item) (item-proc item)))
+             (begin (set-item-proc! store-item (item-proc item))
+                    (display "Updated store item ")
+                    (display (item-name item))
+                    (display " !"))))
+          ;if there is no store item, update store to include this new item!
+          (begin (set-car! store_items (cons item store_items))
+                 (display "Added store item ")
+                 (display (item-name item))
+                 (display " !")))))
 
     ;=============Common and simple procedures====================
     ;**common math procedures**
-    (define (inc env)
-      (define (proc env)
-        (eval '(define (inc x)
-                 (+ x 1)) 
-              env)
-        'ok)
-      (define (dispatch m)
-        (cond ((eq? m 'name) name)
-              ((eq? m 'proc) proc)
-              (else (display "I don't understand. Try either name or proc."))))
-      (if (not (in-table? names-list)) 
-        (begin (insert! 0 (cons name proc) prod-table)
-               (set! number_names (+ number_names 1))
-               dispatch)
-        dispatch))
 
-    (define (dec env)
-      (define name 'dec)
-      (define (proc env)
-        (eval '(define (dec x)
-                 (- x 1)) 
-              env)
-        'ok)
-      (define (dispatch m)
-        (cond ((eq? m 'name) name)
-              ((eq? m 'proc) proc)
-              (else (display "I don't understand. Try either name or proc."))))
-      (if (not (in-table? names-list)) 
-        (begin (insert! 1 (cons name proc) prod-table)
-               (set! number_names (+ number_names 1))
-               dispatch)
-        dispatch))
+    (define inc_item
+      (let ((inc_item 
+              (item 'inc '(define (inc x) (+ x 1)))))
+        (update store_items inc_item)))
 
-    (define (identity env)
-      (define name 'identity)
-      (define (proc env)
-        (eval '(define (identity x)
-                 x)
-              env)
-        'ok)
-      (define (dispatch m)
-        (cond ((eq? m 'name) name)
-              ((eq? m 'proc) proc)
-              (else (display "I don't understand. Try either name or proc."))))
-      (if (not (in-table? names-list)) 
-        (begin (insert! 2 (cons name proc) prod-table)
-               (set! number_names (+ number_names 1))
-               dispatch)
-        dispatch))
-    (define (square env)
-      (define name 'square)
-      (define (proc env)
-        (eval '(define (square x)
-                 (* x x))
-              env)
-        'ok)
-      (define (dispatch m)
-        (cond ((eq? m 'name) name)
-              ((eq? m 'proc) proc)
-              (else (display "I don't understand. Try either name or proc."))))
-      (if (not (in-table? names-list)) 
-        (begin (insert! 3 (cons name proc) prob-table)
-               (set! number_names (+ number_names 1))
-               dispatch)
-        dispatch))
+      (define (dec_item m)
+        (item 'dec '(define (dec x) (- x 1)))) 
+      (update store_items dec_item)
 
-    (define (cube env)
-      (define name 'cube)
-      (define (proc env)
-        (eval '(define (cube x) (* x x x))
-              env)
-        'ok)
-      (if (not (in-table? names-list)) 
-        (begin (insert! 4 (cons name proc) prod-table)
-               (set! number_names (+ number_names 1))
-               dispatch)
-        dispatch))
+      (define (identity_item m)
+        (item 'identity '(define (identity x) x)))
+      (update store_items identity_item)
 
-    (define (average env)
-      (define name 'average)
-      (define (proc env)
-        (eval '(define (average . args)
-                 (/ (sum args) (length args)))
-              env)
-        'ok)
-      (define (dispatch m)
-        (cond ((eq? m 'name) name)
-              ((eq? m 'proc) proc)
-              (else (display "I don't understand. Try either name or proc."))))
-      (if (not (in-table? names-list)) 
-        (begin (insert! 5 (cons name proc) prod-table)
-               (set! number_names (+ number_names 1))
-               dispatch)
-        dispatch))
+      (define (square_item m)
+        (item 'identity '(define (square x) (* x x))))
+      (update store_items square_item)
 
-    (define (logB env)
-      (define name 'logB)
-      (define (proc env)
-        (eval '(define (logB B x)
-                 (/ (log x) (log B)))
+      (define (cube_item m)
+        (item 'cube '(define (cube x) (* x x x))))
+      (update store_items cube_item)
+
+      (define (average_item m)
+        (item 'average '(define (average . args) (/ (sum args) (length args)))))
+      (update store_items average_item)
+
+      (define (logB_item m)
+        (item 'logB '(define (logB B x)
+                       (/ (log x) (log B)))))
+      (update store_items logB_item)
+
+      (define (fib_item m)
+        (item 'fib '(define (fib n)
+                      (if (= n 0) 
+                        0
+                        (if (= n 1) 
+                          1
+                          (+ (fib (- n 1)) (fib (- n 2))))))))
+      (update store_items fib_item)
+
+      (define (fact_item m)
+        (item 'fact '(define (fact n)
+                       (if (= n 1) 1 (* n (fact (- n 1))))) 
               env))
-      (define (dispatch m)
-        (cond ((eq? m 'name) name)
-              ((eq? m 'proc) proc)
-              (else (display "I don't understand. Try either name or proc."))))
-      (if (not (in-table? names-list)) 
-        (begin (insert! 6 (cons name proc) prod-table)
-               (set! number_names (+ number_names 1))
-               dispatch)
-        dispatch))
 
+      (update store_items fact_item)
 
-    (define (fib env)
-      (define name 'fib)
-      (define (proc env)
-        (eval '(define (fib n)
-                 (if (= n 0) 
-                   0
-                   (if (= n 1) 
-                     1
-                     (+ (fib (- n 1)) (fib (- n 2))))))
-              env))
-      (define (dispatch m)
-        (cond ((eq? m 'name) name)
-              ((eq? m 'proc) proc)
-              (else (display "I don't understand. Try either name or proc."))))
-      (if (not (in-table? names-list)) 
-        (begin (insert! 7 (cons name proc) prod-table)
-               (set! number_names (+ number_names 1))
-               dispatch)
-        dispatch))
+      ;**boolean procedures**
+      (define (false?_item m)
+        (item 'false? '(define (false? x) (eq? x false))))
+      (update store_items false?_item)
 
-    (define (fact env)
-      (define name 'fact)
-      (define (proc env)
-        (eval '(define (fact n)
-                 (if (= n 1) 1 (* n (fact (- n 1))))) 
-              env))
-      (define (dispatch m)
-        (cond ((eq? m 'name) name)
-              ((eq? m 'proc) proc)
-              (else (display "I don't understand. Try either name or proc."))))
-      (if (not (in-table? names-list)) 
-        (begin (insert! 8 (cons name proc) prod-table)
-               (set! number_names (+ number_names 1))
-               dispatch)
-        dispatch))
+      (define (true?_item)
+        (item 'true? '(define (true? x) (not (false? x)))))
+      (update store_items true?_item)
 
-    ;**boolean procedures**
-    (define (false? env)
-      (define name 'false?)
-      (define (proc env)
-        (eval '(define (false? x) (eq? x false)) env))
-      (define (dispatch m)
-        (cond ((eq? m 'name) name)
-              ((eq? m 'proc) proc)
-              (else (display "I don't understand. Try either name or proc."))))
-      (if (not (in-table? names-list)) 
-        (begin (insert! 9 (cons name proc) prob-table)
-               (set! number_names (+ number_names 1))
-               dispatch)
-        dispatch))
-    (define (true? env)
-      (define name 'true?)
-      (define (proc env)
-        (eval '(define (true? x) (not (false? x))) env))
-      (define (dispatch m)
-        (cond ((eq? m 'name) name)
-              ((eq? m 'proc) proc)
-              (else (display "I don't understand. Try either name or proc."))))
-      (if (not (in-table? names-list)) 
-        (begin (insert! 10 (cons name proc) prob-table)
-               (set! number_names (+ number_names 1))
-               dispatch)
-        dispatch))
-    (define (and env)
-      (define name 'and)
-      (define (proc env)
-        (eval '(define (and p1 p2)
-                 (if (true? p1)
-                   (if (true? p2)
-                     true
-                     false)
-                   false))
-              env))
-      (define (dispatch m)
-        (cond ((eq? m 'name) name)
-              ((eq? m 'proc) proc)
-              (else (display "I don't understand. Try either name or proc."))))
-      (define (final-tweaks key value index table)
-        (if (lookup var table)
-          dispatch
-          (begin (insert! n (cons name proc) prod-table)
-                 (set! number_names (+ number_names 1))
-                 dispatch)))
-      (final-tweaks name proc 11 table))
-      (define (or env)
-        (define name 'or)
-        (define (proc env)
-          (eval '(define (or p1 p2)
-                   (if (true? p1)
-                     true
-                     (if (true? p2)
+      (define (and_item m)
+        (item 'and '(define (and p1 p2)
+                      (if (true? p1)
+                        (if (true? p2)
+                          true
+                          false)
+                        false))))
+      (update store_items and_item)
+
+      (define (or_item m)
+        (item 'or '(define (or p1 p2)
+                     (if (true? p1)
                        true
-                       false)))
-                env))
-        (define (dispatch m)
-          (cond ((eq? m 'name) name)
-                ((eq? m 'proc) proc)
-                (else (display "I don't understand. Try either name or proc."))))
-        (if (not (in-table? names-list)) 
-          (begin (insert! 12 (cons name proc) prob-table)
-                 (set! number_names (+ number_names 1))
-                 dispatch)
-          dispatch))
+                       (if (true? p2)
+                         true
+                         false)))))
+      (update store_items or_item)
 
       ;**pair procedures** 
-      (define (append env)
-        (define 'name append)
-        (define (proc env)
-          (eval '(define (append x y)
-                   (if (null? x) 
-                     y 
-                     (cons (car x) (append (cdr x) y))))
-                env))
-        (define (dispatch m)
-          (cond ((eq? m 'name) name)
-                ((eq? m 'proc) proc)
-                (else (display "I don't understand. Try either name or proc."))))
-        (if (not (in-table? names-list)) 
-          (begin (insert! 13 (cons name proc) prod-table)
-                 (set! number_names (+ number_names 1))
-                 dispatch)
-          dispatch))
+      (define (append_item m)
+        (item 'append '(define (append x y)
+                         (if (null? x) 
+                           y 
+                           (cons (car x) (append (cdr x) y))))))
+      (update store_items append_item)
+
 
       ;add map, filter, streams, stream-map
 
       ;==========**Vendor**==========
-      (define (get-number-of-packages)
+      (define (number-of-packages)
         number-of-names)
-      procedure-table
-      (define (procedure-list)
-        (car procedure-table)
+      (define (proc-list)
+        (define (search key table)
+          (if (null? (cdr table))
+            ()
+            (cons (cdr (lookup key table)) (search (+ key 1) table))))
+        (search 0 prod-table))
 
-        (define (vendor m)
-          (define (install-all-packages-prompt)
-            (display "Would you like to install all packages in store?")
-            (let ((input (read)))
-              (if (or (eq? input 'yes) (eq? input 'y) (eq? input 1))
-                ;<install-all-packages>
-                (begin (display "Which packages would you like me to install?")
-                       (set! input (read))
-                       ;<search-store-for-packages-in-list>))))
-                       (define (install-all-packages)
-
-
-                         (vendor m)
-
-                         )
-
-                       ;need to automate installing procedures, because there are too many of them.
-
-                       (define (install-all-from-store store env)
+      (define (install-all procedures)
+        (lambda (env)
+          (if (null? procedures)
+            'done
+            (begin ((car procedures) env)
+                   (install-all (cdr procedures) env)))))
 
 
+      (define (vendor)
+        (display "Which packages do you want to install? Input `all` to install all packages. Input list to print a list of packages")
+        (let ((input (read)))
+          (cond ((eq? input 'all)
+                 (install-all (proc-list)))
+                ((eq? input 'list)
+                 prod-table))))
 
-                         (define (install-packages-to-env eval env)
-                           (install-primitive-arithmetic env)
-                           (install-primitive-not env)
-                           (install-primitive-eq? env)
-                           ((get-package 'false? eval) env)
-                           ((get-package 'true? eval) env)
-                           ((get-package 'fib eval) env)
-                           ((get-package 'fact eval) env)
-                           ((get-package 'append eval) env))
-                         (define (test-env eval) 
-                           (let ((initial-env (setup-environment)))
-                             (install-packages-to-env eval initial-env)
-                             initial-env))
-                         ;(define (test-evall-env 
-                         ;  (let ((initial-env (setup-environment)))
-                         ;    (install-packages-to-env evall initial-env)
-                         ;    initial-env))
+      (vendor)))
 
 
-                         (define (test-seq eval env)
-                           (eval '(fib 10) env)
-                           (eval '(fact 10) env)
-                           (eval '(append '(a b c d e) '(f g h i j)) env))
+  ;need to automate installing procedures, because there are too many of them.
+
+  (define (test-env eval) 
+    (let ((initial-env (setup-environment)))
+      (display "Do you want to extend the books implementation of the global environment to contain extra primitives?")
+      (let ((input (read)))
+        (if (or (eq? input 'y) (eq? input 'yes) (eq? input 1))
+          (install-primitives initial-env))
+        initial-env)))
+  ;(define (test-evall-env 
+  ;  (let ((initial-env (setup-environment)))
+  ;    (install-packages-to-env evall initial-env)
+  ;    initial-env))
 
 
-                         (define (n-calls prod eval env n)
-                           (if (= n 0)
-                             'done
-                             (begin (prod eval env)
-                                    (n-calls prod eval env (- n 1)))))
+  (define (test-seq eval env)
+    (eval '(fib 10) env)
+    (eval '(fact 10) env)
+    (eval '(append '(a b c d e) '(f g h i j)) env))
 
-                         (define (timed eval n)
-                           (let ((starttime (runtime)))
-                             (n-calls test-seq eval (test-env eval) n)
-                             (- (runtime) starttime)))
 
-                         ;(define (timed-evall n)
-                         ;  (let ((starttime (runtime)))
-                         ;    (n-calls test-seq evall test-evall-env n)
-                         ;    (- (runtime) starttime)))
+  (define (n-calls prod eval env n)
+    (if (= n 0)
+      'done
+      (begin (prod eval env)
+             (n-calls prod eval env (- n 1)))))
 
-                         (define (%diff-evals eval1 eval2 n)
-                           (let ((teval (timed eval1 n))
-                                 (tevall (timed eval2 n)))
-                             (abs (/ (- tevall teval) teval))))
+  (define (timed eval n)
+    (let ((starttime (runtime)))
+      (n-calls test-seq eval (test-env eval) n)
+      (- (runtime) starttime)))
 
-                         ;(%diff-eval eval evall 50) returns  .28
-                         ;(%diff-eval eval evall 100) returns .44 
-                         ;(%diff-eval eval evall 200) returns .44
-                         ;(%diff-evals eval evall 400) returns .44
-                         ;(%diff-evals eval evall 800) returns .44
+  ;(define (timed-evall n)
+  ;  (let ((starttime (runtime)))
+  ;    (n-calls test-seq evall test-evall-env n)
+  ;    (- (runtime) starttime)))
 
-                         ;Thus evall is roughly .44 percent faster than eval! We've achieved a nice efficiency boost by performing more of the syntactical analysis on expressions, before executing them...
+  (define (%diff-evals eval1 eval2 n)
+    (let ((teval (timed eval1 n))
+          (tevall (timed eval2 n)))
+      (abs (/ (- tevall teval) teval))))
 
-                         ;========================== 4.2 Variations on a Scheme - Lazy Evaluation ==========================
-                         ;===========4.2.1 Normal Order and Applicative Order===========
+  ;(%diff-eval eval evall 50) returns  .28
+  ;(%diff-eval eval evall 100) returns .44 
+  ;(%diff-eval eval evall 200) returns .44
+  ;(%diff-evals eval evall 400) returns .44
+  ;(%diff-evals eval evall 800) returns .44
+
+  ;Thus evall is roughly .44 percent faster than eval! We've achieved a nice efficiency boost by performing more of the syntactical analysis on expressions, before executing them...
+
+  ;========================== 4.2 Variations on a Scheme - Lazy Evaluation ==========================
+  ;===========4.2.1 Normal Order and Applicative Order===========
