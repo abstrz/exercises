@@ -1,3 +1,10 @@
+(define (number-list? input)
+  (cond ((number? input) #t)
+        ((symbol? input) #f)
+        ((pair? input) 
+         (and (number? (car input)) (number-list? (cdr input))))
+        (else #t)))
+
 ;=============1.2.4 Exponentiation=============================
 ;;recursive definition
 ;(define (expt_rec b n)
@@ -6344,36 +6351,6 @@
 ;    (/ (sum args) (length args)))
 
 ;=============================<Not done yet!!!!>=============================
-(define (install-primitive-arithmetic env)
-  (define-variable! '= (list 'primitive =) env)
-  (define-variable! '+ (list 'primitive +) env)
-  (define-variable! '- (list 'primitive -) env)
-  (define-variable! '* (list 'primitive *) env)
-  (define-variable! '/ (list 'primitive /) env)
-  'ok)
-
-(define (install-primitive-modular-arithmetic env)
-  (define-variable! 'remainder (list 'primitive remainder) env)
-  (define-variable! 'quotient (list 'primitive quotient) env)
-  (define-variable! 'modulo (list 'primitive modulo) env)
-  'ok)
-
-(define (install-primitive-boolean env)
-  (define-variable! 'not (list 'primitive not) env) 
-  'ok)
-
-(define (install-primitive-relations env)
-  (define-variable! '< (list 'primitive <) env)
-  (define-variable! '<= (list 'primitive <=) env)
-  (define-variable! '> (list 'primitive >) env)
-  (define-variable! '>= (list 'primitive >=) env)
-  (define-variable! 'eq? (list 'primitive eq?) env)
-  'ok)
-(define (install-primitives env)
-    (install-primitive-arithmetic env)
-    (install-primitive-modular-arithmetic env)
-    (install-primitive-boolean env)
-    (install-primitive-relations env))
 
 ;For compound procedures we build a store
 ;==========**STORE**==========
@@ -6381,219 +6358,374 @@
 ;Rewrite this so that the table entry keys are the names of the procedures, and the values are the procedure implementations...
 ;NOk
 
-(define (item name proc)
+(define (item name proc eval)
   (cons name (lambda (env) (eval proc env) 'ok)))
+
 (define (item-name i)
   (car i))
+
 (define (item-proc i)
   (cdr i))
-(define (set-item-name! i val)
-  (set-car! i val))
-(define (set-item-proc! i val)
+
+(define (set-item-name! i name)
+  (set-car! i name))
+
+(define (set-item-proc! i proc)
   (set-cdr! i proc))
 
-(define (store eval)
-  (let ((store_items ()))
 
-    (define (search-by-name _store_items name)
-      (if (null? _store_items)
+
+;vendor options are modularized slightly... we have decision trees. at step 1 the choice is install from store or quit. to do this, though, we need one program that  handles
+;the installation of packages that can be run as soon as the user selects install from store.
+
+(define (store eval)
+  (lambda (env)
+    (let ((store_items ()))
+
+      (define (search-by-name _store_items name)
+        (if (null? _store_items)
           #f
           (let ((_item (car _store_items)))
             (if (eq? (item-name _item) name)
-                _item
-                (search-by-name (cdr _store_items) name)))))
+              _item
+              (search-by-name (cdr _store_items) name)))))
+      (define (update _store_items item)
+        (let ((store_item (search-by-name store_items (item-name item))))
+          (if store_item 
+            ;if proc scripts differ update the one we have with the one given.
+            (if (not (eq? (item-proc store-item) (item-proc item)))
+              (begin (set-item-proc! store-item (item-proc item))
+                     (newline)
+                     (display "**Updated store item ")
+                     (display (item-name item))
+                     (display " !**")
+                     (newline)))
+            ;if there is no store item, update store to include this new item!
+            (begin (set! store_items (cons item store_items))
+                   (newline)
+                   (display "**Added ")
+                   (display (item-name item))
+                   (display " to the store!**")
+                   (newline)))))
 
-    (define (update _store_items item)
-      (let ((store-item (search-by-name store_items (item-name item))))
-        (if store-item 
-          ;if proc scripts differ update the one we have with the one given.
-          ((if (not (eq? (item-proc store-item) (item-proc item)))
-             (begin (set-item-proc! store-item (item-proc item))
-                    (display "Updated store item ")
-                    (display (item-name item))
-                    (display " !"))))
-          ;if there is no store item, update store to include this new item!
-          (begin (set-car! store_items (cons item store_items))
-                 (display "Added store item ")
-                 (display (item-name item))
-                 (display " !")))))
-
-    ;=============Common and simple procedures====================
-
-    ;**common math procedures**
-
-    (define inc_init
-      (let ((already-run? #f)
-            (inc_item ()))
-        (if already-run?
-            inc_item
-            (begin (set! inc_item (item 'inc '(define (inc x) (+ x 1))))
-                   (update store_items inc_item)))))
-
-      (define (dec_init m)
-        (let ((already-run? #f)
-            (dec_item ()))
-        (if already-run?
-            inc_item
-            (begin (set! inc_item (item 'dec '(define (dec x) (- x 1))))
-                   (update store_items dec_item)))))
+      (define (item_init name procedure)
+        (let ((_item (item name procedure eval)))
+          (update store_items _item)
+          _item))
 
 
+      ;=============Common and simple procedures====================
 
-      ;<TODO: MEMOIZE REST OF PROCEDURES>
-      (define (identity_item m)
-        (item 'identity '(define (identity x) x)))
-      (update store_items identity_item)
-
-      (define (square_item m)
-        (item 'identity '(define (square x) (* x x))))
-      (update store_items square_item)
-
-      (define (cube_item m)
-        (item 'cube '(define (cube x) (* x x x))))
-      (update store_items cube_item)
-
-      (define (average_item m)
-        (item 'average '(define (average . args) (/ (sum args) (length args)))))
-      (update store_items average_item)
-
-      (define (logB_item m)
-        (item 'logB '(define (logB B x)
-                       (/ (log x) (log B)))))
-      (update store_items logB_item)
-
-      (define (fib_item m)
-        (item 'fib '(define (fib n)
-                      (if (= n 0) 
-                        0
-                        (if (= n 1) 
-                          1
-                          (+ (fib (- n 1)) (fib (- n 2))))))))
-      (update store_items fib_item)
-
-      (define (fact_item m)
-        (item 'fact '(define (fact n)
-                       (if (= n 1) 1 (* n (fact (- n 1))))) 
-              env))
-
-      (update store_items fact_item)
-
-      ;**boolean procedures**
-      (define (false?_item m)
-        (item 'false? '(define (false? x) (eq? x false))))
-      (update store_items false?_item)
-
-      (define (true?_item)
-        (item 'true? '(define (true? x) (not (false? x)))))
-      (update store_items true?_item)
-
-      (define (and_item m)
-        (item 'and '(define (and p1 p2)
-                      (if (true? p1)
-                        (if (true? p2)
-                          true
-                          false)
-                        false))))
-      (update store_items and_item)
-
-      (define (or_item m)
-        (item 'or '(define (or p1 p2)
-                     (if (true? p1)
-                       true
-                       (if (true? p2)
-                         true
-                         false)))))
-      (update store_items or_item)
-
-      ;**pair procedures** 
-      (define (append_item m)
-        (item 'append '(define (append x y)
-                         (if (null? x) 
-                           y 
-                           (cons (car x) (append (cdr x) y))))))
-      (update store_items append_item)
+      ;**common math procedures**
+      (define (items_init)
+        (define (intro_message)
+          (display "**********************************************************************")
+          (newline)
+          (display "Item initialization began...")
+          (newline))
+        (define (outro_message)
+          (newline)
+          (display "ITEM INITIALIZATION COMPLETE")
+          (newline)
+          (display "**********************************************************************")
+          (newline))
 
 
-      ;add map, filter, streams, stream-map
+        (intro_message)
+
+        (define (install-primitives env)
+          (define (install-primitive-arithmetic env)
+            (define-variable! '= (list 'primitive =) env)
+            (define-variable! '+ (list 'primitive +) env)
+            (define-variable! '- (list 'primitive -) env)
+            (define-variable! '* (list 'primitive *) env)
+            (define-variable! '/ (list 'primitive /) env)
+            'ok)
+          (define (install-primitive-modular-arithmetic env)
+            (define-variable! 'remainder (list 'primitive remainder) env)
+            (define-variable! 'quotient (list 'primitive quotient) env)
+            (define-variable! 'modulo (list 'primitive modulo) env)
+            'ok)
+          (define (install-primitive-boolean env)
+            (define-variable! 'not (list 'primitive not) env) 
+            'ok)
+
+          (define (install-primitive-relations env)
+            (define-variable! '< (list 'primitive <) env)
+            (define-variable! '<= (list 'primitive <=) env)
+            (define-variable! '> (list 'primitive >) env)
+            (define-variable! '>= (list 'primitive >=) env)
+            (define-variable! 'eq? (list 'primitive eq?) env)
+            'ok)
+          (install-primitive-arithmetic env)
+          (install-primitive-modular-arithmetic env)
+          (install-primitive-boolean env)
+          (install-primitive-relations env))
+
+        (define inc_init
+          (item_init 'inc '(define (inc x) (+ x 1))))
+
+        (define dec_init
+          (item_init 'dec '(define (dec x) (- x 1))))
+
+        (define identity_init
+          (item_init 'identity '(define (identity x) x)))
+
+        (define square_init
+          (item_init 'square '(define (square x) (* x x))))
+
+        (define cube_init
+          (item_init 'cube '(define (cube x) (* x x x))))
+
+        (define average_init
+          (item_init 'average '(define (average . args) (/ (sum args) (length args)))))
+
+        (define logB_init
+          (item_init 'logB '(define (logB B x)
+                              (/ (log x) (log B)))))
+
+        (define fib_init
+          (item_init 'fib '(define (fib n)
+                             (if (= n 0) 
+                               0
+                               (if (= n 1) 
+                                 1
+                                 (+ (fib (- n 1)) (fib (- n 2))))))))
+
+        (define fact_init
+          (item_init 'fact '(define (fact n)
+                              (if (= n 1) 1 (* n (fact (- n 1)))))))
+
+        ;**boolean procedures**
+        (define false?_init
+          (item_init 'false? '(define (false? x) (eq? x false))))
+
+        (define true?_init
+          (item_init 'true? '(define (true? x) (not (false? x)))))
+
+        (define and_init
+          (item_init 'and '(define (and p1 p2)
+                             (if (true? p1)
+                               (if (true? p2)
+                                 true
+                                 false)
+                               false))))
+
+
+        (define or_init
+          (item_init'or '(define (or p1 p2)
+                           (if (true? p1)
+                             true
+                             (if (true? p2)
+                               true
+                               false)))))
+
+        (define number-list?_init
+          (item_init 'number-list? '(define (number-list? input)
+                                      (cond ((number? input) #t)
+                                            ((symbol? input) #f)
+                                            ((pair? input) 
+                                             (and (number? (car input)) (number-list? (cdr input))))
+                                            (else #t)))))
+
+
+        ;**pair procedures** 
+        (define append_init
+          (item_init 'append '(define (append x y)
+                                (if (null? x) 
+                                  y 
+                                  (cons (car x) (append (cdr x) y))))))
+
+
+        (define map_init
+           (item_init 'map '(define (map proc . args)
+                             (define (mini-map proc arg)
+                               (if (null? arg)
+                                 ()
+                                 (cons (proc (car arg)) (mini-map proc (cdr arg)))))
+                             (define (map-proc proc . args)
+                               (if (null? args)
+                                 ()
+                                 (cons (mini-map proc (car args)) (map-proc proc (cdr args)))))
+                             map-proc)))    
+        (define filter_init
+          (item_init 'filter '(define (filter pred? L)
+                                (cond ((null? L) ())
+                                      ((pred? (car L)) (cons L (filter pred? (cdr L))))
+                                      (else (filter pred? (cdr L)))))))
+        (outro_message))
+
+      (items_init)
+
 
       ;==========**Vendor**==========
-      (define (number-of-packages)
-        number-of-names)
-      (define (proc-list)
-        (define (search key table)
-          (if (null? (cdr table))
-            ()
-            (cons (cdr (lookup key table)) (search (+ key 1) table))))
-        (search 0 prod-table))
+      (define (install-all _items env)
+          (let ((_item (car _items)))
+            (if (null? _items)
+              'done
+              (begin ((item-proc _item) env)
+                     (install-all (cdr _items))))))
 
-      (define (install-all procedures)
-        (lambda (env)
-          (if (null? procedures)
-            'done
-            (begin ((car procedures) env)
-                   (install-all (cdr procedures) env)))))
+      (define (install-by-number number _items env)
+        (if (and (>= number 0) (< number (length _items)))
+            (let ((_item (list-ref _items number)))
+              (newline)
+              (display "Installing ")
+              (display (item-name _item))
+              (display " ...")
+              (newline)
+              ((item-proc _item) env))
+            (begin (newline)
+                   (display "Your input number must satisfy 0<=number<")
+                   (display (length _items))
+                   (display "! ")
+                   (newline))))
 
+      (define (install-by-#list _items env . _numbers)
+          (let ((len (length _numbers)))
+            (cond ((null? _numbers) 'done)
+                  ((= len 1) (install-by-number (car _numbers)  _items env))
+                  ((> len 2)(begin ((install-by-number (car _numbers) _items) env)
+                                   (install-by-#list (cdr _numbers) env_items))))))
+
+      (define (print-items _store_items)
+        (let ((range (enumerate-interval 0 (length _store_items))))
+          (define (print-iter indexing seq)
+            (if (not (null? seq))
+              (begin (newline)
+                     (display (car indexing))
+                     (display ". ")
+                     (display (car seq))
+                     (display ". ")
+                     (newline)
+                     (print-iter (cdr indexing) (cdr seq)))))
+          (print-iter range store_items)))
 
       (define (vendor)
-        (display "Which packages do you want to install? Input `all` to install all packages. Input list to print a list of packages")
+        (display "**********************************************************************")
+        (newline)
+        (newline)
+        (display "s: to install from store.")
+        (newline)
+        (display "q to quit.")
+        (newline)
+        (newline)
         (let ((input (read)))
-          (cond ((eq? input 'all)
-                 (install-all (proc-list)))
-                ((eq? input 'list)
-                 prod-table))))
+          (cond ((eq? input 's)
+                 (display "a to install all in store." )
+                 (newline)
+                 (display "p to install primitives.")
+                 (newline)
+                 (display "0 1 2 3 ... to install non-primitives by indexing in store database.")
+                 (newline)
+                 (display "l to list out packages in store")
+                 (newline)
+                 (display "q to quit")
+                 (newline)
+                 (set! input (read))
+                 (cond ((eq? input 'a)
+                        (install-all store env))
+                       ((or (number-list? input) (number? input))
+                        (install-by-#list store_items env input))
+                       ((eq? input 'p)
+                        (install-primitives env)
+                        (vendor))
+                       ((eq? input 'l)
+                        (print-items store_items)
+                        (vendor))
+                       ((eq? input 'q) (newline) 'Exiting)))
+                ((eq? input 'q)
+                 (newline)
+                 'Exiting...)
+                (else (display "I didn't understand. Either press s to install from store or q to quit.")
+                      (newline)
+                      (vendor)))))
+      (vendor))))   
+;
+;
+;
+;Okay, our installer will take a list of environments, and run each through the installer.
+(define (analyze.execute exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        ((let? exp) (eval-let exp env))
+        ((let*? exp) (eval-let* exp env))
+        ((application? exp)
+         (apply (analyze.execute (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else 
+          (error "Unknown expression type: EVAL" exp))))
 
-      (vendor)))
+;analyze before execution time.
+;(define (analyze.then.execute exp env) ((analyze exp) env))
+;(define (analyze exp)
+;  (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
+;        ((quoted? exp) (analyze-quoted exp))
+;        ((variable? exp) (analyze-variable exp))
+;        ((assignment? exp) (analyze-assignment exp))
+;        ((definition? exp) (analyze-definition exp))
+;        ((if? exp) (analyze-if exp))
+;        ((lambda? exp) (analyze-lambda exp))
+;        ((begin? exp) (analyze-sequence (begin-actions exp)))
+;        ((cond? exp) (analyze (cond->if exp)))
+;        ((application? exp) (analyze-application exp))
+;        (else (error "Unknown expression type: ANALYZE" exp))))
 
 
-  ;need to automate installing procedures, because there are too many of them.
-
-  (define (test-env eval) 
-    (let ((initial-env (setup-environment)))
-      (display "Do you want to extend the books implementation of the global environment to contain extra primitives?")
-      (let ((input (read)))
-        (if (or (eq? input 'y) (eq? input 'yes) (eq? input 1))
-          (install-primitives initial-env))
-        initial-env)))
-  ;(define (test-evall-env 
-  ;  (let ((initial-env (setup-environment)))
-  ;    (install-packages-to-env evall initial-env)
-  ;    initial-env))
+(define env (setup-environment))
+(define my_store_1 ((store analyze.execute) env))
+;(define my_store_2 ((store analyze.then.execute) env))
 
 
-  (define (test-seq eval env)
-    (eval '(fib 10) env)
-    (eval '(fact 10) env)
-    (eval '(append '(a b c d e) '(f g h i j)) env))
 
 
-  (define (n-calls prod eval env n)
-    (if (= n 0)
-      'done
-      (begin (prod eval env)
-             (n-calls prod eval env (- n 1)))))
 
-  (define (timed eval n)
-    (let ((starttime (runtime)))
-      (n-calls test-seq eval (test-env eval) n)
-      (- (runtime) starttime)))
+;===================TESTING===================
+;analyze at execution time.
 
-  ;(define (timed-evall n)
-  ;  (let ((starttime (runtime)))
-  ;    (n-calls test-seq evall test-evall-env n)
-  ;    (- (runtime) starttime)))
+(define (test-seq eval env)
+  (eval '(fib 10) env)
+  (eval '(fact 10) env)
+  (eval '(append '(a b c d e) '(f g h i j)) env))
 
-  (define (%diff-evals eval1 eval2 n)
-    (let ((teval (timed eval1 n))
-          (tevall (timed eval2 n)))
-      (abs (/ (- tevall teval) teval))))
 
-  ;(%diff-eval eval evall 50) returns  .28
-  ;(%diff-eval eval evall 100) returns .44 
-  ;(%diff-eval eval evall 200) returns .44
-  ;(%diff-evals eval evall 400) returns .44
-  ;(%diff-evals eval evall 800) returns .44
+(define (n-calls prod eval env n)
+  (if (= n 0)
+    'done
+    (begin (prod eval env)
+           (n-calls prod eval env (- n 1)))))
 
-  ;Thus evall is roughly .44 percent faster than eval! We've achieved a nice efficiency boost by performing more of the syntactical analysis on expressions, before executing them...
+(define (timed eval n)
+  (let ((starttime (runtime)))
+    (n-calls test-seq eval (test-env eval) n)
+    (- (runtime) starttime)))
 
-  ;========================== 4.2 Variations on a Scheme - Lazy Evaluation ==========================
-  ;===========4.2.1 Normal Order and Applicative Order===========
+
+
+;(define (timed-evall n)
+;  (let ((starttime (runtime)))
+;    (n-calls test-seq evall test-evall-env n)
+;    (- (runtime) starttime)))
+
+(define (%diff-evals eval1 eval2 n)
+  (let ((teval (timed eval1 n))
+        (tevall (timed eval2 n)))
+    (abs (/ (- tevall teval) teval))))
+
+;(%diff-eval eval evall 50) returns  .28
+;(%diff-eval eval evall 100) returns .44 
+;(%diff-eval eval evall 200) returns .44
+;(%diff-evals eval evall 400) returns .44
+;(%diff-evals eval evall 800) returns .44
+
+;Thus evall is roughly .44 percent faster than eval! We've achieved a nice efficiency boost by performing more of the syntactical analysis on expressions, before executing them...
+
+;========================== 4.2 Variations on a Scheme - Lazy Evaluation ==========================
+;===========4.2.1 Normal Order and Applicative Order===========
