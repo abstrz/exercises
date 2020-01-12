@@ -1,5 +1,62 @@
 ;Code based on Exercise 4.24 from SICP.
 
+
+
+
+;simple 1d queue for get procedure of store, and installer.
+
+
+(define (make-queue)
+  (let ((queue (cons () ())))
+    (define (front-ptr) (car queue))
+    (define (rear-ptr) (cdr queue))
+    (define (set-front-ptr! item)
+      (set-car! queue item))
+    (define  (set-rear-ptr! item)
+      (set-cdr! queue item))
+    (define (empty-queue?)
+      (null? (front-ptr)))
+    (define (front-queue)
+      (if (empty-queue?)
+        (error "FRONT called with an empty queue" queue)
+        (car (front-ptr))))
+    (define (insert-queue! item)
+      (let ((new-pair (cons item ())))
+        (cond ((empty-queue?)
+               (set-front-ptr! new-pair)
+               (set-rear-ptr! new-pair)
+               queue)
+              (else (set-cdr! (rear-ptr) new-pair)
+                    (set-rear-ptr! new-pair)
+                    queue))))
+    (define (delete-queue!)
+      (cond ((empty-queue?)
+             (error "DELETE! called with an empty queue" queue))
+            (else (set-front-ptr! (cdr (front-ptr)))
+                  queue)))
+    (define (print-queue)
+      (display (front-ptr)))
+    (define (dispatch m)
+      (cond ((eq? m 'empty-queue?) (empty-queue?))
+            ((eq? m 'front-queue) (front-queue))
+            ((eq? m 'insert!) insert-queue!)
+            ((eq? m 'delete!) (delete-queue!))
+            ((eq? m 'print) (print-queue))
+            (else (error "Unknown operation: QUEUE" m))))
+    dispatch))
+
+;simple method that'll be used for get-procs
+(define (list->queue L)
+  (let ((queue (make-queue)))
+    (define (recursively lis)
+      (if (null? lis)
+        queue
+        (begin ((queue 'insert!) (car lis))
+               (recursively (cdr lis)))))
+    (recursively L)))
+
+
+
 ;table for pkgs
 (define (make-table)
   (let ((local-table (list '*table*)))
@@ -7,38 +64,38 @@
       (define (table-traverser ks table)
         (let ((key (car ks)))
           (if (null? (cdr ks))
-              (let ((record (assoc key (cdr table))))
-                (if record
-                    (cdr record)
-                    #f))
-              (let ((subtable
-                      (assoc key (cdr table))))
-                (if subtable
-                    (table-traverser (cdr ks) subtable)
-                    #f)))))
+            (let ((record (assoc key (cdr table))))
+              (if record
+                (cdr record)
+                #f))
+            (let ((subtable
+                    (assoc key (cdr table))))
+              (if subtable
+                (table-traverser (cdr ks) subtable)
+                #f)))))
       (table-traverser keys local-table))
     (define (insert! keys value)
       (define (make-piece ks v)
         (if (null? (cdr ks))
-            (cons (car ks) v)
-            (list (car ks) (make-piece (cdr ks) v))))
+          (cons (car ks) v)
+          (list (car ks) (make-piece (cdr ks) v))))
       (define (table-traverser ks v table)
         (let ((key (car ks)))
           (if (null? (cdr ks))
-              (if (not (pair? (cdr table)))
-                  (set-cdr! table (list (cons key value)))
-                  (let ((record (assoc key (cdr table))))
-                    (if record
-                        (set-cdr! record value)
-                        (set-cdr! table
-                                  (cons (cons key value)
-                                        (cdr table))))))
-              (let ((subtable
-                      (assoc key (cdr table))))
-                (if subtable
-                    (table-traverser (cdr ks) value subtable)
-                    (set-cdr! table
-                              (cons (make-piece ks value) (cdr table))))))))
+            (if (not (pair? (cdr table)))
+              (set-cdr! table (list (cons key value)))
+              (let ((record (assoc key (cdr table))))
+                (if record
+                  (set-cdr! record value)
+                  (set-cdr! table
+                            (cons (cons key value)
+                                  (cdr table))))))
+            (let ((subtable
+                    (assoc key (cdr table))))
+              (if subtable
+                (table-traverser (cdr ks) value subtable)
+                (set-cdr! table
+                          (cons (make-piece ks value) (cdr table))))))))
       (begin (table-traverser keys value local-table)
              'ok))
     (define (query keys)
@@ -52,49 +109,16 @@
         (recursive-search (cdr keys) (assoc (car keys) (cdr local-table)))
         (assoc keys (cdr local-table))))
 
-  (define (print-table)
-    (display local-table))
-  (define (dispatch m)
-    (cond ((eq? m 'lookup) lookup)
-          ((eq? m 'insert!) insert!)
-          ((eq? m 'query) query)
-          ((eq? m 'print-table) (print-table))
-          (else (error "Unknown operation: TABLE" m))))
-  dispatch))
+    (define (print-table)
+      (display local-table))
+    (define (dispatch m)
+      (cond ((eq? m 'lookup) lookup)
+            ((eq? m 'insert!) insert!)
+            ((eq? m 'query) query)
+            ((eq? m 'print-table) (print-table))
+            (else (error "Unknown operation: TABLE" m))))
+    dispatch))
 
-
-;queue for installer
-(define (front-ptr queue) (car queue))
-(define (rear-ptr queue) (cdr queue))
-(define (set-front-ptr! queue item)
-  (set-car! queue item))
-(define  (set-rear-ptr! queue item)
-  (set-cdr! queue item))
-(define (empty-queue? queue)
-  (null? (front-ptr queue)))
-(define (make-queue)
-  (cons () ()))
-(define (front-queue queue)
-  (if (empty-queue? queue)
-    (error "FRONT called with an empty queue" queue)
-    (car (front-ptr queue))))
-(define (insert-queue! queue item)
-  (let ((new-pair (cons item ())))
-    (cond ((empty-queue? queue)
-           (set-front-ptr! queue new-pair)
-           (set-rear-ptr! queue new-pair)
-           queue)
-          (else (set-cdr! (rear-ptr queue) new-pair)
-                (set-rear-ptr! queue new-pair)
-                queue))))
-(define (delete-queue! queue)
-  (cond ((empty-queue? queue)
-         (error "DELETE! called with an empty queue" queue))
-        (else (set-front-ptr! queue (cdr (front-ptr queue)))
-              queue)))
-
-(define (true? x) (not (eq? x false)))
-(define (false? x) (eq? x false))
 
 ;Procedure representation:
 (define (make-procedure parameters body env)
@@ -458,65 +482,43 @@
                  proc))))
 
 
-;============================PKG STUFF============================
+;============================PKG AND STORE STUFF============================
 
-;primitive procedure check
 ;pkg constructor
 (define (pkg name proc eval)
   (if (tagged-list? proc 'primitive)
-    (list 'primitive name (lambda (env) (define-variable! name proc env) 'ok))
-    (list 'non-primitive name (lambda (env) (eval proc env) 'ok))))
-
+    (cons (list 'primitive name) (lambda (env) (define-variable! name proc env) 'ok))
+    (cons (list 'non-primitive name) (lambda (env) (eval proc env) 'ok))))
 ;pkg selectors 
-(define (pkg-tag _pkg)
+(define (pkg-keys _pkg)
   (car _pkg))
-(define (pkg-main _pkg)
-  (cdr _pkg))
-(define (pkg-name _pkg)
-  (car (pkg-main _pkg)))
 (define (pkg-proc _pkg)
-  (cadr (pkg-main _pkg)))
-
-
-
+  (cdr _pkg))
 ;pkg setters
-;(primitive name proc)
-
-(define (set-pkg-name! _pkg _name)
-  (set-car! (cdr _pkg) _name))
+(define (set-pkg-keys! _keys _query)
+  (set-car! _pkg _keys))
 (define (set-pkg-proc! _pkg _proc)
-  (if (pair? _proc)
-    (set-car! (cddr _pkg) (lambda (env) (define-variable! name _proc env) 'ok))
-    (set-car! (cddr _pkg) (lambda (env) (eval _proc env) 'ok))))
+  (if (tagged-list? _proc 'primitive)
+    (set-cdr! _pkg  (lambda (env) (define-variable! name _proc env) 'ok))
+    (set-cdr! _pkg (lambda (env) (eval _proc env) 'ok))))
 
+;store constructor
 (define (make-store eval)
   (let ((procs (make-table)))
     (define (query-procs query)
       ((procs 'query) query))
-    (define (update _pkg)
-      (let ((tag (pkg-tag _pkg)))
-        (if (eq? tag 'primitive)
-          (let ((query (list tag (pkg-name _pkg))))
-            (let ((_data (query-procs query)))
-              (if _data
-                (if (not (eq? (pkg-proc _pkg) (cdr _data)))
-                  (set-cdr! _data  (pkg-proc _pkg)))
-                ((procs 'insert!) query (pkg-proc _pkg)))))
-          (let ((query (list 'non-primitive (pkg-name _pkg))))
-            (let ((_data (query-procs query)))
-              (if _data
-                (if (not (eq? (pkg-proc _pkg) (cdr _data)))
-                  (set-cdr! _data (pkg-proc _pkg)))
-                ((procs 'insert!) query (pkg-proc _pkg))))))))
 
-    (define (set-pkg-proc! _pkg _proc)
-      (if (pair? _proc)
-        (set-car! (cddr _pkg) (lambda (env) (define-variable! name proc env) 'ok))
-        (set-car! (cddr _pkg) (lambda (env) (eval proc env) 'ok))))
+    (define (update _pkg)
+      (let ((nameproc (query-procs (pkg-keys _pkg))))
+        (if nameproc
+          (if (not (eq? (pkg-proc _pkg) (cdr nameproc)))
+            (set-cdr! nameproc (pkg-proc _pkg)))
+          ((procs 'insert!) (pkg-keys _pkg) (pkg-proc _pkg)))))
 
     (define (add-pkg name proc)
       (update (pkg name proc eval)))
     
+
     (define (print-procs)
       (procs 'print-table))
 
@@ -615,151 +617,39 @@
             ((eq? m 'query) query-procs)
             ((eq? m 'print) (print-procs))
             (else ("Sorry, I don't understand MESSAGE: " m))))
-    dispatch))   
-
-
-
-
-(define (get-packages query)
-  (define (subtable->packages subtable)
-    (define (recursively tag pkgs_data)
-      (if (null? pkgs_data)
-        ()
-        (let ((pkg_data (car pkgs_data)))
-          (let ((name (car pkg_data))
-                (proc (cdr pkg_data)))
-            (cons (list tag name proc eval) (recursively tag (cdr pkgs_data)))))))
-    (let ((_tag (car subtable))
-          (_pkgs_data (cdr subtable)))
-      (recursively _tag _pkgs_data)))
-  (if (pair? query) 
-    (if (null? (cdr query))
-      (subtable->packages ((store 'query) (car query)))
-      (let ((pkg_data ((store 'query) query)))
-        (if pkg_data
-          (pkg (car pkg_data) (cdr pkg_data) eval)
-          false)))
-    (subtable->packages ((store 'query) query))))
-
-(define store (make-store eval))
+    dispatch))     
 
 ;=====================INSTALLER STUFF=====================
-
-
-
-;installs procs from  store
-(define (install env)
-  (define (install-all _pkgs env)
-    (let ((_pkg (car _pkgs)))
-      (if (null? _pkgs)
-        'done
-        (begin ((pkg-proc _pkg) env)
-               (install-all (cdr _pkgs))))))
-  (define (install-by-number _pkgs env number)
-    (if (and (>= number 0) (< number (length _pkgs)))
-      (let ((_pkg (list-ref _pkgs number)))
-        (newline)
-        (display "Installing ")
-        (display (pkg-name _pkg))
-        (display " ...")
-        (newline)
-        ((pkg-proc _pkg) env))
-      (begin (newline)
-             (display "Your input number must satisfy 0<=number<")
-             (display (length _pkgs))
-             (display "! ")
-             (newline))))
-  (define (install-by-#list _pkgs env . _numbers)
-    (let ((len (length _numbers)))
-      (cond ((null? _numbers) 'done)
-            ((= len 1) (install-by-number _pkgs env (car _numbers)))
-            ((> len 1) (begin ((install-by-number _pkgs env (car _numbers)))
-                              (install-by-#list _pkgs env (cdr _numbers)))))))
-  (define (print-pkgs _procs)
-    (let ((range (enumerate-interval 0 (length _procs))))
-      (define (print-iter indexing seq)
-        (if (not (null? seq))
-          (begin (newline)
-                 (display (car indexing))
-                 (display ". ")
-                 (display (car seq))
-                 (display ". ")
-                 (newline)
-                 (print-iter (cdr indexing) (cdr seq)))))
-      (print-iter range store_pkgs)))
-  (define (vendor)
-    (display "**********************************************************************")
-    (newline)
-    (newline)
-    (display "s: to install from store.")
-    (newline)
-    (display "q to quit.")
-    (newline)
-    (newline)
-    (let ((input (read)))
-      (cond ((eq? input 's)
-             (display "a to install all in store." )
-             (newline)
-             (display "p to install primitives.")
-             (newline)
-             (display "0 1 2 3 ... to install non-primitives by indexing in store database.")
-             (newline)
-             (display "l to list out packages in store")
-             (newline)
-             (display "q to quit")
-             (newline)
-             (set! input (read))
-             (cond ((eq? input 'a)
-                    (install-all store env)
-                    (vendor))
-                   ((number? input)
-                    (install-by-number store_pkgs env input))
-
-
-
-                   ((number-list? input)
-                    (install-by-#list store_pkgs env input)
-                    (vendor))
-                   ((eq? input 'p)
-                    (install-primitives env)
-                    (vendor))
-                   ((eq? input 'l)
-                    (print-pkgs store_pkgs)
-                    (vendor))
-                   ((eq? input 'q)
-                    (newline)
-                    'Exiting...)
-                   (else (display "I didn't understand. Either press s to install from store or q to quit.")
-                         (newline)
-                         (vendor))))
-            ((eq? input 'q)
-             (newline))
-            (else (begin (display "I didn't understand. Either press s to install from store or q to quit.")
-                         'Exiting...)))))    
-  (vendor))  
-
-;===========================Initialization===========================
-
-;procs initialization:
-(define store_1 (make-store eval))
-;(define store_2 (make-store eval-after-analyze))
-
-;environment initialization:
-(define env (setup-environment))
-
-
-
-
+(define (make-installer eval env)
+  (let ((store (make-store eval)))
+    (define (data->queue data)
+      (list->queue (map (lambda (x) (cdr x)) data)))
+    (define (get-all-procs)
+      (data->queue (append (cdr ((store 'query) 'primitive)) (cdr ((store 'query) 'non-primitive)))))
+    (define (get-primitives)
+      (data->queue (cdr ((store 'query) 'primitive))))
+    (define (get-non-primitives)
+      (data->queue (cdr ((store 'query) 'non-primitive))))
+    (define (install proc_queue env)
+      (if (not (proc_queue 'empty-queue?))
+        (let ((proc (proc_queue 'front-queue)))
+          (proc env)
+          (proc_queue 'delete!)
+          (install proc_queue env))
+        'done))
+    (define (dispatcher m)
+      (cond ((eq? m 'a)
+             (install (get-all-procs) env))
+            ((eq? m 'p)
+             (install (get-primitives) env))
+            ((eq? m 'c)
+             (install (get-non-primitives) env))))
+  dispatcher))
 ;===================TESTING===================
-;analyze at execution time.
 
-(define (test-seq eval env)
-  (eval '(fib 10) env)
-  (eval '(fact 10) env)
-  (eval '(append '(a b c d e) '(f g h i j)) env))
+(define (make-timer eval env) 'to_be_implemented)
 
-;add random shit
-
+(define (make-tester eval env) 'to_be_implemented)
 
 (define (n-calls prod eval env n)
   (if (= n 0)
@@ -792,4 +682,8 @@
 
 ;Thus evall is roughly .44 percent faster than eval! We've achieved a nice efficiency boost by performing more of the syntactical analysis on expressions, before executing them...
 
+;===========================Initialization===========================
 
+(define env (setup-environment))
+
+(define installer (make-installer eval env))
