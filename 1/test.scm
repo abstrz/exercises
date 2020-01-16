@@ -512,22 +512,6 @@
                     env)
   'ok)
 
-(define (list-of-values-lr exps env)
-  (if (no-operands? exps)
-    ()
-    (let ((evald-exp (eval (first-operand exps) env)))
-      (cons (evald-exp (list-of-values (rest-operands exps) env))))))
-
-(define (reverse-list l)
-  (define (iter li result)
-    (if (null? li)
-      result
-      (iter (cdr li) (cons (car li) result))))
-  (iter l ()))
-(define (list-of-values-rl exps env)
-  (let ((reversed-exps (reverse-list exps)))
-    (list-of-values-lr reversed-exps env)))
-
 ;The only self-evaluating items are numbers and strings:
 (define (self-evaluating? exp)
   (cond ((number? exp) #t)
