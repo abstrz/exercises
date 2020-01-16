@@ -97,11 +97,11 @@
 
 ;generate symbol
 (define (s-gen)
-  (let ((ng (make-numgen 0 25)))
-    (let ((rand_init 'a))
+  (define ng (make-numgen 0 25))
+    (let ((rand_init (num->symbol (ng))))
       (define (update)
         (set! rand_init (num->symbol (ng))))
-      update)))
+      update))
 
 ;generate predicates of the form (< n1 n2), for n1,n2 numbers.
 (define (pn-gen)
@@ -899,14 +899,14 @@
           ()
           (cons (generate-argument (car param_types)) (generate-arguments (cdr param_types)))))
       (define (generate-argument param_type)
-        (cond ((eq? param_type 'n) (generate-n))
-              ((eq? param_type 'n!=0) (generate-n!=0))
-              ((eq? param_type 'n>0) (generate-n>0))
-              ((eq? param_type 'n>=0) (generate-n>=0))
-              ((eq? param_type 'n<0) (generate-n<0))
-              ((eq? param_type 'x) (generate-x))
-              ((eq? param_type 'P) (generate-P))
-              ((eq? param_type 'L) (generate-L))))
+        (cond ((eq? param_type 'n) (n-gen))
+              ((eq? param_type 'n!=0) (n!=0-gen))
+              ((eq? param_type 'n>0) (n>0-gen))
+              ((eq? param_type 'n>=0) (n>=0-gen))
+              ((eq? param_type 'n<0) (n<0-gen))
+              ((eq? param_type 'P) (p-gen))
+              ((eq? param_type 'L) (l-gen))
+              ((eq? param_type 'x) (x-gen))))
       (define (generate-n)
         ;takes a list of param_types and pseudo-randomly generates a corresponding list of arguments. 
         (define (make-application name param_types)
