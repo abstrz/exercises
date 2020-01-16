@@ -250,7 +250,7 @@
     update))
 
 
-
+;======================QUEUE AND TABLE======================
 ;simple 1d queue for get procedure of store, and installer.
 (define (make-queue)
   (let ((queue (cons () ())))
@@ -303,7 +303,6 @@
 
 
 
-;table for pkgs
 (define (make-table)
   (let ((local-table (list '*table*)))
     (define (lookup keys)
@@ -366,6 +365,7 @@
     dispatch))
 
 
+;==================REPRESENTING PROCEDURES AND ENVIRONMENTS========================
 ;Procedure representation:
 (define (make-procedure parameters body env)
   (list 'procedure parameters body env))
@@ -391,6 +391,7 @@
 
 (define (primitive-procedure? proc)
   (tagged-list proc 'primitive))
+
 ;Environment representation:
 (define (enclosing-environment env) (cdr env))
 (define (first-frame env) (car env))
