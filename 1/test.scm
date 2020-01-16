@@ -1,7 +1,11 @@
-;Code based on Exercise 4.24 from SICP.
+;Code based on Exercise 4.24 from SICP:
+;  Design and carry out some experiments to compare the speed of the original metacircular evaluator with the version in this section. 
+;  Use your results to estimate the fraction of time that is spent in analysis versus execution for various procedures.
+
+;The following is my solution:
+;=========================================================
 (define (true? x)
   (not (false? x)))
-
 
 ;==============GENERATE ARGUMENTS==============
 ;param_types:n n!=0 n<0 n<=0 n>0 n>=0 P L x ...
