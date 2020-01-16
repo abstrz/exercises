@@ -3,7 +3,7 @@
   (not (false? x)))
 
 
-;==============RANDOM PROCEDURES NEEDED FOR TESTER==============
+;==============GENERATE ARGUMENTS==============
 ;param_types:n n!=0 n<0 n<=0 n>0 n>=0 P L x ...
 
 ;properties of ux+v=n: u,v coprime to n, and both odd. 
@@ -95,6 +95,7 @@
          'z)
         (else (error "Unrecognized number" num))))
 
+;generate symbol
 (define (s-gen)
   (let ((ng (make-numgen 0 25)))
     (let ((rand_init 'a))
@@ -118,6 +119,7 @@
       (set! rand_init (list 'eq? (sg) (sg))))
     update))
 
+;generate predicates
 (define (p-gen)
   (define pn (pn-gen))
   (define ps (ps-gen))
@@ -129,7 +131,7 @@
         (set! rand_init (ps))))
     update))
 
-;generate-lists-of-numbers
+;generate lists of numbers
 (define (ln-gen)
   (define ng (make-numgen 0 1000))
   (let ((rand_init (list (ng))))
@@ -137,6 +139,7 @@
       (set! rand_init (cons (ng) rand_init)))
     update))
 
+;generate lists of symbols
 (define (ls-gen)
   (define sg (s-gen))
   (let ((rand_init (list (sg))))
@@ -144,13 +147,15 @@
       (set! rand_init (cons (sg) rand_init)))
     update))
 
+;generate lists of predicates
 (define (lp-gen)
   (define pg (p-gen))
   (let ((rand_init (list (pg))))
     (define (update)
       (set! rand_init (cons (pg) rand_init)))
     update))
-;if no size argument provided, goes on forever. Otherwise, cuts at size and starts new list.
+
+;tool for generating lists of numbers, symbols, and predicates.
 (define (l-gen-pre)
   (define ng (n-gen))
   (define sg (s-gen))
@@ -170,7 +175,7 @@
              (set! rand_init (pg)))))
     update))
 
-;takes a number n and prints out a generic list of n elements.
+;generate list of numbers, symbols, and predicates
 (define (l-gen . n)
   (let ((lgp (l-gen-pre)))
     (let ((rand_init (list (lgp)))
@@ -191,30 +196,31 @@
                    (update)))))
       update)))
 
-  ;x can be one of 4 options n,s,P,L:
-  (define (x-gen)
-    (define ng (n-gen))
-    (define sg (s-gen))
-    (define pg (p-gen))
-    (define lg (l-gen))
-    (define ng_index (n-gen))
-    (let ((rand_init (ng))
-          (n (ng_index)))
-      (define (update)
-        (cond ((= (remainder n 4) 0)
-               (set! n (ng_index))
-               (set! rand_init (ng)))
-              ((= (remainder n 4) 1)
-               (set! n (ng_index))
-               (set! rand_init (sg)))
-              ((= (remainder n 4) 2)
-               (set! n (ng_index))
-               (set! rand_init (pg)))
-              ((= (remainder n 4) 3)
-               (set! n (ng_index))
-               (set! rand_init (lg)))))
-      update))
-;... can only be interpreted after some other symbol, and it means to generate a list of arbitrarily many elements of the type read.
+;generates either number, symbol, predicate, or list
+(define (x-gen)
+  (define ng (n-gen))
+  (define sg (s-gen))
+  (define pg (p-gen))
+  (define lg (l-gen))
+  (define ng_index (n-gen))
+  (let ((rand_init (ng))
+        (n (ng_index)))
+    (define (update)
+      (cond ((= (remainder n 4) 0)
+             (set! n (ng_index))
+             (set! rand_init (ng)))
+            ((= (remainder n 4) 1)
+             (set! n (ng_index))
+             (set! rand_init (sg)))
+            ((= (remainder n 4) 2)
+             (set! n (ng_index))
+             (set! rand_init (pg)))
+            ((= (remainder n 4) 3)
+             (set! n (ng_index))
+             (set! rand_init (lg)))))
+    update))
+
+;generate a list of 100 elements of type element.
 (define (...-gen element)
   (define ng (n-gen))
   (define pg (p-gen))
