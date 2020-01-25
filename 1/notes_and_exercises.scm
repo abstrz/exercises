@@ -7,6 +7,13 @@
         ((pair? input) 
          (and (number? (car input)) (number-list? (cdr input))))
         (else #t)))
+(define (average . args)
+  (let ((l (length args)))
+    (define (iteratively result subargs)
+      (if (null? subargs)
+        (/ result l)
+        (iteratively (+ result (car subargs)) (cdr subargs))))
+    (iteratively 0 args)))
 ;=============1.2.4 Exponentiation=============================
 ;;recursive definition
 ;(define (expt_rec b n)
@@ -5771,7 +5778,7 @@
     (define-variable! 'true true initial-env)
     (define-variable! 'false false initial-env)
     initial-env))
-(define env (setup-environment))
+(define genv (setup-environment))
 
 ;primitive-procedures are of the form (primitive <implementation-in-lisp>)
 (define (primitive-procedure? proc)
@@ -6491,7 +6498,7 @@
       (user-print output)))
   (driver-loop-lazy))
 
-(eval-lazy '(define (try a b) (if (= a 0) 1 b)) env)
+(eval-lazy '(define (try a b) (if (= a 0) 1 b)) genv)
 
 ;Exercise 4.27:
 ;(define count 0)
@@ -6574,64 +6581,28 @@
 ;2
 
 ;Exercise 4.28:
-;We could consider a procedure that takes an argument and gives you another procedure...
-;Let eval-lazy be such that it uses eval-lazy to evaluate the operator in apply, rather than actual-value:
-(define (w input)
-  (lambda (x) (* input x)))
-;Then we have
-;(eval-lazy '((w 3) 5) env)
-;=(apply-lazy (eval-lazy '(w 3) env)
-;   (5)
-;   env)
 
-;(eval-lazy '(w 3) env)
-;=(apply-lazy (eval-lazy 'w)
-;   (3)
-;   env)
-;=(eval-sequence
-;   (lambda (x) (* input x))
-;   (extend-environment
-;     (input)
-;     (thunk 3 env)
-;     env))
-;=(eval-lazy '(lambda (x) (* input x)) *env)
-;=(make-procedure  (x) (* input x) *env)
-;=(procedure (x) (* input x) *env)
-;where *env= (extend-environment '(input) '(thunk 3 env) env)
+;We will get an error whenever we have something like 
+;(define (p q)
+;  (q p))
+;ie, whenever an operand becomes an operator, because as operand it will be delayed, and as operator it will not be forced. 
+;(define (cons a b)
+;  (lambda (m) (m a b)))
+;(define (car p)
+;  (p (lambda (a b) a)))
+;(define (cdr p)
+;  (p (lambda (a b) b)))
 
-;*env = (extend-environment '(input) '(thunk 3 env) env), where env is the global environment
-
-;(eval-lazy '((w 3) 5) env)
-;=(apply-lazy (procedure (x) (* input x) *env) env)
-;=(eval-sequence-lazy
-;   (* input x)
-;   (extend-environment
-;     (x)
-;     (list-of-delayed-args (5) env)
-;     *env))
-;=(eval-sequence-lazy
-;   (* input x)
-;   (extend-environment
-;     (x)
-;     ('(thunk 5 env))
-;     *env))
-;=(eval-sequence-lazy
-;   (* input x)
-;   **env)
-;, where **env=(extend-environment
-;                (x)
-;                ('(thunk 5 env))
-;                *env)
-;=(eval-lazy (* input x) **env)
-;=(apply-primitive * (list-of-arg-values (list input x) **env))
-
-;(list-of-arg-values (list input x) **env)
-;((actual-value (thunk 3 env)) (actual-value (thunk 5 env)))
-;((force-it (eval-lazy 3 env)) (force-it (eval-lazy 5 env)))
-;(3 5)
-
-;(eval-lazy (* input x) **env)
-;=(apply-primitive * (3 5))
-;=15
-
-;Okay, nevermind. This works. Will think of a pathological counter example later.
+;(eval-lazy (car (cons a b)) genv)
+;=(eval-sequence-lazy 
+;   (p (lambda (a b) a)) 
+;    (extend-environment 
+;     (p)
+;     (thunk (cons a b) genv)
+;     genv))
+;(eval-lazy (p (lambda (a b) a)) (extend-environment 
+;                                  (p)
+;                                  (thunk (cons a b) genv)
+;                                  genv)
+;((thunk (cons a b) genv) (lambda (a b) a))
+;ERROR
