@@ -6625,3 +6625,5 @@
 ;;As for the interaction, (id 10) is evaluated twice without memoization, and so count is 2. With memoization, it is just evaluated once, and then the thunk (list 'thunk '(id 10) genv) is 
 ;;set to (list 'evaluated-thunk 10 ()), so that force-it just returns 10, without doing any extra computational work, the second time. 
 ;;Exercise 4:30:
+;;a
+
