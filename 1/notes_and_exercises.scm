@@ -6625,5 +6625,66 @@
 ;;As for the interaction, (id 10) is evaluated twice without memoization, and so count is 2. With memoization, it is just evaluated once, and then the thunk (list 'thunk '(id 10) genv) is 
 ;;set to (list 'evaluated-thunk 10 ()), so that force-it just returns 10, without doing any extra computational work, the second time. 
 ;;Exercise 4:30:
-;;a
+;;a: Let's just trace out what for-each does,
+;;(define (for-each proc items)
+;;  (if (null? items)
+;;    'done
+;;    (begin (proc (car items))
+;;           (for-each proc (cdr items)))))
+;;(eval-lazy '(for-each (lambda (x) (newline) (display x)) 
+;;                      (list 57 321 88))
+;;           genv)
+;;=(apply-lazy 'for-each 
+;;             ((lambda (x) (newline) (display x))
+;;              (list 57 321 88))
+;;             genv)
+;;=(eval-sequence-lazy 
+;;   '(if (null? items)
+;;      'done
+;;      (begin (proc (car items))
+;;             (for-each proc (cdr items))))
+;;   '(extend-environment  ;;*
+;;      '(proc items)
+;;      '((thunk (lambda (x) (newline) (display x)) genv)
+;;        (thunk (57 321 88) genv))
+;;      genv))
+;;=(eval-lazy '(begin (proc (car items))
+;;                    (for-each proc (cdr items)))
+;;            *genv) ;;where *genv is the extension marked by *
+;;1=(eval-lazy '(proc (car items)) *genv) ;;first expression of begin statement
+;;1=(apply-lazy (actual-value 'proc *genv) 
+;;         '((car items)) 
+;;         *genv)
+;;1= (apply-lazy '(procedure (x) ((newline) (display x)) genv)
+;;               '((car items))
+;;               *genv)
+;;1=(eval-sequence-lazy
+;;    '((newline) (display x))
+;;    (extend-environment  ;;**
+;;      (x)
+;;      '(thunk (car items) *genv)
+;;      genv))
+;;1.1=(eval-lazy '(newline) **genv) ;;with **genv being the extension marked by **
+;;1.2=(eval-lazy '(display x) **genv)
+;;1.2=(apply-primitive-procedure display
+;;                               (actual-value 'x **genv))
+;;1.2=(apply-in-underlying-scheme display
+;;                                (force-it (eval-lazy (car items) *genv)))
+;;1.2=(apply-in-underlying-scheme display
+;;                                (force-it (apply-primitive-procedure 'car
+;;                                                                     (thunk (57 321 88) genv))))
+;;1.2=(apply-in-underlying-scheme display
+;;                                (force-it (apply-in-underlying-scheme car
+;;                                                                     '(57 321 88))))
+;;1.2=(apply-in-underlying-scheme display
+;;                                57)
+
+                                
+
+
+
+
+
+
+
 
