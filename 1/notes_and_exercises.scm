@@ -6611,7 +6611,7 @@
 ;;                                  (p)
 ;;                                  (thunk (cons a b) genv)
 ;;                                  genv)
-;((thunk (cons a b) genv) (lambda (a b) a)
+;((thunk (cons a b) genv) (lambda (a b) a))
 ;;ERROR
 ;;Exercise 4.29:
 ;;Consider the following:
@@ -6624,67 +6624,73 @@
 ;;           (run-n-times proc (- n 1)))))
 ;;As for the interaction, (id 10) is evaluated twice without memoization, and so count is 2. With memoization, it is just evaluated once, and then the thunk (list 'thunk '(id 10) genv) is 
 ;;set to (list 'evaluated-thunk 10 ()), so that force-it just returns 10, without doing any extra computational work, the second time. 
-;;Exercise 4:30:
-;;a: Let's just trace out what for-each does,
-;;(define (for-each proc items)
-;;  (if (null? items)
-;;    'done
-;;    (begin (proc (car items))
-;;           (for-each proc (cdr items)))))
-;;(eval-lazy '(for-each (lambda (x) (newline) (display x)) 
-;;                      (list 57 321 88))
-;;           genv)
-;;=(apply-lazy 'for-each 
-;;             ((lambda (x) (newline) (display x))
-;;              (list 57 321 88))
-;;             genv)
-;;=(eval-sequence-lazy 
-;;   '(if (null? items)
-;;      'done
-;;      (begin (proc (car items))
-;;             (for-each proc (cdr items))))
-;;   '(extend-environment  ;;*
-;;      '(proc items)
-;;      '((thunk (lambda (x) (newline) (display x)) genv)
-;;        (thunk (57 321 88) genv))
-;;      genv))
-;;=(eval-lazy '(begin (proc (car items))
-;;                    (for-each proc (cdr items)))
-;;            *genv) ;;where *genv is the extension marked by *
-;;1=(eval-lazy '(proc (car items)) *genv) ;;first expression of begin statement
-;;1=(apply-lazy (actual-value 'proc *genv) 
-;;         '((car items)) 
-;;         *genv)
-;;1= (apply-lazy '(procedure (x) ((newline) (display x)) genv)
-;;               '((car items))
-;;               *genv)
-;;1=(eval-sequence-lazy
-;;    '((newline) (display x))
-;;    (extend-environment  ;;**
-;;      (x)
-;;      '(thunk (car items) *genv)
-;;      genv))
-;;1.1=(eval-lazy '(newline) **genv) ;;with **genv being the extension marked by **
-;;1.2=(eval-lazy '(display x) **genv)
-;;1.2=(apply-primitive-procedure display
-;;                               (actual-value 'x **genv))
-;;1.2=(apply-in-underlying-scheme display
-;;                                (force-it (eval-lazy (car items) *genv)))
-;;1.2=(apply-in-underlying-scheme display
-;;                                (force-it (apply-primitive-procedure 'car
-;;                                                                     (thunk (57 321 88) genv))))
-;;1.2=(apply-in-underlying-scheme display
-;;                                (force-it (apply-in-underlying-scheme car
-;;                                                                     '(57 321 88))))
-;;1.2=(apply-in-underlying-scheme display
-;;                                57)
+;;Exercise 4.30:
+;;done on paper
+;;Exercise 4.31:
+(define (eval-hybrid exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment-lazy exp env))
+        ((definition? exp) (eval-definition-lazy exp env))
+        ((if? exp) (eval-if-lazy exp env))
+        ((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
+        ((begin? exp)
+         (eval-sequence-lazy (begin-actions exp) env))
+        ((application? exp)
+         (apply-hybrid (actual-value-hybrid (operator exp) env)
+                     (operands exp)
+                     env))
+        (else 
+          (error "Unknown expression type: EVAL" exp))))
 
-                                
+(define (apply-hybrid procedure arguments env)
+  ;;primitive procedure handling needs to take into consideration whether params are to be memoized or not.
+  (cond ((primitive-procedure? procedure)
+         (apply-primitive-procedure
+           procedure
+           (list-of-hybrid-arg-values arguments env)))
+        ;;treatment relative to param-type
+        ((compound-procedure? procedure) 
+         (eval-sequence-lazy
+           (procedure-body procedure)
+           (extend-environment
+             (procedure-parameters procedure)
+             (list-of-hybrid-args (procedure-parameters procedure) arguments env)
+             (procedure-environment procedure))))
+        (else (error "Unknown procedure type: APPLY" procedure))))
+;;we only have to worry about memoization of parameters when forcing the procedure comes into play, which doesn't happen until
+(define (lazy? param)
+  (or (eq? (cadr param) 'lazy) (eq? (cadr param) 'lazy-memo)))
 
+(define (list-of-hybrid-arg-values exps env)
+  (if (no-operands? exps)
+    '()
+    (cons (actual-value-hybrid (first-operand exps) env) (list-of-arg-values (rest-operands exps) env))))
 
+(define (list-of-hybrid-args params arguments env)
+  (cond ((null? params) ())
+        ((lazy-memo? (car params))
+         (cons (delay-it-memo (car arguments) env) (list-of-hybrid-args (cdr params) (cdr arguments) env)))
+        ((lazy? (car params))
+                (cons (delay-it (car arguments) env) (list-of-hybrid-args (cdr params) (cdr arguments) env)))
+        (else (cons (car arguments) (list-of-hybrid-args (cdr params) (cdr arguments) env)))))
+(define (delay-it-memo exp env)
+  (list 'thunk-memo exp env))
 
+(define (force-it-hybrid obj)
+  (cond ((thunk-memo? obj)
+         (let ((result (actual-value-hybrid (thunk-exp obj) (thunk-env obj))))
+           (set-car! obj 'evaluated-thunk)
+           (set-car! (cdr obj) result) 
+           (set-cdr! (cdr obj) ()) ;;forget env to save space.
+           result))
+        ((thunk? obj)
+         (actual-value-hybrid (thunk-exp obj) (thunk-env obj)))
+        ((evaluated-thunk? obj) (thunk-value obj))
+        (else obj)))
 
-
-
-
-
+(define (thunk-memo? obj)
+  (tagged-list? obj 'thunk-memo))
+(define (actual-value-hybrid exp)
+  (force-it-hybrid (eval-hybrid exp env)))
