@@ -6631,18 +6631,41 @@
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
         ((quoted? exp) (text-of-quotation exp))
-        ((assignment? exp) (eval-assignment-lazy exp env))
-        ((definition? exp) (eval-definition-lazy exp env))
-        ((if? exp) (eval-if-lazy exp env))
+        ((assignment? exp) (eval-assignment-hybrid exp env))
+        ((definition? exp) (eval-definition-hybrid exp env))
+        ((if? exp) (eval-if-hybrid exp env))
         ((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
         ((begin? exp)
-         (eval-sequence-lazy (begin-actions exp) env))
+         (eval-sequence-hybrid (begin-actions exp) env))
         ((application? exp)
          (apply-hybrid (actual-value-hybrid (operator exp) env)
                      (operands exp)
                      env))
         (else 
           (error "Unknown expression type: EVAL" exp))))
+
+(define (eval-if-hybrid exp env)
+  (if (true? (actual-value (if-predicate exp) env))
+    (eval-hybrid (if-consequent exp) env)
+    (eval-hybrid (if-alternative exp) env)))
+(define (eval-sequence-hybrid exps env)
+  (cond ((last-exp? exps)
+         (eval-hybrid (first-exp exps) env))
+        (else
+          (eval-hybrid (first-exp exps) env)
+          (eval-sequence-hybrid (rest-exps exps) env))))
+(define (eval-definition-hybrid exp env)
+  (define-variable! (definition-variable exp)
+                    (eval-hybrid (definition-value exp) env)
+                    env)
+  'ok)
+(define (eval-assignment-hybrid exp env)
+  (set-variable-value! (assignment-variable exp)
+                       (eval-hybrid (assignment-value exp) env)
+                       env)
+  'ok)
+
+
 
 (define (apply-hybrid procedure arguments env)
   ;;primitive procedure handling needs to take into consideration whether params are to be memoized or not.
@@ -6652,7 +6675,7 @@
            (list-of-hybrid-arg-values arguments env)))
         ;;treatment relative to param-type
         ((compound-procedure? procedure) 
-         (eval-sequence-lazy
+         (eval-sequence-hybrid
            (procedure-body procedure)
            (extend-environment
              (procedure-parameters procedure)
