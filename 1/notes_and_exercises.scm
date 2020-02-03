@@ -6645,7 +6645,7 @@
           (error "Unknown expression type: EVAL" exp))))
 
 (define (eval-if-hybrid exp env)
-  (if (true? (actual-value (if-predicate exp) env))
+  (if (true? (actual-value-hybrid (if-predicate exp) env))
     (eval-hybrid (if-consequent exp) env)
     (eval-hybrid (if-alternative exp) env)))
 (define (eval-sequence-hybrid exps env)
