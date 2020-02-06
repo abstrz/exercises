@@ -125,6 +125,7 @@
 
 ;;========2. Boolean Arithmetic========
 ;;========2.1 Background========
+;;We represent binary numbers as lists, i.e. 101010101 will be represented as (1 0 1 0 1 0 1 0 1)
 
 ;;returns a bus with same number of bits as two argument bits, assumes both arguments are busses of the same number of bits!
 (define (bitwise-addition bits1 bits2)
@@ -149,8 +150,6 @@
                 ((= a 0)
                  (cons 0 (adder 0 (cdr sb1) (cdr sb2))))))))
     (reverse-list (adder 0 rb1 rb2))))
-
-;;Let's represent binary numbers as lists such that say 101010101 is represented as (1 0 1 0 1 0 1 0 1). We want a function that can take base 10 numbers and transform them into binary numbers, and vice versa.
 
 ;;transform list of bits representing base 2 number to base 10 number
 (define (num2->num10 l)
