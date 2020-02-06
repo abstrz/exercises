@@ -5753,10 +5753,7 @@
       (make-unbound! var (enclosing-environment env)))))
 ;;4.1.4. Running the Evaluator as a Program:
 (define primitive-procedures
-  (list (list 'car car)
-        (list 'cdr cdr)
-        (list 'cons cons)
-        (list 'null? null?)
+  (list (list 'null? null?)
         (list '+ +)
         (list '- -)
         (list '* *)
@@ -6717,3 +6714,36 @@
   (tagged-list? obj 'thunk-memo))
 (define (actual-value-hybrid exp)
   (force-it-hybrid (eval-hybrid exp env)))
+
+
+;;=========================4.2.3 Streams as Lazy Lists=========================
+(eval-lazy '(define (cons x y) (lambda (m) (m x y))) genv)
+(eval-lazy '(define (car z) (z (lambda (p q) p))) genv)
+(eval-lazy '(define (cdr z) (z (lambda (p q) q))) genv)
+
+(eval-lazy '(define (list-ref items n)
+              (if (= n 0)
+                (car items)
+                (list-ref (cdr items) (- n 1)))) genv)
+(eval-lazy '(define (map proc items)
+              (if (null? items)
+                '()
+                (cons (proc (car items)) (map proc (cdr items))))) genv)
+;(define (scale-list items factor)
+;  (map (lambda (x) (* x factor)) items))
+;(define (add-lists list1 list2)
+;  (cond ((null? list1) list2)
+;        ((null? list2) list1)
+;        (else (cons (+ (car list1) (car list2))
+;                    (add-lists (cdr list1) (cdr list2))))))
+;(define ones (cons 1 ones))
+;(define integers (cons 1 (add-lists ones integers)))
+;(define (integral integrand initial-value dt)
+;  (define int
+;    (cons initial-value
+;          (add-lists (scale-list integrand dt) int)))
+;  int)
+;(define (solve f y0 dt)
+;  (define y (integral dy y0 dt))
+;  (define dy (map f y))
+;  y)
