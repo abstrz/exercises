@@ -1,0 +1,26 @@
+//Takes ans and returns zr, ng, and ans.
+
+CHIP final {
+IN
+  ans[16];
+
+OUT
+  zr,
+  ng,
+  out[16];
+
+PARTS:
+//zr
+Or8Way(in=ans[0..7], out=zr1);
+Or8Way(in=ans[8..15], out=zr2);
+Or(a=zr1, b=zr2, out=zr3);
+Not(in=zr3, out=zr);
+
+//ng
+And(a=ans[15], b=ans[15], out=ng);
+
+//output
+And16(a=ans, b=ans, out=out);
+
+}
+

@@ -46,5 +46,7 @@ CHIP ALU {
     negate-control(a=x1, n=nx, out=x2);
     zero-control(a=y, z=zy, out=y1);
     negate-control(a=y1, n=ny, out=y2);
-    f-control(x=x2, y=y2, f=f, out=out);
+    f-control(x=x2, y=y2, f=f, out=w1);
+    negate-control(a=w1, n=no, out=w2);
+    final(ans=w2, zr=zr, ng=ng, out=out);
 }
