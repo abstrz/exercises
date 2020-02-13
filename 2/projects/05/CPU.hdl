@@ -41,58 +41,41 @@ CHIP CPU {
     PARTS:
 
     //Instruction handling
-    DMux16(in=instruction, sel=instruction[15], a=i1, b=i2);
-    Or16(a=i1, b=instruction, out=w0);
-
-    //Loading A
-    Not(in=i2[0], out=noti20);
-    Or(a=i2[5], b=noti20, out=loadA);
+    decode(instructions=instruction, out[0]=d0, out[1]=d1, out[2]=d2, out[3]=d3, out[4]=d4, out[5]=d5, out[6]=d6, out[7]=d7, out[8]=d8, out[9]=d9, out[10]=d10, out[11]=d11, out[12]=d12, out[13]=d13, out[14]=d14, out[15]=d15);
+    Mux16(a=instruction, b=ALUout, sel=d15, out=w0);
 
     //A register
-    Register(in=w1, load=loadA, out=A);     
+    Not(in=d15, out=notd15);
+    Or(a=notd15, b=d5, out=loadA);
+    Register(in=w0, load=loadA, out=A);     
 
     //A or M output
-    Mux16(a=A, b=inM, sel=i2[12], out=AM);
+    Mux16(a=A, b=inM, sel=d12, out=AM);
 
     //ALU
-    ALU(x=D, y=AM, zx=i2[6], nx=i2[7], zy=i2[8], ny=i2[9], f=i2[10], no=i2[11, out=outM, zr=zr, ng=ng);
+    ALU(x=D, y=AM, zx=d11, nx=d10, zy=d9, ny=d8, f=d7, no=d6, out=ALUout, zr=zr, ng=ng);
+    And16(a=ALUout, b=ALUout, out=outM);
 
-    Mux16(a=w0, b=outM, sel=i2[0], out=w1);
+
 
     //writeM output
-    And(a=i2[5], b=i2[5], out=writeM);
+    And(a=d3, b=d3, out=writeM);
 
     //addressM output
-    And16(a=A, b=A, out=addressM[0..15]);
+    sixteentofifteen(in=A, out=addressM);
 
     //D register
-    Register(in=outM, load=i2[4], out=D);
-
-
+    Register(in=ALUout, load=d4, out=D);
+   
     //PC logic
-    //jump if n>0
-    Not(in=ng, out=notng);
-    Not(in=zr, out=notzr);
-    And(a=notng, b=notzr, out=notneg);
-    And(a=i2[0], b=notneg, out=l1);
-    //jump if n=0
-    And(a=i2[1], b=zr, out=l2);
-    //jump if n>=0
-    And(a=i2[0], b=i2[1], out=firstsecond);
-    And(a=firsttwo, b=notng, out=l3);
-    //jump if n<0
-    And(a=i2[2], b=ng, out=l4);
-    //jump if n!=0
-    And(a=i2[0], b=i2[2], out=firstthird);
-    And(a=firstthird, b=notzr, out=l5);
-    //jump if n<=0
-    And(a=i2[2], b=i2[1], out=secondthird);
-    Or(a=ng, b=zr, out=notpositive);
-    And(a=secondthird, b=notpositive, out=l6);
-    //jump
-    And(a=firstsecond, b=secondthird, out=l7);
-    Or8Way(a=false, b=l1, c=l2, d=l3, e=l4, f=l5, g=l6, h=l7, out=load);
+    PC-handler(Cinstruction[0]=d0, Cinstruction[1]=d1, Cinstruction[2]=d2, Cinstruction[3]=d3, Cinstruction[4]=d4, 
+               Cinstruction[5]=d5, Cinstruction[6]=d6, Cinstruction[7]=d7, Cinstruction[8]=d8, Cinstruction[9]=d9, 
+               Cinstruction[10]=d10, Cinstruction[11]=d11, Cinstruction[12]=d12, Cinstruction[13]=d13, 
+               Cinstruction[14]=d14, Cinstruction[15]=d15, zr=zr, ng=ng, out=load);
     Not(in=load, out=notload);
-    PC(in=A,load=load, inc=notload, reset=reset, out=pc);
- 
+    PC(in=A,load=load, inc=notload, reset=reset, out=pcpre);
+    sixteentofifteen(in=pcpre, out=pc);
+
+
+
 }
