@@ -7,8 +7,7 @@ char *clean_front_line(char *line){
     return line;
 }
 
-//removes trailing white space and comments
-
+//removes trailing comments, newline characters, and white space.
 char *clean_end_line(char *line){
     int i, end_selector;
 
@@ -19,7 +18,7 @@ char *clean_end_line(char *line){
 
     
 
-    //remove trailing newline charaacters
+    //remove trailing newline characters
     size_t len = strlen(line)-1;
     if (*line && line[len] == '\n')
         line[len-1] = '\0';
