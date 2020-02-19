@@ -10,30 +10,30 @@ char *clean_front_line(char *line){
 //removes trailing white space and comments
 
 char *clean_end_line(char *line){
-    int i, last_non_white_space;
+    int i, end_selector;
 
     //remove trailing comments
     for (i = 0;  line[i] != '\0' && line[i] != '/' && line [i+1] != '/'; ++i)
         ;
-
     line[i] = '\0';
 
-    //remove trailing white space
-    for(i=0; line[i] != '\0'; ++i)
-        if(line[i] != ' ')
-            last_non_white_space=i;
-    line[last_non_white_space+1] = '\0';
-
+    
 
     //remove trailing newline charaacters
     size_t len = strlen(line)-1;
     if (*line && line[len] == '\n')
         line[len-1] = '\0';
 
+    //remove trailing white space
+    for(i=0; line[i] != '\0'; ++i)
+        if(line[i] != ' ')
+            end_selector=i;
+    line[end_selector+1] = '\0';
+
     return line;
 }
 
-char *next_command(char *line, int maxline, FILE* fp){
+char *next_line(char *line, int maxline, FILE* fp){
     for (line=clean_front_line(line); 
             *line == '/' && *(line+1) == '/'  ||
             strcmp(line, "\n") == 0 ||
@@ -53,7 +53,7 @@ char **getlines(FILE* fp){
     for(i=0; fgets(line, 100, fp) != NULL; i++){
         char *newline;
         newline = malloc(sizeof(*newline) *100);
-        strcpy(newline, next_command(line, 100, fp));
+        strcpy(newline, next_line(line, 100, fp));
         lines[i]=newline;
     }
     return lines;
