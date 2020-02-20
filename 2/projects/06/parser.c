@@ -6,8 +6,7 @@ const int MAX_LINE = 1000;
 
 int number_of_lines(FILE* fp){
     int number_lines = 0;
-    char *line;
-    line = malloc(sizeof(*line) * MAX_LINE);
+    char *line = malloc(sizeof(char) * MAX_LINE);
 
     rewind(fp);
 
@@ -62,8 +61,7 @@ char *next_line(char *line, FILE* fp){
 char **getlines(FILE* fp){
     char **lines = malloc(sizeof(**lines) * MAX_FILE_SIZE);
     int i;
-    char *line;
-    line = malloc(sizeof(*line) * MAX_LINE);
+    char *line = malloc(sizeof(char) * MAX_LINE);
 
     for(i=0; fgets(line, MAX_LINE, fp) != NULL; i++){
         char *newline;
@@ -71,6 +69,7 @@ char **getlines(FILE* fp){
         strcpy(newline, next_line(line, fp));
         lines[i]=newline;
     }
+    free(line);
     return lines;
 }
 
