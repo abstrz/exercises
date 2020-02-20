@@ -27,8 +27,7 @@ char *output_filename(char *name){
 }
 
 
-int assembler(int argc, char *argv[], char **commands, table *t){
-    char *filename = malloc(sizeof(char) *20);
+int assembler(int argc, char *argv[], char **commands, char *filename, table *t){
     char *out_file = malloc(sizeof(char) *20);
 
     if (argc != 2)
@@ -52,7 +51,6 @@ int assembler(int argc, char *argv[], char **commands, table *t){
         }
         fclose(fp);
         fclose(fo);
-        free(out_file);
     }
 }
 
@@ -60,9 +58,10 @@ int assembler(int argc, char *argv[], char **commands, table *t){
 int main(int argc, char *argv[])
 {
     char **commands;
+    char *filename;
     table *t;
 
-    assembler(argc, argv, commands, t);
+    assembler(argc, argv, commands, filename, t);
 
 }
 
