@@ -28,7 +28,7 @@ char *output_filename(char *name){
 
 
 int assembler(int argc, char *argv[], char **commands, char *filename, table *t){
-    char *out_file;
+    char *out_file = malloc(sizeof(char) *20);
 
     if (argc != 2)
         printf("%s\n", "Assembler takes one argument.");
