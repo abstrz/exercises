@@ -45,7 +45,6 @@ int assembler(int argc, char *argv[], char **commands, char *filename, table *t)
         out_file = output_filename(filename);
         fo = fopen(out_file, "w");
         while(*commands != NULL){
-            encode(*commands);
             fputs(encode(*commands), fo);
             fputs("\n", fo);
             ++commands;
