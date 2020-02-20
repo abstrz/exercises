@@ -86,11 +86,8 @@ void build_symbol_table(char **commands, table *t){
     num_jump_addresses = 0;
     for(i=0;commands[i]!=NULL;++i){
         if(strcmp(commandtype(commands[i]), "L_COMMAND") == 0){
-            char *s;
-            s= symbol(commands[i]);
-            addentry(s, i-num_jump_addresses, t);
+            addentry(symbol(commands[i]), i-num_jump_addresses, t);
             num_jump_addresses++;
-            free(s);
         }
     }
 
@@ -121,6 +118,8 @@ void build_symbol_table(char **commands, table *t){
                 else if (strcmp(s, "R4")==0)
                     addentry(s, 4, t);
                 else if (strcmp(s, "R5")==0)
+                    addentry(s, 5, t);
+                else if (strcmp(s, "R6")==0)
                     addentry(s, 6, t);
                 else if (strcmp(s, "R7")==0)
                     addentry(s, 7, t);

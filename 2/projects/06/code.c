@@ -10,12 +10,6 @@ char *dest_encode(char *s){
         d = dest(s);
         if ( d == NULL)
             return "000";
-        else if( *d == 'M' )
-            return "001";
-        else if( *d == 'D' )
-            return "010";
-        else if( *d == 'A' )
-            return "100";
         else if( strcmp(d, "MD") == 0 )
             return "011";
         else if( strcmp(d, "AM") == 0 )
@@ -24,6 +18,12 @@ char *dest_encode(char *s){
             return "110";
         else if( strcmp(d, "AMD") == 0 )
             return "111";
+        else if( *d == 'M' )
+            return "001";
+        else if( *d == 'D' )
+            return "010";
+        else if( *d == 'A' )
+            return "100";
         else
             return "ERROR: Destination can only be one of A, M, or D.";
     }else
@@ -145,7 +145,7 @@ char *encode(char *s){
 
 char *to_binary(char *s){
     int i, n;
-    char *binary = malloc(sizeof(char) * 17);
+    char *binary = malloc(sizeof(char) * 1000);
     char *start, *end;
 
     sscanf(s, "%d", &n);
