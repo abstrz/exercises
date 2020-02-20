@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <ctype.h>
-#include "string.h"
-#include "handlelines.h"
+#include <string.h>
 
 typedef struct entry entry;
 
@@ -26,8 +25,8 @@ unsigned hash(char *key, int n);
 void print_contents(table* t);
 entry *lookup(char *key, table *t);
 entry *addentry(char *key, int val, table *t);
+void build_symbol_table(char **commands, table *t);
 
 bool contains(char *key, table *t);
 int getaddress(char *key, table *t);
-void build_symbol_table(char **commands, table *t);
 

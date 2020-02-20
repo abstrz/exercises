@@ -1,4 +1,5 @@
 #include "symboltable.h"
+#include "parser.h"
 
 table *make_table(int n){
     table *t;
@@ -84,75 +85,68 @@ void build_symbol_table(char **commands, table *t){
 
     num_jump_addresses = 0;
     for(i=0;commands[i]!=NULL;++i){
-        if(commands[i][0] == '('){
-            int k;
-            char *symbol;
-            symbol =malloc(sizeof(*symbol)*100);
-
-            for(k=1; commands[i][k] != ')'; k++){
-                symbol[k-1] = commands[i][k];
-            }
-
-            addentry(symbol, i-num_jump_addresses, t);
+        if(strcmp(commandtype(commands[i]), "L_COMMAND") == 0){
+            char *s;
+            s= symbol(commands[i]);
+            addentry(s, i-num_jump_addresses, t);
             num_jump_addresses++;
-
-            free(symbol);
+            free(s);
         }
     }
 
     variable_counter=16;
     for(i=0;commands[i]!=NULL;++i){
-        if(commands[i][0] == '@'){
-            char *symbol;
-            symbol = commands[i]+1;
-            if(!contains(symbol, t)){
-                if (strcmp(symbol, "SP")==0)
-                    addentry(symbol, 0, t);
-                else if (strcmp(symbol, "LCL")==0)
-                    addentry(symbol, 1, t);
-                else if (strcmp(symbol, "ARG")==0)
-                    addentry(symbol, 2, t);
-                else if (strcmp(symbol, "THIS")==0)
-                    addentry(symbol, 3, t);
-                else if (strcmp(symbol, "THAT")==0)
-                    addentry(symbol, 4, t);
-                else if (strcmp(symbol, "R0")==0)
-                    addentry(symbol, 0, t);
-                else if (strcmp(symbol, "R1")==0)
-                    addentry(symbol, 1, t);
-                else if (strcmp(symbol, "R2")==0)
-                    addentry(symbol, 2, t);
-                else if (strcmp(symbol, "R3")==0)
-                    addentry(symbol, 3, t);
-                else if (strcmp(symbol, "R4")==0)
-                    addentry(symbol, 4, t);
-                else if (strcmp(symbol, "R5")==0)
-                    addentry(symbol, 6, t);
-                else if (strcmp(symbol, "R7")==0)
-                    addentry(symbol, 7, t);
-                else if (strcmp(symbol, "R8")==0)
-                    addentry(symbol, 8, t);
-                else if (strcmp(symbol, "R9")==0)
-                    addentry(symbol, 9, t);
-                else if (strcmp(symbol, "R10")==0)
-                    addentry(symbol, 10, t);
-                else if (strcmp(symbol, "R11")==0)
-                    addentry(symbol, 11, t);
-                else if (strcmp(symbol, "R12")==0)
-                    addentry(symbol, 12, t);
-                else if (strcmp(symbol, "R13")==0)
-                    addentry(symbol, 13, t);
-                else if (strcmp(symbol, "R14")==0)
-                    addentry(symbol, 14, t);
-                else if (strcmp(symbol, "R15")==0)
-                    addentry(symbol, 15, t);
-                else if (strcmp(symbol, "SCREEN")==0)
-                    addentry(symbol, 16384, t);
-                else if (strcmp(symbol, "KBD")==0)
-                    addentry(symbol, 24576, t);
+        if(strcmp(commandtype(commands[i]), "A_COMMAND") == 0){
+            char *s;
+            s = symbol(commands[i]);
+            if(!contains(s, t)){
+                if (strcmp(s, "SP")==0)
+                    addentry(s, 0, t);
+                else if (strcmp(s, "LCL")==0)
+                    addentry(s, 1, t);
+                else if (strcmp(s, "ARG")==0)
+                    addentry(s, 2, t);
+                else if (strcmp(s, "THIS")==0)
+                    addentry(s, 3, t);
+                else if (strcmp(s, "THAT")==0)
+                    addentry(s, 4, t);
+                else if (strcmp(s, "R0")==0)
+                    addentry(s, 0, t);
+                else if (strcmp(s, "R1")==0)
+                    addentry(s, 1, t);
+                else if (strcmp(s, "R2")==0)
+                    addentry(s, 2, t);
+                else if (strcmp(s, "R3")==0)
+                    addentry(s, 3, t);
+                else if (strcmp(s, "R4")==0)
+                    addentry(s, 4, t);
+                else if (strcmp(s, "R5")==0)
+                    addentry(s, 6, t);
+                else if (strcmp(s, "R7")==0)
+                    addentry(s, 7, t);
+                else if (strcmp(s, "R8")==0)
+                    addentry(s, 8, t);
+                else if (strcmp(s, "R9")==0)
+                    addentry(s, 9, t);
+                else if (strcmp(s, "R10")==0)
+                    addentry(s, 10, t);
+                else if (strcmp(s, "R11")==0)
+                    addentry(s, 11, t);
+                else if (strcmp(s, "R12")==0)
+                    addentry(s, 12, t);
+                else if (strcmp(s, "R13")==0)
+                    addentry(s, 13, t);
+                else if (strcmp(s, "R14")==0)
+                    addentry(s, 14, t);
+                else if (strcmp(s, "R15")==0)
+                    addentry(s, 15, t);
+                else if (strcmp(s, "SCREEN")==0)
+                    addentry(s, 16384, t);
+                else if (strcmp(s, "KBD")==0)
+                    addentry(s, 24576, t);
                 else
-                    if(!isdigit(symbol[0])){
-                        addentry(symbol,variable_counter++,t);
+                    if(!isdigit(s[0])){
+                        addentry(s,variable_counter++,t);
                     }
             }
         }

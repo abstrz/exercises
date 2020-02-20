@@ -1,7 +1,7 @@
 #include "parser.h"
 
-const int MAX_FILE_SIZE = 1000000;
-const int MAX_LINE = 100;
+const int MAX_FILE_SIZE = 1000000000;
+const int MAX_LINE = 1000;
 
 
 int number_of_lines(FILE* fp){
@@ -79,10 +79,12 @@ char *commandtype(char *line){
 
     if( line[0] == '@' )
         command = "A_COMMAND";
-    if( line[1] == '=' || line[1] == ';' )
+    else if( line[1] == '=' || line[1] == ';' || line[2] == '=')
         command = "C_COMMAND";
-    if( line[0] == '(' )
+    else if( line[0] == '(' )
         command = "L_COMMAND";
+    else 
+        NULL;
     
     return command;
 }
@@ -91,10 +93,9 @@ char *symbol(char *line){
     char *command_type;
     char *s;
     s= malloc(sizeof(*s)*MAX_LINE);
-
     command_type = commandtype(line);
     if(strcmp(command_type, "A_COMMAND") == 0)
-        s=line+1;
+        s= line+1;
     else if(strcmp(command_type, "L_COMMAND") == 0){
         int i;
         for(i=1; line[i] != ')'; i++)
@@ -108,31 +109,46 @@ char *symbol(char *line){
 
 char *dest(char *line){
     char *command_type;
-    char *d;
-
-    d=malloc(sizeof(*d));
+    char *d = malloc(sizeof(char)*3);
 
     command_type = commandtype(line);
     if(strcmp(command_type, "C_COMMAND") == 0){
         if(line[1] == '=')
             *d = line[0];
+        else if (line[2] == '='){
+            d[0] = line[0];
+            d[1] = line[1];
+        }
+        else if (line[3] == '='){
+            d[0] = line[0];
+            d[1] = line[1];
+            d[2] = line[2];
+        }
         else
-            return 0;
+            return NULL;
     }else
-        return 0;
+        return NULL;
     return d;
 }       
 
 char *comp(char *line){
     char *command_type;
     char *c;
+    
+    c = malloc(sizeof(*c));
 
     command_type = commandtype(line);
     if(strcmp(command_type, "C_COMMAND") == 0){
-        if(line[1] == ';')
+        if(line[1] == ';'){
             *c = line[0];
-        else if(line[1] == '=')
+        }else if(line[1] == '=')
             c = line+2;
+        else if (line[2] == '='){
+            c=line+3;
+        }
+        else if (line[3] == '='){
+            c=line+4;
+        }
         else
             return NULL;
     }else
@@ -143,6 +159,8 @@ char *comp(char *line){
 char *jump(char *line){
     char *command_type;
     char *j;
+
+    j = malloc(sizeof(*j));
 
     command_type = commandtype(line);
     if(strcmp(command_type, "C_COMMAND") == 0){
