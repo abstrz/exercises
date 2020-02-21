@@ -3,10 +3,11 @@
 **Chapters**: </br></br>
 
 ***1: Programming***
-*Read and do exercises from Structure and Interpretation of Computer Programs.*
+*Read and did exercises from the first three, and most of the fourth, chapters
+of Structure and Interpretation of Programming Languages."
 
 ***2: Computer Architecture***
-*Work through first six chapters of NAND2Tetris, and complete corresponding
+*Worked through first six chapters of NAND2Tetris, and completed corresponding
 projects.*
 
 ***3: Algorithms and Data Structures***
