@@ -1,6 +1,4 @@
-# st
-
-teachyourselfcs.com syllabus!
+# teachyourselfcs.com syllabus.
 
 **Chapters**: </br></br>
 
