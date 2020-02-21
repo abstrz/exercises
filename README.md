@@ -4,7 +4,7 @@
 
 ***1: Programming***
 *Read and did exercises from the first three, and most of the fourth, chapters
-of Structure and Interpretation of Programming Languages."
+of Structure and Interpretation of Programming Languages."*
 
 ***2: Computer Architecture***
 *Worked through first six chapters of NAND2Tetris, and completed corresponding
