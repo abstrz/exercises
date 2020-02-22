@@ -1,0 +1,19 @@
+//if z=0, out=a
+//if z=1, out=0
+
+CHIP f-control {
+IN
+x[16], y[16], f;
+
+OUT
+out[16];
+
+PARTS:
+And16(a=x, b=y, out=w1);
+Add16(a=x, b=y, out=w2);
+Not1to16(in=f, out=notf16);
+And16(a=notf16, b=w1, out=w3);
+And1to16(a=w2, b=f, out=w4);
+Or16(a=w3, b=w4, out=out);
+}
+
