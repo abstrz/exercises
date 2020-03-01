@@ -28,6 +28,58 @@ class Solution:
         else:
             return (sorted_nums[mid-1] + sorted_nums[mid])/2
 
+    def longestPalindrome(self, s: str) -> str:
+
+        start_outer_init = 0;
+        end_outer_init = len(s)-1
+        start_outer = start_inner = i = start_outer_init
+        end_outer = end_inner = j = end_outer_init
+
+        palindrome = "";
+        longest = 0;
+
+        while start_outer<=end_outer:
+            while i<j:
+                if s[i] != s[j]:
+                    i +=1
+                    j -= 1
+                    start_inner = i
+                    end_inner = j 
+                else:
+                    i += 1
+                    j -= 1
+            if end_inner-start_inner+1 > longest:
+                longest = end_inner-start_inner+1
+                palindrome = s[start_inner:end_inner+1]
+            end_outer -= 1
+            i = start_inner =start_outer
+            j = end_inner = end_outer
+
+        end_outer = end_outer_init
+        while start_outer<=end_outer:
+            while i<j:
+                if s[i] != s[j]:
+                    i +=1
+                    j -= 1
+                    start_inner = i
+                    end_inner = j 
+                else:
+                    i += 1
+                    j -= 1
+            if end_inner-start_inner+1 > longest:
+                longest = end_inner-start_inner+1
+                palindrome = s[start_inner:end_inner+1]
+            start_outer += 1
+            i = start_inner=start_outer
+            j = end_inner =end_outer
+
+
+        return palindrome
+
+
+
+
+
 
 
 
