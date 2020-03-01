@@ -20,7 +20,7 @@ class Solution:
         return recursively([], l1, l2)
 
     def findMedianSortedArrays(self, nums1, nums2):
-        sorted_nums = sortLists(nums1, nums2)
+        sorted_nums = self.sortLists(nums1, nums2)
         lngth = len(sorted_nums);
         mid = int(lngth/2)
         if (lngth % 2 == 1):
