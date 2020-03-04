@@ -8,6 +8,7 @@
 typedef struct Node Node;
 struct Node{
     char *vertex;
+    int weight;
     Node *next;
 };
 
@@ -20,26 +21,24 @@ typedef Node **Graph_L;
 void
 print_vertices(Graph_L g);
 
-
 int
 has_vertex(char *vertex, Graph_L g);
 
+Node *
+lookup(char *vertex, Graph_L g);
+
+void
+add_vertex(char *v, Graph_L g);
+
+void
+delete_vertex(char *v, Graph_L g);
 
 //checks if edge v1v2 in graph.
 int
 has_edge(char *v1, char *v2, Graph_L g);
 
 void
-add_node(char *v, Graph_L g);
+add_edge(char *v1, char *v2, int w, Graph_L g);
 
 void
-add_directed_edge(char *v1, char *v2, Graph_L g);
-
-void
-add_edge(char *v1, char *v2, Graph_L g);
-
-void 
-remove_directed_edge(char *v1, char *v2, Graph_L g);
-
-void
-remove_edge(char *v1, char *v2, Graph_L g);
+delete_edge(char *v1, char *v2, Graph_L g);
