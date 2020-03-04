@@ -1,3 +1,8 @@
+/* REPRESENTATION OF GRAPH AS ADJACENCY LIST */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 typedef struct Node Node;
@@ -6,20 +11,35 @@ struct Node{
     Node *next;
 };
 
-typedef Node **Graph;
+typedef Node **Graph_L;
 
 /* A note: There is a difference in how undirected and directed graphs
  * will be handled, but that is up to the user to implement.
  */
 
-//inserts node into data structure, and returns the added node, if successful.
-Node add_node(Node *nd, Graph g);
+void
+print_vertices(Graph_L g);
 
-//deletes node from graph
-void delete_node(Node *nd, Graph g);
 
-//insert edge between nd1 and nd2
-void add_edge(Node *nd1, Node *nd2, Graph g);
+int
+has_vertex(char *vertex, Graph_L g);
 
-//delete edge between nd1 and nd2
-void delete_edge(Node *nd1, Node *nd2, Graph g);
+
+//checks if edge v1v2 in graph.
+int
+has_edge(char *v1, char *v2, Graph_L g);
+
+void
+add_node(char *v, Graph_L g);
+
+void
+add_directed_edge(char *v1, char *v2, Graph_L g);
+
+void
+add_edge(char *v1, char *v2, Graph_L g);
+
+void 
+remove_directed_edge(char *v1, char *v2, Graph_L g);
+
+void
+remove_edge(char *v1, char *v2, Graph_L g);
