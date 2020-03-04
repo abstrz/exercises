@@ -31,6 +31,9 @@ void
 add_vertex(char *v, Graph_L g);
 
 void
+delete_vertex_and_edges(char *v, Graph_L g);
+
+void
 delete_vertex(char *v, Graph_L g);
 
 //checks if edge v1v2 in graph.
@@ -39,6 +42,9 @@ has_edge(char *v1, char *v2, Graph_L g);
 
 void
 add_edge(char *v1, char *v2, int w, Graph_L g);
+
+void
+add_edge_undirected(char *v1, char *v2, int w, Graph_L g);
 
 void
 delete_edge(char *v1, char *v2, Graph_L g);

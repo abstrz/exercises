@@ -57,15 +57,12 @@ add_vertex(char *v, Graph_L g)
     }
 }
 
+
+
 void
 delete_vertex(char *v, Graph_L g)
 {
-    /* 1. Find vertex
-     * 2. Free memory of all of its children. 
-     * 3. Set g* = NULL
-     * 4. Remove it from all other linked lists in graph.
-     */
-    Node *nd1, *nd2;
+  Node *nd1, *nd2;
     Graph_L front = g;                  //save initial memory address of g.
 
     while(*g){
@@ -86,10 +83,20 @@ delete_vertex(char *v, Graph_L g)
         }
         ++g;
     }
+}
+
+
+void
+delete_vertex_and_edges(char *v, Graph_L g)
+{
+    Node *nd1, *nd2;
+    Graph_L front = g;                  //save initial memory address of g.
+
+    delete_vertex(v, g);
 
     //delete all edges to v
     g= front;
-    char *v0 = malloc(sizeof(char*));
+    char *v0;
     while (*g){
         v0 = (*g)->vertex;
         delete_edge(v0, v, g);
@@ -127,6 +134,13 @@ add_edge(char *v1, char *v2, int w, Graph_L g)
         nd2->next = NULL;
         nd1->next = nd2;
     }
+}
+
+void
+add_edge_undirected(char *v1, char *v2, int w, Graph_L g)
+{
+    add_edge(v1, v2, w, g);
+    add_edge(v2, v1, w, g);
 }
 
 //if we can find v2 amongst the nodes of n1 and v1 amondst the nodes of n2...
