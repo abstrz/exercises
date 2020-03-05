@@ -1,31 +1,30 @@
-#include <time.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include "graph_list.h"
 #include "graph_matrix.h"
+#include "array.h"
 
-/* TSP Nearest Neighbor Heuristic:
- * returns linked list which is solution cycle
- * weights of nodes represent weights of edges.
- */
+const int MAX_GRAPH_SIZE = 100;
+
 Node * 
 NearestNeighbor_L(Graph_L g)  //takes as argument a complete, weighted graph on n vertices.
 {
     const int min_weight_init = 1000000;
     int min_weight = min_weight_init;
 
+    char **visited = malloc(sizeof(char*) * MAX_GRAPH_SIZE);
+
     Node *solution = malloc(sizeof(Node*));
 
     solution->vertex = (*g)->vertex;
 
     Node *front_ptr = solution;
-   
+
+    Graph_L ptr = g;
     Node *nd = (*g);
     char *v0 = nd->vertex;
-    while(*(g+1)){
+    while(*(g++)){
         while (nd->next){
             nd = nd->next;
-            if(nd->weight<min_weight && strcmp(nd->vertex, v0) != 0){
+            if(nd->weight<min_weight && in_string_arr(nd->vertex, visited) == 0){
                 Node *cp = malloc(sizeof(Node*));
                 cp->vertex = nd->vertex;
                 cp->weight = nd->weight;
@@ -33,15 +32,17 @@ NearestNeighbor_L(Graph_L g)  //takes as argument a complete, weighted graph on 
                 min_weight = nd->weight;
             }
         }
-        if(strcmp(solution->vertex, v0) != 0)
-            delete_vertex_and_edges(solution->vertex, g);
+        
+        add_string(solution->vertex, visited);
+
+        if(solution->next == NULL)
+            break;
 
         solution = solution->next;
-        nd = lookup(solution->vertex, g);
+        nd = lookup(solution->vertex, ptr);
         min_weight = min_weight_init;
-
-
     }
+    g= ptr;
     front_ptr->weight = (*g)->next->weight;
     solution->next = front_ptr;
 
@@ -51,26 +52,21 @@ NearestNeighbor_L(Graph_L g)  //takes as argument a complete, weighted graph on 
 
 }
 
-
 int main()
 {
 
-    Graph_L g = malloc(sizeof(Node*)*100);
+    Graph_L g = malloc(sizeof(Node*)* MAX_GRAPH_SIZE);
 
     Node *soln;
 
     add_vertex("a", g);
     add_vertex("b", g);
     add_vertex("c", g);
-    add_vertex("d", g);
 
 
     add_edge_undirected("a", "b", 2, g);
-    add_edge_undirected("a", "c", 4, g);
-    add_edge_undirected("a", "d", 1, g);
-    add_edge_undirected("b", "c", 5, g);
-    add_edge_undirected("b", "d", 3, g);
-    add_edge_undirected("c", "d", 99, g);
+    add_edge_undirected("b", "c", 3, g);
+    add_edge_undirected("c", "a", 1, g);
 
 
     soln = NearestNeighbor_L(g);
@@ -81,13 +77,10 @@ int main()
     int i=0;
     char * v0 = soln->vertex;
 
-    while(i<3){
+    while(i<2){
         if(strcmp(soln->vertex, v0))
             i++;
         printf("Vertex: %s, Weight:%d\n", soln->vertex, soln->weight); 
         soln= soln->next;
     }
-
-
-
 }

@@ -10,7 +10,7 @@ print_vertices(Graph_L g)
         printf("Vertex: %s, Adjacent: ", (*g)->vertex);
         nd = *g;
         while (nd = nd->next){
-            printf("%s ", nd->vertex);
+            printf("(%s, %d), ", nd->vertex, nd->weight);
         }
         printf("\n");
         ++g;
