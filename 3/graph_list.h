@@ -1,5 +1,4 @@
 /* REPRESENTATION OF GRAPH AS ADJACENCY LIST */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
