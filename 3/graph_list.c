@@ -1,7 +1,19 @@
 #include "graph_list.h"
 
+const int MAX_GRAPH_SIZE = 1000;
 
 void
+rand_init()
+{
+    static int init_identifier=0;
+
+    if(init_identifier == 0){
+        srand(time(NULL));
+        init_identifier++;
+    }
+}
+
+    void
 print_vertices(Graph_L g)
 {
     Node *nd;
@@ -19,7 +31,7 @@ print_vertices(Graph_L g)
 }
 
 
-int
+    int
 has_vertex(char *vertex, Graph_L g)
 {
     while(*g){
@@ -30,7 +42,7 @@ has_vertex(char *vertex, Graph_L g)
     return 0;
 }
 
-Node *
+    Node *
 lookup(char *vertex, Graph_L g)
 {
     while(*g){
@@ -41,7 +53,7 @@ lookup(char *vertex, Graph_L g)
     return NULL;
 }
 
-void
+    void
 add_vertex(char *v, Graph_L g)
 {
     if(!has_vertex(v, g)){
@@ -59,10 +71,10 @@ add_vertex(char *v, Graph_L g)
 
 
 
-void
+    void
 delete_vertex(char *v, Graph_L g)
 {
-  Node *nd1, *nd2;
+    Node *nd1, *nd2;
     Graph_L front = g;                  //save initial memory address of g.
 
     while(*g){
@@ -86,7 +98,7 @@ delete_vertex(char *v, Graph_L g)
 }
 
 
-void
+    void
 delete_vertex_and_edges(char *v, Graph_L g)
 {
     Node *nd1, *nd2;
@@ -105,7 +117,7 @@ delete_vertex_and_edges(char *v, Graph_L g)
 }
 
 
-int
+    int
 has_edge(char *v1, char *v2, Graph_L g)
 {
     Node *nd;
@@ -120,7 +132,7 @@ has_edge(char *v1, char *v2, Graph_L g)
     return 0;
 }
 
-void
+    void
 add_edge(char *v1, char *v2, int w, Graph_L g)
 {
     Node *nd1, *nd2;
@@ -136,7 +148,7 @@ add_edge(char *v1, char *v2, int w, Graph_L g)
     }
 }
 
-void
+    void
 add_edge_undirected(char *v1, char *v2, int w, Graph_L g)
 {
     add_edge(v1, v2, w, g);
@@ -144,7 +156,7 @@ add_edge_undirected(char *v1, char *v2, int w, Graph_L g)
 }
 
 //if we can find v2 amongst the nodes of n1 and v1 amondst the nodes of n2...
-void
+    void
 delete_edge(char *v1, char *v2, Graph_L g)
 {
     if(has_edge(v1, v2, g)){
@@ -166,4 +178,34 @@ delete_edge(char *v1, char *v2, Graph_L g)
                 }
         }
     }
+}
+int
+count_numbers(int n)
+{
+    int i=0;
+    while(n>0){
+        n = n/10;
+        i++;
+    }
+    return i;
+}
+char *
+numbered_vertex(int n){
+    char *vertex = malloc(sizeof(char *)* (((int) count_numbers(n)) + 2));
+
+    *vertex = 'v';
+
+    sprintf(vertex+1, "%d", n);
+
+    return vertex;
+}
+
+int
+generate_complete_graph(int n)
+{
+    rand_init();
+    int r = rand();
+
+    Graph_L g = malloc(sizeof(Node*) * MAX_GRAPH_SIZE);
+
 }

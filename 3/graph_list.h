@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <stdlib.h>
+
 
 
 typedef struct Node Node;
@@ -47,3 +50,9 @@ add_edge_undirected(char *v1, char *v2, int w, Graph_L g);
 
 void
 delete_edge(char *v1, char *v2, Graph_L g);
+
+char *
+numbered_vertex(int n);
+
+int
+generate_complete_graph(int n);

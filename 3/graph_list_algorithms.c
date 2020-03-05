@@ -1,7 +1,5 @@
 #include "graph_list_algorithms.h"
 
-const int MAX_GRAPH_SIZE = 100;
-
 Node * 
 NearestNeighbor_L(Graph_L g)  //takes as argument a complete, weighted graph on n vertices.
 {
