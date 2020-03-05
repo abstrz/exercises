@@ -18,7 +18,6 @@ NearestNeighbor_L(Graph_L g)  //takes as argument a complete, weighted graph on 
 
     Graph_L ptr = g;
     Node *nd = (*g);
-    char *v0 = nd->vertex;
     while(*(g++)){
         while (nd->next){
             nd = nd->next;
