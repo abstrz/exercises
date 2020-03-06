@@ -1,9 +1,38 @@
 #include "graph_list_algorithms.h"
 
-Node * 
-NearestNeighbor_L(Graph_L g)  //takes as argument a complete, weighted graph on n vertices.
+void
+print_solution(Node *sol)
 {
-    const int min_weight_init = 1000000;
+    int i=0;
+    while(i<2){
+        if(strcmp(sol->vertex, "v0") == 0)
+            ++i;
+        printf("(%s, %d) \n", sol->vertex, sol->weight);
+        sol = sol->next;
+    }
+}
+
+
+int
+total_distance(Node *sol)
+{
+    int i=0;
+
+    int total = sol->weight;
+    sol = sol->next;
+    while(strcmp(sol->vertex, "v0") != 0){
+        total += sol->weight;
+        sol = sol->next;
+    }
+    return total;
+}
+
+
+
+    Node * 
+NearestNeighbor_L(Graph_L g, int n)  //takes as argument a complete, weighted graph on n vertices.
+{
+    const long int min_weight_init = n+2;
     int min_weight = min_weight_init;
 
     char **visited = malloc(sizeof(char*) * MAX_GRAPH_SIZE);
@@ -27,7 +56,7 @@ NearestNeighbor_L(Graph_L g)  //takes as argument a complete, weighted graph on 
                 min_weight = nd->weight;
             }
         }
-        
+
         add_string(solution->vertex, visited);
 
         if(solution->next == NULL)

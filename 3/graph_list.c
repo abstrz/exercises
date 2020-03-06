@@ -1,6 +1,6 @@
 #include "graph_list.h"
 
-const int MAX_GRAPH_SIZE = 1000;
+const int MAX_GRAPH_SIZE = 10000;
 
 void
 rand_init()
@@ -200,12 +200,21 @@ numbered_vertex(int n){
     return vertex;
 }
 
-int
+Graph_L
 generate_complete_graph(int n)
 {
     rand_init();
-    int r = rand();
 
     Graph_L g = malloc(sizeof(Node*) * MAX_GRAPH_SIZE);
 
+    int i,j;
+
+    for(i = 0; i<n; i++)
+        add_vertex(numbered_vertex(i), g);
+
+    for(i = 0; i<n; i++)
+        for(j=i+1; j<n; j++){
+            add_edge_undirected(numbered_vertex(i), numbered_vertex(j), (rand() % (n+1))+1, g);
+        }
+    return g;
 }

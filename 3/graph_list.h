@@ -5,6 +5,7 @@
 #include <time.h>
 #include <stdlib.h>
 
+extern const int MAX_GRAPH_SIZE;
 
 
 typedef struct Node Node;
@@ -54,5 +55,5 @@ delete_edge(char *v1, char *v2, Graph_L g);
 char *
 numbered_vertex(int n);
 
-int
+Graph_L
 generate_complete_graph(int n);
