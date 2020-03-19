@@ -1,11 +1,29 @@
 #include "graph_algorithms.h"
 
+void
+addtostartstring(char c, char *s)
+{
+    char *p = s;
+
+    while(*(p++) != '\0');
+
+    while(p>=s){
+        *(p+1) = *p;
+        p--;
+    }
+    *s = c;
+}
+
+
+
+
+
+
 int main()
 {
-    Graph_L g = generate_complete_graph(100);
-    Node *sol = NearestNeighbor_L(g, 100);
+    chain c = generate_chain(1);
+    add_end_chain("a", 10, c);
+    printg(c);
 
-    print_solution(sol);
-    printf("%d\n", total_distance(sol));
 }
 

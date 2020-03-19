@@ -1,7 +1,19 @@
 #include "array.h"
 
+void
+addtostartstring(char c, char *s)
+{
+    char *p = s;
 
-    int
+    while(*(p++) != '\0');
+
+    while(p>=s){
+        *(p+1) = *p;
+        p--;
+    }
+    *s = c;
+}
+int
 in_string_arr(char *s, char **arr)
 {
         while (*arr){
@@ -22,7 +34,7 @@ add_string(char *s, char **arr)
     }
 }
 
-    int
+int
 pair_in_string_arr(char **s, char **arr[])
 {
         while (*arr){
@@ -33,7 +45,7 @@ pair_in_string_arr(char **s, char **arr[])
         return 0;
 }
 
-    void
+void
 add_pair(char **s, char **arr[])
 {
     if(pair_in_string_arr(s, arr) == 0){

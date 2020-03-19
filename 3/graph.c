@@ -41,11 +41,91 @@ numbered_vertex(int n){
 
 
 /*********** CHAIN STUFF **********/
-chain *
-add_to_chain(char *vertex, int weight, int location, chain c)
+
+chain
+generate_chain(int n)
 {
-    if lookup(vertex, c)
+    rand_init();
+
+    Graph_L nc = malloc(sizeof(Node*) * MAX_GRAPH_SIZE);
+
+    int i,j;
+
+    if(n == 0 || n < 0){
+        return NULL;
+    }else{
+        for(i = 0; i<n; i++)
+            add_vertex(numbered_vertex(i), 0, nc);
+        for(i = 0; i<n-1; i++)
+            add_edge_undirected(numbered_vertex(i), numbered_vertex(i+1), (rand() % (n+1))+1, nc);
+    }
+
+    return nc;
 }
+
+void
+printc(chain c)
+{
+    Node *nd;
+
+    while (*c){
+        printf("Vertex: %s, Adjacent: ", (*c)->vertex);
+        nd = *c;
+        while (nd->next){
+            printf("(%s, %d), ", nd->vertex, nd->weight); 
+            nd->next;
+        }
+        printf("\n");
+        ++c;
+    }
+    printf("\n%s\n", "*****************************");
+}
+
+void
+add_front_chain(char *v, int w, chain c)
+{
+    chain p = c;
+
+    while(*(p++) != NULL);
+
+    while(p>=c){
+        *(p+1) = *p;
+        p--;
+    }
+    Node *new = malloc(sizeof(Node*));
+    new->vertex = v;
+    new->weight = 0;
+
+    *c = new;
+
+    add_edge_undirected(v, (*(c+1))->vertex, w, c);
+}
+
+void
+add_end_chain(char *v, int w, chain c)
+{
+    add_vertex(v,0,c);
+    while(*(c+2))
+        c++;
+    add_edge_undirected(v, (*c)->vertex, w, c);
+}
+//pi = 0 means merge i by its starting node.
+//   = 1 means merge i by its ending node.
+void
+merge_chains(chain c1, chain c2, int p1, int p2)
+{
+    if( p1 == 0 && p2 == 0 ){
+
+    }else if( p1 == 0 && p2 == 1 ){
+
+    }else if( p1 == 1 && p2 == 0 ){
+
+    }else if( p1 == 1 && p2 == 1 ){
+
+    }else
+        printf("%s", "Error! You must enter two chains and two values of either 0 or 1!");
+}
+
 
 /*********** Graph_L STUFF ***********/
 void
@@ -66,7 +146,7 @@ printg(Graph_L g)
 }
 
 
-int
+    int
 has_vertex(char *vertex, Graph_L g)
 {
     while(*g){
@@ -77,7 +157,7 @@ has_vertex(char *vertex, Graph_L g)
     return 0;
 }
 
-Node *
+    Node *
 lookup(char *vertex, Graph_L g)
 {
     while(*g){
@@ -88,8 +168,8 @@ lookup(char *vertex, Graph_L g)
     return NULL;
 }
 
-void
-add_vertex(char *v, Graph_L g)
+    void
+add_vertex(char *v, int w, Graph_L g)
 {
     if(!has_vertex(v, g)){
 
@@ -98,6 +178,7 @@ add_vertex(char *v, Graph_L g)
 
         Node *nd = malloc(sizeof(Node*));
         nd->vertex = v;
+        nd->weight = w;
         nd->next = NULL;
 
         *g = nd;
@@ -106,7 +187,7 @@ add_vertex(char *v, Graph_L g)
 
 
 
-void
+    void
 delete_vertex(char *v, Graph_L g)
 {
     Node *nd1, *nd2;
@@ -133,7 +214,7 @@ delete_vertex(char *v, Graph_L g)
 }
 
 
-void
+    void
 delete_vertex_and_edges(char *v, Graph_L g)
 {
     Node *nd1, *nd2;
@@ -152,7 +233,7 @@ delete_vertex_and_edges(char *v, Graph_L g)
 }
 
 
-int
+    int
 has_edge(char *v1, char *v2, Graph_L g)
 {
     Node *nd;
@@ -167,7 +248,7 @@ has_edge(char *v1, char *v2, Graph_L g)
     return 0;
 }
 
-void
+    void
 add_edge(char *v1, char *v2, int w, Graph_L g)
 {
     Node *nd1, *nd2;
@@ -183,7 +264,7 @@ add_edge(char *v1, char *v2, int w, Graph_L g)
     }
 }
 
-void
+    void
 add_edge_undirected(char *v1, char *v2, int w, Graph_L g)
 {
     add_edge(v1, v2, w, g);
@@ -191,7 +272,7 @@ add_edge_undirected(char *v1, char *v2, int w, Graph_L g)
 }
 
 //if we can find v2 amongst the nodes of n1 and v1 amondst the nodes of n2...
-void
+    void
 delete_edge(char *v1, char *v2, Graph_L g)
 {
     if(has_edge(v1, v2, g)){
@@ -215,7 +296,7 @@ delete_edge(char *v1, char *v2, Graph_L g)
     }
 }
 
-Graph_L
+    Graph_L
 generate_complete_graph(int n)
 {
     rand_init();
@@ -225,7 +306,7 @@ generate_complete_graph(int n)
     int i,j;
 
     for(i = 0; i<n; i++)
-        add_vertex(numbered_vertex(i), g);
+        add_vertex(numbered_vertex(i), 0,g);
 
     for(i = 0; i<n; i++)
         for(j=i+1; j<n; j++){

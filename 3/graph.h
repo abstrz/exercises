@@ -24,10 +24,10 @@ struct Node{
     Node *next;
 };
 
-typedef Node *chain;
 
 typedef Node **Graph_L;
 
+typedef Graph_L chain;
 
 
 /* A note: There is a difference in how undirected and directed graphs
@@ -39,19 +39,21 @@ numbered_vertex(int n);
 
 /*********** CHAIN STUFF **********/
 
-/* merges chain c1 and c2 from chain *c={a1, ..., c1, ... ai, ..., c2, ..., an}
-   returns chain *c = {a1, ..., aj \overhat{c1}, \overhat{c2}, d aj+1, ..., an}, 
-   where d = c1 \cup c2 */
-chain *
-merge(chain c1, chain c2, chain *c);
+
+void printc(chain c);
+
+chain generate_chain(int n);
+
+chain merge(chain c1, chain c2, chain *c);
 
 //location=0 means add vertex to start of c,
 //         1 means add vertex to end of
 //
+void 
+add_front_chain(char *vertex, int weight, chain c);
 
-chain *
-add_to_chain(char *vertex, int weight, int location, chain c);
-
+void 
+add_end_chain(char *vertex, int weight, chain c);
 
 /*********** Graph_L STUFF ***********/
 
@@ -66,7 +68,7 @@ Node *
 lookup(char *vertex, Graph_L g);
 
 void
-add_vertex(char *v, Graph_L g);
+add_vertex(char *v, int w, Graph_L g);
 
 void
 delete_vertex_and_edges(char *v, Graph_L g);
