@@ -29,10 +29,11 @@ count_numbers(int n)
 }
 
 char *
-numbered_vertex(int n){
+numbered_vertex(char v, int n){
     char *vertex = malloc(sizeof(char *)* (((int) count_numbers(n)) + 2));
 
-    *vertex = 'v';
+
+    *vertex = v;
 
     sprintf(vertex+1, "%d", n);
 
@@ -43,7 +44,7 @@ numbered_vertex(int n){
 /*********** CHAIN STUFF **********/
 
 chain
-generate_chain(int n)
+generate_chain(char variable, int n)
 {
     rand_init();
 
@@ -55,9 +56,9 @@ generate_chain(int n)
         return NULL;
     }else{
         for(i = 0; i<n; i++)
-            add_vertex(numbered_vertex(i), 0, nc);
+            add_vertex(numbered_vertex(variable, i), 0, nc);
         for(i = 0; i<n-1; i++)
-            add_edge_undirected(numbered_vertex(i), numbered_vertex(i+1), (rand() % (n+1))+1, nc);
+            add_edge_undirected(numbered_vertex(variable, i), numbered_vertex(variable, i+1), (rand() % (n+1))+1, nc);
     }
 
     return nc;
@@ -109,26 +110,66 @@ add_end_chain(char *v, int w, chain c)
         c++;
     add_edge_undirected(v, (*c)->vertex, w, c);
 }
+
+void
+reverse_chain(chain c)
+{
+    chain p = c;
+    Node *temp = malloc(sizeof(Node*));
+
+    while(*(p+1) != NULL)
+        p++;
+
+    while(c<p){
+        temp = *c;
+        *c = *p;
+        *p = temp;
+        c++;
+        p--;
+    }
+}
+    
+
+
+
 //pi = 0 means merge i by its starting node.
 //   = 1 means merge i by its ending node.
+//contents of c2 appended to end of c1.
 void
-merge_chains(chain c1, chain c2, int p1, int p2)
+merge_chains(chain c1, chain c2, int w, int p1, int p2)
 {
-    if( p1 == 0 && p2 == 0 ){
-
+         
+    if( p1 == 1 && p2 == 0 ){
+        chain start_ptr = c1;
+        char *first2 = (*c2)->vertex;
+        char *last1;
+        while(*(c1+1))
+            c1++;
+        last1 = (*c1)->vertex;
+        c1++;
+        while(*c2){
+            *c1 = *c2;
+            c1++;
+            c2++;
+        }
+        add_edge_undirected(first2, last1, w, start_ptr);
+    }else if( p1 == 0 && p2 == 0 ){
+        reverse_chain(c1);
+        merge_chains(c1, c2, w, 1, 0);
     }else if( p1 == 0 && p2 == 1 ){
-
-    }else if( p1 == 1 && p2 == 0 ){
-
+        reverse_chain(c1);
+        reverse_chain(c2);
+        merge_chains(c1, c2, w, 1, 0);
     }else if( p1 == 1 && p2 == 1 ){
-
+        reverse_chain(c2);
+        merge_chains(c1, c2, w, 1, 0);
     }else
         printf("%s", "Error! You must enter two chains and two values of either 0 or 1!");
 }
 
 
 /*********** Graph_L STUFF ***********/
-void
+    void
 printg(Graph_L g)
 {
     Node *nd;
@@ -297,7 +338,7 @@ delete_edge(char *v1, char *v2, Graph_L g)
 }
 
     Graph_L
-generate_complete_graph(int n)
+generate_complete_graph(char variable, int n)
 {
     rand_init();
 
@@ -306,11 +347,11 @@ generate_complete_graph(int n)
     int i,j;
 
     for(i = 0; i<n; i++)
-        add_vertex(numbered_vertex(i), 0,g);
+        add_vertex(numbered_vertex(variable, i), 0,g);
 
     for(i = 0; i<n; i++)
         for(j=i+1; j<n; j++){
-            add_edge_undirected(numbered_vertex(i), numbered_vertex(j), (rand() % (n+1))+1, g);
+            add_edge_undirected(numbered_vertex(variable, i), numbered_vertex(variable, j), (rand() % (n+1))+1, g);
         }
     return g;
 }

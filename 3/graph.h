@@ -13,7 +13,7 @@ int
 count_numbers(int n);
 
 char *
-numbered_vertex(int n);
+numbered_vertex(char variable, int n);
 
 /*********** NODE STUFF **********/
 
@@ -34,17 +34,15 @@ typedef Graph_L chain;
  * will be handled, but that is up to the user to implement.
  */
 
-char *
-numbered_vertex(int n);
-
 /*********** CHAIN STUFF **********/
 
 
-void printc(chain c);
+void 
+printc(chain c);
 
-chain generate_chain(int n);
+chain 
+generate_chain(char variable, int n);
 
-chain merge(chain c1, chain c2, chain *c);
 
 //location=0 means add vertex to start of c,
 //         1 means add vertex to end of
@@ -54,6 +52,14 @@ add_front_chain(char *vertex, int weight, chain c);
 
 void 
 add_end_chain(char *vertex, int weight, chain c);
+
+void
+reverse_chain(chain c);
+
+
+
+void 
+merge_chains(chain c1, chain c2, int w, int p1, int p2);
 
 /*********** Graph_L STUFF ***********/
 
@@ -91,7 +97,7 @@ delete_edge(char *v1, char *v2, Graph_L g);
 
 
 Graph_L
-generate_complete_graph(int n);
+generate_complete_graph(char variable, int n);
 
 
 
