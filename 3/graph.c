@@ -2,10 +2,6 @@
 
 const int MAX_GRAPH_SIZE = 10000;
 
-
-
-/*********** GENERAL STUFF **********/
-
 void
 rand_init()
 {
@@ -16,7 +12,6 @@ rand_init()
         init_identifier++;
     }
 }
-
 int
 count_numbers(int n)
 {
@@ -27,11 +22,9 @@ count_numbers(int n)
     }
     return i;
 }
-
 char *
 numbered_vertex(char v, int n){
     char *vertex = malloc(sizeof(char *)* (((int) count_numbers(n)) + 2));
-
 
     *vertex = v;
 
@@ -40,6 +33,61 @@ numbered_vertex(char v, int n){
     return vertex;
 }
 
+void
+addtostartstring(char c, char *s)
+{
+    char *p = s;
+
+    while(*(p++) != '\0');
+
+    while(p>=s){
+        *(p+1) = *p;
+        p--;
+    }
+    *s = c;
+}
+
+int
+in_string_arr(char *s, char **arr)
+{
+        while (*arr){
+                    if (strcmp(*arr, s) == 0)
+                                    return 1;
+                            ++arr;
+                                }
+            return 0;
+}
+
+void
+add_string(char *s, char **arr)
+{
+    if(in_string_arr(s, arr) == 0){
+        while (*arr)
+            ++arr;
+        *arr = s;
+    }
+}
+
+int
+pair_in_string_arr(char **s, char **arr[])
+{
+        while (*arr){
+            if ((strcmp(**arr, *s) == 0) && (strcmp(*(*arr+1), *(s+1)) == 0))
+                return 1;
+            ++arr;
+        }
+        return 0;
+}
+
+void
+add_pair(char **s, char **arr[])
+{
+    if(pair_in_string_arr(s, arr) == 0){
+        while (*arr)
+            ++arr;
+        *arr = s;
+    }
+}
 
 /*********** CHAIN STUFF **********/
 
@@ -129,9 +177,6 @@ reverse_chain(chain c)
     }
 }
     
-
-
-
 //pi = 0 means merge i by its starting node.
 //   = 1 means merge i by its ending node.
 //contents of c2 appended to end of c1.
@@ -169,7 +214,31 @@ merge_chains(chain c1, chain c2, int w, int p1, int p2)
 
 
 /*********** Graph_L STUFF ***********/
-    void
+
+//-1 means that no such edge v1v2 exists.
+int
+get_weight_of_edge(char *v1, char *v2, Graph_L g)
+{
+    while(*g){
+        if (strcmp((*g)->vertex, v1) == 0){
+            Node *nd = (*g)->next;
+            while(nd){
+                if(strcmp(nd->vertex, v2) == 0){
+                    return nd->weight;
+                }
+                nd= nd->next;
+            }
+        }
+        g++;
+    }
+    return -1;
+}
+
+
+
+
+
+void
 printg(Graph_L g)
 {
     Node *nd;
@@ -187,7 +256,7 @@ printg(Graph_L g)
 }
 
 
-    int
+int
 has_vertex(char *vertex, Graph_L g)
 {
     while(*g){
@@ -198,7 +267,7 @@ has_vertex(char *vertex, Graph_L g)
     return 0;
 }
 
-    Node *
+Node *
 lookup(char *vertex, Graph_L g)
 {
     while(*g){
@@ -209,7 +278,7 @@ lookup(char *vertex, Graph_L g)
     return NULL;
 }
 
-    void
+void
 add_vertex(char *v, int w, Graph_L g)
 {
     if(!has_vertex(v, g)){
@@ -228,7 +297,7 @@ add_vertex(char *v, int w, Graph_L g)
 
 
 
-    void
+void
 delete_vertex(char *v, Graph_L g)
 {
     Node *nd1, *nd2;
@@ -255,7 +324,7 @@ delete_vertex(char *v, Graph_L g)
 }
 
 
-    void
+void
 delete_vertex_and_edges(char *v, Graph_L g)
 {
     Node *nd1, *nd2;
@@ -274,7 +343,7 @@ delete_vertex_and_edges(char *v, Graph_L g)
 }
 
 
-    int
+int
 has_edge(char *v1, char *v2, Graph_L g)
 {
     Node *nd;
@@ -289,7 +358,7 @@ has_edge(char *v1, char *v2, Graph_L g)
     return 0;
 }
 
-    void
+void
 add_edge(char *v1, char *v2, int w, Graph_L g)
 {
     Node *nd1, *nd2;
@@ -305,7 +374,7 @@ add_edge(char *v1, char *v2, int w, Graph_L g)
     }
 }
 
-    void
+void
 add_edge_undirected(char *v1, char *v2, int w, Graph_L g)
 {
     add_edge(v1, v2, w, g);
@@ -313,7 +382,7 @@ add_edge_undirected(char *v1, char *v2, int w, Graph_L g)
 }
 
 //if we can find v2 amongst the nodes of n1 and v1 amondst the nodes of n2...
-    void
+void
 delete_edge(char *v1, char *v2, Graph_L g)
 {
     if(has_edge(v1, v2, g)){
@@ -337,7 +406,7 @@ delete_edge(char *v1, char *v2, Graph_L g)
     }
 }
 
-    Graph_L
+Graph_L
 generate_complete_graph(char variable, int n)
 {
     rand_init();
@@ -354,6 +423,104 @@ generate_complete_graph(char variable, int n)
             add_edge_undirected(numbered_vertex(variable, i), numbered_vertex(variable, j), (rand() % (n+1))+1, g);
         }
     return g;
+}
+
+/*********** Algorithms ***********/
+
+
+
+void print_solution(Node *sol)
+{
+    int i=0;
+    while(i<2){
+        if(strcmp(sol->vertex, "v0") == 0)
+            ++i;
+        printf("(%s, %d) \n", sol->vertex, sol->weight);
+        sol = sol->next;
+    }
+}
+
+
+int total_distance(Node *sol)
+{
+    int i=0;
+
+    int total = sol->weight;
+    sol = sol->next;
+    while(strcmp(sol->vertex, "v0") != 0){
+        total += sol->weight;
+        sol = sol->next;
+    }
+    return total;
+}
+
+
+
+Node *NearestNeighbor_L(Graph_L g, int n)  //takes as argument a complete, weighted graph on n vertices.
+{
+    const long int min_weight_init = n+2;
+    int min_weight = min_weight_init;
+
+    char **visited = malloc(sizeof(char*) * MAX_GRAPH_SIZE);
+
+    Node *solution = malloc(sizeof(Node*));
+
+    solution->vertex = (*g)->vertex;
+
+    Node *front_ptr = solution;
+
+    Graph_L ptr = g;
+    Node *nd = (*g);
+    while(*(g++)){
+        while (nd->next){
+            nd = nd->next;
+            if(nd->weight<min_weight && in_string_arr(nd->vertex, visited) == 0){
+                Node *cp = malloc(sizeof(Node*));
+                cp->vertex = nd->vertex;
+                cp->weight = nd->weight;
+                solution->next = cp;
+                min_weight = nd->weight;
+            }
+        }
+
+        add_string(solution->vertex, visited);
+
+        if(solution->next == NULL)
+            break;
+
+        solution = solution->next;
+        nd = lookup(solution->vertex, ptr);
+        min_weight = min_weight_init;
+    }
+    g= ptr;
+    front_ptr->weight = (*g)->next->weight;
+    solution->next = front_ptr;
+
+    solution = front_ptr;
+    return solution;
+
+}
+
+chain *ClosestPair(Graph_L g, int n)
+{
+    const long int min_weight_init = n+2;
+    int i;
+
+    chain *cs = malloc(sizeof(chain)*MAX_GRAPH_SIZE);
+
+    //build n chains each with one node, (vj, 0)-> pointing to nothing
+    for(i=0;i<n-1;i++){
+        //create a new node, with *g's vertex and weight values.
+        chain c = malloc(sizeof(Node*)*MAX_GRAPH_SIZE);
+        add_vertex((*(g+i))->vertex, 0, c);
+        *(cs+i) = c;
+    }
+
+    for(i=0;i<n;i++){
+        *
+    }
+    //find the minimal edge between endpoints of distinct chains. 
+    return cs;
 }
 
 
