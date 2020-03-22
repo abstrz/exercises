@@ -45,23 +45,30 @@ void add_vertex(char *v, int w, Graph_L g);
 void delete_vertex_and_edges(char *v, Graph_L g);
 void delete_vertex(char *v, Graph_L g);
 int has_edge(char *v1, char *v2, Graph_L g);
+int get_weight(char *v1, char *v2, Graph_L g);
 void add_edge(char *v1, char *v2, int w, Graph_L g);
 void add_edge_undirected(char *v1, char *v2, int w, Graph_L g);
 void delete_edge(char *v1, char *v2, Graph_L g);
+int num_vertices(Graph_L g);
 Graph_L generate_complete_graph(char variable, int n);
 
 /*********** CHAIN  **********/
 void printc(chain c);
 chain generate_chain(char variable, int n);
 void add_front_chain(char *vertex, int weight, chain c);
-void add_end_chain(char *vertex, int weight, chain c);
+void add_back_chain(char *vertex, int weight, chain c);
 void reverse_chain(chain c);
+char *get_front_chain(chain c);
+char *get_back_chain(chain c);
+
+/*********** CHAIN *  **********/
 void merge_chains(chain c1, chain c2, int w, int p1, int p2);
-char *get_start_chain(chain c);
-char *get_end_chain(chain c);
+void delete_chain(char *v, chain *cs); //starting with *v
+void merge_and_delete(chain *cs, Graph_L g); 
+
+
 
 /*********** ALGORITHMS  **********/
-Node *NearestNeighbor_L(Graph_L g, int n);
-chain *ClosestPair(Graph_L g, int n);
-
+Node *NearestNeighbor_L(Graph_L g);
+chain *ClosestPair(Graph_L g);
 
