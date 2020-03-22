@@ -120,25 +120,6 @@ add_pair(char **s, char **arr[])
 
 /*********** Graph_L STUFF ***********/
 
-//-1 means that no such edge v1v2 exists.
-int
-get_weight_of_edge(char *v1, char *v2, Graph_L g)
-{
-    while(*g){
-        if (strcmp((*g)->vertex, v1) == 0){
-            Node *nd = (*g)->next;
-            while(nd){
-                if(strcmp(nd->vertex, v2) == 0){
-                    return nd->weight;
-                }
-                nd= nd->next;
-            }
-        }
-        g++;
-    }
-    return -1;
-}
-
 void
 printg(Graph_L g)
 {
@@ -482,12 +463,8 @@ merge_and_delete(chain *cs, Graph_L g)
             back_p2 = get_back_chain(*p2);
 
             if(strcmp(front_p1, back_p1) == 0 && strcmp(front_p2, back_p2) == 0){
-                //                printf("======================================\n");
-                //                printf("front_p1 = %s, \n", front_p1);
-                //                printf("front_p2 = %s \n", front_p2);
-                //
                 int w;
-                w = get_weight(front_p1, front_p2, g);
+                w = get_weight(back_p1, front_p2, g);
                 if(w<min_weight){
                     c1 = *p1;
                     c2 = *p2;
@@ -495,21 +472,78 @@ merge_and_delete(chain *cs, Graph_L g)
                     pos2 = 0;
                     min_weight = w;
                 }
-                //                printf("w(front_p1, front_p2) = w(%s, %s)= %d\n", front_p1, front_p2, w);
-                //                printf("min_weight = %d\n", min_weight);
-                //                printf("pos1 = %d\n", pos1);
-                //                printf("pos2 = %d\n", pos2);
-                //                printf("(*s)->vertex = %s\n", (*s)->vertex );
-                //                printf("(*t)->vertex = %s\n", (*t)->vertex );
-
-
             }else if(strcmp(front_p1, back_p1) == 0 && !(strcmp(front_p2, back_p2) == 0)){
+                int w;
+                w = get_weight(back_p1, front_p2, g);
+                if(w<min_weight){
+                    c1 = *p1;
+                    c2 = *p2;
+                    pos1 = 0;
+                    pos2 = 0;
+                    min_weight = w;
+                }
+                w = get_weight(back_p1, back_p2, g);
+                if(w<min_weight){
+                    c1 = *p1;
+                    c2 = *p2;
+                    pos1 = 1;
+                    pos2 = 1;
+                    min_weight = w;
+                }
             }else if(!(strcmp(front_p1, back_p1) == 0) && strcmp(front_p2, back_p2) == 0){
-                printf("======================================\n");
-                printf("front_p1 = %s, back_p1 = %s \n\n", front_p1, back_p1);
-                printf("front_p2 = %s \n", front_p2);
+                int w;
+                w = get_weight(front_p1, front_p2, g);
+                if(w<min_weight){
+                    c1 = *p1;
+                    c2 = *p2;
+                    pos1 = 0;
+                    pos2 = 0;
+                    min_weight = w;
+                }
+                w = get_weight(back_p1, front_p2, g);
+                if(w<min_weight){
+                    c1 = *p1;
+                    c2 = *p2;
+                    pos1 = 1;
+                    pos2 = 1;
+                    min_weight = w;
+                }
+
+            }else if(!(strcmp(front_p1, back_p1) == 0) && !(strcmp(front_p2, back_p2) == 0)){
+                int w;
+                w = get_weight(back_p1, front_p2, g);
+                if(w<min_weight){
+                    c1 = *p1;
+                    c2 = *p2;
+                    pos1 = 1;
+                    pos2 = 0;
+                    min_weight = w;
+                }
+                w = get_weight(back_p1, back_p2, g);
+                if(w<min_weight){
+                    c1 = *p1;
+                    c2 = *p2;
+                    pos1 = 1;
+                    pos2 = 1;
+                    min_weight = w;
+                }
+                w = get_weight(front_p1, back_p2, g);
+                if(w<min_weight){
+                    c1 = *p1;
+                    c2 = *p2;
+                    pos1 = 0;
+                    pos2 = 1;
+                    min_weight = w;
+                } 
+                w = get_weight(front_p1, front_p2, g);
+                if(w<min_weight){
+                    c1 = *p1;
+                    c2 = *p2;
+                    pos1 = 0;
+                    pos2 = 0;
+                    min_weight = w;
+                }
             }else{
-                printf("======================================\n");
                 printf("front_p1 = %s, back_p1 = %s \n\n", front_p1, back_p1);
                 printf("front_p2 = %s, back_p2 = %s \n\n", front_p2, back_p2);
             }
@@ -520,62 +554,54 @@ merge_and_delete(chain *cs, Graph_L g)
 
     merge_chains(c1, c2,  min_weight, pos1, pos2);
     delete_chain((*c2)->vertex, cs);
+    while(*(cs+1))
+        cs++;
+    *cs = NULL;
 }
 
 
 /*********** Algorithms ***********/
-Node *NearestNeighbor_L(Graph_L g)  //takes as argument a complete, weighted graph on n vertices.
+chain NearestNeighbor(Graph_L g)
 {
     int n = num_vertices(g);
-    const long int min_weight_init = n+2;
-    int min_weight = num_vertices(g);
+    int min_weight, w;
+    chain solution = malloc(sizeof(Node*)*n);
+    char **explored_vertices = malloc(sizeof(char*)*n);
 
+    char *initial_vertex;
+    char *next_vertex;
 
-    char **visited = malloc(sizeof(char*) * MAX_GRAPH_SIZE);
+    initial_vertex = (*g)->vertex;
+    add_vertex(initial_vertex, 0, solution);
+    *explored_vertices = initial_vertex;
 
-    Node *solution = malloc(sizeof(Node*));
-
-    solution->vertex = (*g)->vertex;
-
-    Node *front_ptr = solution;
-
-    Graph_L ptr = g;
-    Node *nd = (*g);
-    while(*(g++)){
-        while (nd->next){
-            nd = nd->next;
-            if(nd->weight<min_weight && in_string_arr(nd->vertex, visited) == 0){
-                Node *cp = malloc(sizeof(Node*));
-                cp->vertex = nd->vertex;
-                cp->weight = nd->weight;
-                solution->next = cp;
-                min_weight = nd->weight;
+    int i, j;
+    for(i=0; i<n-1; i++){
+        for(j=0; j<n; j++){
+            w = get_weight(initial_vertex, (*(g+j))->vertex, g);
+            if((w < min_weight) && in_string_arr((*(g+j))->vertex, explored_vertices) == 0){
+                min_weight = w;
+                next_vertex = (*(g+j))->vertex;
             }
         }
-
-        add_string(solution->vertex, visited);
-
-        if(solution->next == NULL)
-            break;
-
-        solution = solution->next;
-        nd = lookup(solution->vertex, ptr);
-        min_weight = min_weight_init;
+        add_vertex(next_vertex, 0, solution);
+        add_edge_undirected(initial_vertex, next_vertex, min_weight, solution); 
+        add_string(next_vertex, explored_vertices);
+        initial_vertex = next_vertex;
+        min_weight = n+2;
     }
-    g= ptr;
-    front_ptr->weight = (*g)->next->weight;
-    solution->next = front_ptr;
-
-    solution = front_ptr;
+    add_edge_undirected((*(solution+i))->vertex, (*solution)->vertex, get_weight((*(solution+i))->vertex, (*solution)->vertex, g), solution);
     return solution;
-
 }
-chain *ClosestPair(Graph_L g)
+
+chain ClosestPair(Graph_L g)
 {
 
     int n = num_vertices(g);
 
     chain *cs = malloc(sizeof(chain)*MAX_GRAPH_SIZE);
+
+    char *front, *back;
 
     //build n chains each with one node, (vj, 0)-> pointing to nothing
     int i;
@@ -585,11 +611,15 @@ chain *ClosestPair(Graph_L g)
         add_vertex((*(g+i))->vertex, 0, c);
         *(cs+i) = c;
     }
+    while ( *(cs+1) )
+        merge_and_delete(cs, g);
 
-    merge_and_delete(cs, g);
-    merge_and_delete(cs, g);
+    front = get_front_chain (*cs);
+    back = get_back_chain(*cs);
 
-    return cs;
+    add_edge_undirected(front, back, get_weight(front, back, g), *cs);
+
+    return *cs;
 }
 
 

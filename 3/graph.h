@@ -37,7 +37,6 @@ int pair_in_string_arr(char **s, char **arr[]);
 void add_pair(char **s, char **arr[]);
 
 /*********** Graph_L ***********/
-int get_weight_of_edge(char *v1, char *v2, Graph_L g);
 void printg(Graph_L g);
 int has_vertex(char *vertex, Graph_L g);
 Node *lookup(char *vertex, Graph_L g);
@@ -69,6 +68,6 @@ void merge_and_delete(chain *cs, Graph_L g);
 
 
 /*********** ALGORITHMS  **********/
-Node *NearestNeighbor_L(Graph_L g);
-chain *ClosestPair(Graph_L g);
+chain NearestNeighbor(Graph_L g);
+chain ClosestPair(Graph_L g);
 

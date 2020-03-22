@@ -5,19 +5,15 @@
 
 int main()
 {
-    Graph_L g = generate_complete_graph('v', 10);
-    chain *solution = ClosestPair(g);
+    Graph_L g = generate_complete_graph('v', 4);
+    printc(g);
+    chain solution1 = NearestNeighbor(g);
+    chain solution2 = ClosestPair(g);
+
+    printc(solution1);
 
 
-    while(*solution){
-        printc(*solution);
-        solution++;
-    }
 
-     chain c = generate_chain('v', 5);
-     chain d = generate_chain('w', 6);
-
-     merge_chains(c, d, 50, 1, 1);
 
 }
 
