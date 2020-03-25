@@ -77,14 +77,23 @@ addtostartstring(char c, char *s)
 int
 in_string_arr(char *s, char **arr)
 {
-        while (*arr){
-                    if (strcmp(*arr, s) == 0)
-                                    return 1;
-                            ++arr;
-                                }
-            return 0;
+    while (*arr){
+        if (strcmp(*arr, s) == 0)
+            return 1;
+        ++arr;
+    }
+    return 0;
 }
+int
+len_string_arr(char **s)
+{
+    int size = 0;
+    while(*s){
+        size++; s++;
+    }
 
+    return size;
+}
 void
 add_string(char *s, char **arr)
 {
@@ -95,18 +104,36 @@ add_string(char *s, char **arr)
     }
 }
 
+
+//returns 1 if unordered arrays are equal, 0 otherwise.
 int
-pair_in_string_arr(char **s, char **arr[])
-{
-        while (*arr){
-            if ((strcmp(**arr, *s) == 0) && (strcmp(*(*arr+1), *(s+1)) == 0))
-                return 1;
-            ++arr;
+unordered_arr_equal(char **s, char **t){
+
+    if(len_string_arr(s) == len_string_arr(t)){
+        while(*s){
+            if(!in_string_arr(*s, t))
+                return 0;
+            s++;
         }
+        return 1;
+    }
+    else
         return 0;
 }
 
-void
+
+    int
+pair_in_string_arr(char **s, char **arr[])
+{
+    while (*arr){
+        if ((strcmp(**arr, *s) == 0) && (strcmp(*(*arr+1), *(s+1)) == 0))
+            return 1;
+        ++arr;
+    }
+    return 0;
+}
+
+    void
 add_pair(char **s, char **arr[])
 {
     if(pair_in_string_arr(s, arr) == 0){
@@ -118,9 +145,10 @@ add_pair(char **s, char **arr[])
 
 
 
+
 /*********** Graph_L STUFF ***********/
 
-void
+    void
 printg(Graph_L g)
 {
     Node *nd;
@@ -138,7 +166,7 @@ printg(Graph_L g)
 }
 
 
-int
+    int
 has_vertex(char *vertex, Graph_L g)
 {
     while(*g){
@@ -149,7 +177,7 @@ has_vertex(char *vertex, Graph_L g)
     return 0;
 }
 
-Node *
+    Node *
 lookup(char *vertex, Graph_L g)
 {
     while(*g){
@@ -160,7 +188,7 @@ lookup(char *vertex, Graph_L g)
     return NULL;
 }
 
-void
+    void
 add_vertex(char *v, int w, Graph_L g)
 {
     if(!has_vertex(v, g)){
@@ -177,7 +205,7 @@ add_vertex(char *v, int w, Graph_L g)
     }
 }
 
-int
+    int
 has_edge(char *v1, char *v2, Graph_L g)
 {
     Node *nd;
@@ -192,7 +220,7 @@ has_edge(char *v1, char *v2, Graph_L g)
     return 0;
 }
 
-int
+    int
 get_weight(char *v1, char *v2, Graph_L g)
 {
     Node *nd;
@@ -208,7 +236,7 @@ get_weight(char *v1, char *v2, Graph_L g)
 }
 
 
-void
+    void
 add_edge(char *v1, char *v2, int w, Graph_L g)
 {
     Node *nd1, *nd2;
@@ -224,7 +252,7 @@ add_edge(char *v1, char *v2, int w, Graph_L g)
     }
 }
 
-void
+    void
 add_edge_undirected(char *v1, char *v2, int w, Graph_L g)
 {
     add_edge(v1, v2, w, g);
@@ -232,7 +260,7 @@ add_edge_undirected(char *v1, char *v2, int w, Graph_L g)
 }
 
 //if we can find v2 amongst the nodes of n1 and v1 amondst the nodes of n2...
-void
+    void
 delete_edge(char *v1, char *v2, Graph_L g)
 {
     if(has_edge(v1, v2, g)){
@@ -264,9 +292,9 @@ num_vertices(Graph_L g){
         size++;
 
     return size;
-}
 
-Graph_L
+}
+    Graph_L
 generate_complete_graph(char variable, int n)
 {
     rand_init();
@@ -286,7 +314,7 @@ generate_complete_graph(char variable, int n)
 }
 /*********** CHAIN **********/
 
-chain
+    chain
 generate_chain(char variable, int n)
 {
     rand_init();
@@ -301,22 +329,22 @@ generate_chain(char variable, int n)
         for(i = 0; i<n; i++)
             add_vertex(numbered_vertex(variable, i), 0, nc);
         for(i = 0; i<n-1; i++);
-            //add_edge_undirected(numbered_vertex(variable, i), numbered_vertex(variable, i+1), (rand() % (n+1))+1, nc);
+        //add_edge_undirected(numbered_vertex(variable, i), numbered_vertex(variable, i+1), (rand() % (n+1))+1, nc);
     }
 
     return nc;
 }
 
-void
+    void
 printc(chain c)
 {
     Node *nd;
 
     while (*c){
-        printf("Vertex: %s, Adjacent: ", (*c)->vertex);
+        printf("Vertex: %s Adjacent:", (*c)->vertex);
         nd = (*c)->next;
         while (nd){
-            printf("(%s, %d), ", nd->vertex, nd->weight); 
+            printf(" (%s, %d) ", nd->vertex, nd->weight); 
             nd = nd->next;
         }
         printf("\n");
@@ -325,7 +353,7 @@ printc(chain c)
     printf("\n%s\n", "*****************************");
 }
 
-void
+    void
 add_front_chain(char *v, int w, chain c)
 {
     chain p = c;
@@ -345,7 +373,7 @@ add_front_chain(char *v, int w, chain c)
     add_edge_undirected(v, (*(c+1))->vertex, w, c);
 }
 
-void
+    void
 add_back_chain(char *v, int w, chain c)
 {
     add_vertex(v,0,c);
@@ -354,7 +382,7 @@ add_back_chain(char *v, int w, chain c)
     add_edge_undirected(v, (*c)->vertex, w, c);
 }
 
-void
+    void
 reverse_chain(chain c)
 {
     chain p = c;
@@ -371,13 +399,15 @@ reverse_chain(chain c)
         p--;
     }
 }
-    
 
-char *get_front_chain(chain c)
+
+    char 
+*get_front_chain(chain c)
 {
     return (*c)->vertex;
 }
-char *get_back_chain(chain c)
+    char 
+*get_back_chain(chain c)
 {
     while(*(c+1))
         c++;
@@ -390,10 +420,10 @@ char *get_back_chain(chain c)
 //pi = 0 means merge i by its starting node.
 //   = 1 means merge i by its ending node.
 //contents of c2 appended to end of c1.
-void
+    void
 merge_chains(chain c1, chain c2, int w, int p1, int p2)
 {
-         
+
     if( p1 == 1 && p2 == 0 ){
         chain start_ptr = c1;
         char *first2 = (*c2)->vertex;
@@ -422,11 +452,11 @@ merge_chains(chain c1, chain c2, int w, int p1, int p2)
         printf("%s", "Error! You must enter two chains and two values of either 0 or 1!");
 }
 
-void
+    void
 delete_chain(char *v, chain *cs)
 {
     chain *p = cs;
-    
+
     chain c;
     while(c = *p){
         if(strcmp((*c)->vertex, v) == 0){
@@ -440,6 +470,40 @@ delete_chain(char *v, chain *cs)
 }
 
 void
+visit(chain c, char **visited_vertices, Graph_L g){
+
+    int min_weight = num_vertices(g)+2;
+    int w;
+
+    if(*visited_vertices){
+        char *s, *t;
+        if (len_string_arr(visited_vertices) < num_vertices(g)){
+                   s = get_back_chain(c);
+                   while(*g){
+                       if(!in_string_arr((*g)->vertex, visited_vertices)){
+                           w= get_weight((*g)->vertex, s, g);
+                           if(w<min_weight){
+                               min_weight = w;
+                               t = (*g)->vertex;
+                           }
+                       }
+                       g++;
+                   }
+                   add_vertex(t, 0, c);
+                   add_edge_undirected(s, t, min_weight, c);
+                   add_string(t, visited_vertices);
+        }
+    }else
+        if(*g){
+            add_vertex((*g)->vertex, 0, c);
+            add_string((*g)->vertex, visited_vertices);
+        }
+}
+
+
+
+
+    void
 merge_and_delete(chain *cs, Graph_L g)
 {
     chain c1, c2;
@@ -561,38 +625,32 @@ merge_and_delete(chain *cs, Graph_L g)
 
 
 /*********** Algorithms ***********/
-chain NearestNeighbor(Graph_L g)
+    chain
+NearestNeighbor(Graph_L g)
 {
     int n = num_vertices(g);
-    int min_weight, w;
-    chain solution = malloc(sizeof(Node*)*n);
-    char **explored_vertices = malloc(sizeof(char*)*n);
+    char **V_g = malloc(sizeof(char*) * n+1);
 
-    char *initial_vertex;
-    char *next_vertex;
+    chain solution = malloc(sizeof(Node*) * n+1);
+    char **visited_points = malloc(sizeof(char*)*n);
 
-    initial_vertex = (*g)->vertex;
-    add_vertex(initial_vertex, 0, solution);
-    *explored_vertices = initial_vertex;
-
-    int i, j;
-    for(i=0; i<n-1; i++){
-        for(j=0; j<n; j++){
-            w = get_weight(initial_vertex, (*(g+j))->vertex, g);
-            if((w < min_weight) && in_string_arr((*(g+j))->vertex, explored_vertices) == 0){
-                min_weight = w;
-                next_vertex = (*(g+j))->vertex;
-            }
-        }
-        add_vertex(next_vertex, 0, solution);
-        add_edge_undirected(initial_vertex, next_vertex, min_weight, solution); 
-        add_string(next_vertex, explored_vertices);
-        initial_vertex = next_vertex;
-        min_weight = n+2;
+    int i=0;
+    while(*(g+i)){
+        add_string((*(g+i))->vertex, V_g);
+        i++;
     }
-    add_edge_undirected((*(solution+i))->vertex, (*solution)->vertex, get_weight((*(solution+i))->vertex, (*solution)->vertex, g), solution);
+
+    for(i=0;i<n;i++)
+        visit(solution, visited_points, g);
+
+    char *front = get_front_chain(solution);
+    char *back = get_back_chain(solution);
+
+    add_edge_undirected(front, back, get_weight(front, back, g), solution);
+
     return solution;
 }
+
 
 chain ClosestPair(Graph_L g)
 {
@@ -611,8 +669,9 @@ chain ClosestPair(Graph_L g)
         add_vertex((*(g+i))->vertex, 0, c);
         *(cs+i) = c;
     }
-    while ( *(cs+1) )
+    while ( *(cs+1) ){
         merge_and_delete(cs, g);
+    }
 
     front = get_front_chain (*cs);
     back = get_back_chain(*cs);

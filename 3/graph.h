@@ -32,7 +32,9 @@ int total_distance(Node *sol);
 
 void addtostartstring(char c, char *s);
 int in_string_arr(char *s, char **arr);
+int len_string_arr(char **s);
 void add_string(char *s, char **arr);
+int unordered_arr_equal(char **s, char **t);
 int pair_in_string_arr(char **s, char **arr[]);
 void add_pair(char **s, char **arr[]);
 
@@ -59,10 +61,12 @@ void add_back_chain(char *vertex, int weight, chain c);
 void reverse_chain(chain c);
 char *get_front_chain(chain c);
 char *get_back_chain(chain c);
+int sum_weight(chain c);
 
 /*********** CHAIN *  **********/
 void merge_chains(chain c1, chain c2, int w, int p1, int p2);
-void delete_chain(char *v, chain *cs); //starting with *v
+void delete_chain(char *v, chain *cs); 
+void visit(chain s, char **visited_vertices, Graph_L g);
 void merge_and_delete(chain *cs, Graph_L g); 
 
 
