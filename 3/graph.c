@@ -382,7 +382,7 @@ add_back_chain(char *v, int w, chain c)
     add_edge_undirected(v, (*c)->vertex, w, c);
 }
 
-    void
+void
 reverse_chain(chain c)
 {
     chain p = c;
@@ -401,12 +401,12 @@ reverse_chain(chain c)
 }
 
 
-    char 
+char 
 *get_front_chain(chain c)
 {
     return (*c)->vertex;
 }
-    char 
+char 
 *get_back_chain(chain c)
 {
     while(*(c+1))
@@ -414,13 +414,27 @@ reverse_chain(chain c)
     return (*c)->vertex;
 }
 
+int
+sum_weight_chain(chain c){
+    int sum = 0;
+
+    chain ptr = c;
+    while(*(ptr+1)){
+        sum += get_weight((*ptr)->vertex, (*(ptr+1))->vertex, ptr);
+        ptr++;
+    }
+    sum += get_weight(get_front_chain(c), get_back_chain(c), c);
+    return sum;
+    
+    free(ptr);
+}
 
 /*********** CHAINS **********/
 
 //pi = 0 means merge i by its starting node.
 //   = 1 means merge i by its ending node.
 //contents of c2 appended to end of c1.
-    void
+void
 merge_chains(chain c1, chain c2, int w, int p1, int p2)
 {
 
@@ -452,7 +466,7 @@ merge_chains(chain c1, chain c2, int w, int p1, int p2)
         printf("%s", "Error! You must enter two chains and two values of either 0 or 1!");
 }
 
-    void
+void
 delete_chain(char *v, chain *cs)
 {
     chain *p = cs;
@@ -499,11 +513,7 @@ visit(chain c, char **visited_vertices, Graph_L g){
             add_string((*g)->vertex, visited_vertices);
         }
 }
-
-
-
-
-    void
+void
 merge_and_delete(chain *cs, Graph_L g)
 {
     chain c1, c2;
@@ -622,10 +632,14 @@ merge_and_delete(chain *cs, Graph_L g)
         cs++;
     *cs = NULL;
 }
-
+int
+lighter(chain sol1,chain sol2)
+{
+    return sum_weight_chain(sol1)<sum_weight_chain(sol2) ? 1 : 0;
+}
 
 /*********** Algorithms ***********/
-    chain
+chain
 NearestNeighbor(Graph_L g)
 {
     int n = num_vertices(g);
@@ -647,6 +661,7 @@ NearestNeighbor(Graph_L g)
     char *back = get_back_chain(solution);
 
     add_edge_undirected(front, back, get_weight(front, back, g), solution);
+
 
     return solution;
 }
@@ -678,7 +693,37 @@ chain ClosestPair(Graph_L g)
 
     add_edge_undirected(front, back, get_weight(front, back, g), *cs);
 
+
     return *cs;
 }
 
+//returns 1 if sol1 is lighter than sol2, and 0 otherwise.
+
+
+float
+nearest_vs_closestpair(int n)
+{
+    Graph_L g;
+
+    float min1= 0;
+    float min2 =0;
+    chain sol1;
+    chain sol2;
+    
+    int i=0;
+    while(i<100){
+        g = generate_complete_graph('v', n);
+        sol1 = NearestNeighbor(g);
+        sol2 = ClosestPair(g);
+        if(lighter(sol1, sol2))
+            min1 ++;
+        else if(lighter(sol2, sol1))
+            min2 ++;
+        ++i;
+    }
+
+    return min2/min1 ;
+
+
+}
 

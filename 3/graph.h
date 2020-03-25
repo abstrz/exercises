@@ -61,17 +61,19 @@ void add_back_chain(char *vertex, int weight, chain c);
 void reverse_chain(chain c);
 char *get_front_chain(chain c);
 char *get_back_chain(chain c);
-int sum_weight(chain c);
+int sum_weight_chain(chain c);
 
 /*********** CHAIN *  **********/
 void merge_chains(chain c1, chain c2, int w, int p1, int p2);
 void delete_chain(char *v, chain *cs); 
 void visit(chain s, char **visited_vertices, Graph_L g);
 void merge_and_delete(chain *cs, Graph_L g); 
+int lighter(chain sol1, chain sol2);
 
 
 
 /*********** ALGORITHMS  **********/
 chain NearestNeighbor(Graph_L g);
 chain ClosestPair(Graph_L g);
+float nearest_vs_closestpair(int n);
 
