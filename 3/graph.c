@@ -35,7 +35,8 @@ numbered_vertex(char v, int n){
     return vertex;
 }
 
-void print_solution(Node *sol)
+void 
+print_solution(Node *sol)
 {
     int i=0;
     while(i<2){
@@ -47,7 +48,8 @@ void print_solution(Node *sol)
 }
 
 
-int total_distance(Node *sol)
+int 
+total_distance(Node *sol)
 {
     int i=0;
 
@@ -638,12 +640,28 @@ lighter(chain sol1,chain sol2)
     return sum_weight_chain(sol1)<sum_weight_chain(sol2) ? 1 : 0;
 }
 
+//generates array of all acyclic chains of n vertices.
 chain *
-generate_acyclic_chains(int n){
+generate_max_acyclic_chains(Graph_L g){
+    int n = num_vertices(g);
+    //neighbors, 
 }
 
 chain
 minimum_acyclic_chain(chain *cs){
+    if(*cs){
+        chain solution;
+        int min_weight = num_vertices(*cs)+2; //all chains in cs are assumed to have the same number of vertices.
+        int w;
+        while(*cs){
+            if(w=sum_weight_chain(*cs)<min_weight){
+                min_weight = w;
+                solution = *cs;
+            }
+            cs++;
+        }
+    }
+    return solution;
 }
 /*********** Algorithms ***********/
 chain
@@ -705,7 +723,7 @@ chain ClosestPair(Graph_L g)
 }
 
 //returns 1 if sol1 is lighter than sol2, and 0 otherwise.
-float
+    float
 nearest_vs_closestpair(int n)
 {
     Graph_L g;
@@ -714,7 +732,7 @@ nearest_vs_closestpair(int n)
     float min2 =0;
     chain sol1;
     chain sol2;
-    
+
     int i=0;
     while(i<100){
         g = generate_complete_graph('v', n);
@@ -730,14 +748,12 @@ nearest_vs_closestpair(int n)
     return min2/min1 ;
 }
 
-chain 
+    chain 
 OptimalTSP(Graph_L g)
 {
     int n = num_vertices(g);
 
-    /*loop over all equivalence classes of cycles 
-
-
+    /*loop over all equivalence classes of cycles */
 
 }
 
