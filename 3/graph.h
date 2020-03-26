@@ -69,11 +69,14 @@ void delete_chain(char *v, chain *cs);
 void visit(chain s, char **visited_vertices, Graph_L g);
 void merge_and_delete(chain *cs, Graph_L g); 
 int lighter(chain sol1, chain sol2);
-
+chain *generate_acyclic_chains(int n, Graph_L g); //generates array of all acyclic chains of n vertices.
+chain minimum_acyclic_chain(chain *cs);
 
 
 /*********** ALGORITHMS  **********/
 chain NearestNeighbor(Graph_L g);
 chain ClosestPair(Graph_L g);
 float nearest_vs_closestpair(int n);
+
+
 

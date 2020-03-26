@@ -638,6 +638,13 @@ lighter(chain sol1,chain sol2)
     return sum_weight_chain(sol1)<sum_weight_chain(sol2) ? 1 : 0;
 }
 
+chain *
+generate_acyclic_chains(int n){
+}
+
+chain
+minimum_acyclic_chain(chain *cs){
+}
 /*********** Algorithms ***********/
 chain
 NearestNeighbor(Graph_L g)
@@ -698,8 +705,6 @@ chain ClosestPair(Graph_L g)
 }
 
 //returns 1 if sol1 is lighter than sol2, and 0 otherwise.
-
-
 float
 nearest_vs_closestpair(int n)
 {
@@ -723,7 +728,22 @@ nearest_vs_closestpair(int n)
     }
 
     return min2/min1 ;
+}
+
+chain 
+OptimalTSP(Graph_L g)
+{
+    int n = num_vertices(g);
+
+    /*loop over all equivalence classes of cycles 
+
 
 
 }
+
+
+
+
+
+
 
