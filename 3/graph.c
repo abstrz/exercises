@@ -2,7 +2,7 @@
 
 #define MAX_GRAPH_SIZE 10000
 
-void
+    void
 rand_init()
 {
     static int init_identifier=0;
@@ -13,7 +13,7 @@ rand_init()
     }
 }
 
-int
+    int
 factorial(int n)
 {
     int product = n;
@@ -95,7 +95,7 @@ addtostartstring(char c, char *s)
     *s = c;
 }
 
-void
+    void
 print_string_arr(char **arr)
 {
     printf("*************************************\n");
@@ -463,13 +463,13 @@ sum_weight_chain(chain c){
 
     chain ptr = c;
     while(*(ptr+1)){
-        sum += get_weight((*ptr)->vertex, (*(ptr+1))->vertex, ptr);
+        sum += get_weight((*ptr)->vertex, (*(ptr+1))->vertex, c);
         ptr++;
     }
     sum += get_weight(get_front_chain(c), get_back_chain(c), c);
+
     return sum;
 
-    free(ptr);
 }
 
 /*********** CHAINS **********/
@@ -685,14 +685,14 @@ chain *
 acyclic_chains_starting_with(char *v, Graph_L g)
 {
     if(has_vertex(v, g)){
-        int i,j,k, n1, n2;
-        char *new, *back;
+        int i,j,k, n1, n2, w;
+        char *new, *front, *back;
 
         int n = num_vertices(g);
         int num_chains = factorial(n-1);
-        char **ptr;
 
         chain *sol = malloc(sizeof(chain)*(num_chains+1));
+        chain *ptr;
 
 
         for(i=0; i<n; i++){
@@ -702,7 +702,7 @@ acyclic_chains_starting_with(char *v, Graph_L g)
                 if(!*(sol+j))
                     new=v;
                 else
-                    while(has_vertex(new, *(sol+j)))
+                    while(has_vertex(new, *(sol+n2*j)))
                         new = next_vertex(new, g);
                 for(k=n2*j; k<(n2*(j+1)); k++){
                     if(!*(sol+k)){
@@ -718,34 +718,59 @@ acyclic_chains_starting_with(char *v, Graph_L g)
                 new = next_vertex(new, g);
             }
         }
+        ptr = sol;
+        while(*ptr){
+            front = get_front_chain(*ptr);
+            back = get_back_chain(*ptr);
+            add_edge_undirected(front, back, get_weight(front,back, g), *ptr);
+            ptr++;
+        }
+
+
         return sol;
     }else
         return NULL;
 }
 
 //generates array of all acyclic chains of n vertices.
-    chain *
+chain *
 generate_acyclic_chains(Graph_L g)
 {
+    int n = num_vertices(g);
 
+    chain *sol = malloc(sizeof(chain)*(factorial(n)+(n+1)));
+
+    chain *temp;
+
+    int i,j, m;
+
+    m = factorial(n-1);
+    for(i=0;i<n;i++){
+        temp = acyclic_chains_starting_with((*(g+i))->vertex, g);
+        for(j=m*i;j<m*(i+1); j++){
+            *(sol+j) = *(temp+j - m*i);
+        }
+    }
+    return sol;
 }
 
-//chain
-//minimum_acyclic_chain(chain *cs){
-//    if(*cs){
-//        chain solution;
-//        int min_weight = num_vertices(*cs)+2; //all chains in cs are assumed to have the same number of vertices.
-//        int w;
-//        while(*cs){
-//            if(w=sum_weight_chain(*cs)<min_weight){
-//                min_weight = w;
-//                solution = *cs;
-//            }
-//            cs++;
-//        }
-//    }
-//    return solution;
-//}
+chain
+minimum_acyclic_chain(chain *cs){
+    int n = num_vertices(*cs);
+    chain solution = malloc(sizeof(Node*) * (n+1));
+    int min_weight =  n * (n+2); 
+    int w;
+    while(*cs){
+        w=sum_weight_chain(*cs);
+        if(w<min_weight){
+            min_weight = w;
+            solution = *cs;
+        }
+        cs++;
+    }
+    return solution;
+}
+
 /*********** Algorithms ***********/
     chain
 NearestNeighbor(Graph_L g)
@@ -834,10 +859,7 @@ nearest_vs_closestpair(int n)
     chain 
 OptimalTSP(Graph_L g)
 {
-    int n = num_vertices(g);
-
-    /*loop over all equivalence classes of cycles */
-
+    return minimum_acyclic_chain(generate_acyclic_chains(g));
 }
 
 
