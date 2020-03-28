@@ -831,30 +831,7 @@ chain ClosestPair(Graph_L g)
 }
 
 //returns 1 if sol1 is lighter than sol2, and 0 otherwise.
-    float
-nearest_vs_closestpair(int n)
-{
-    Graph_L g;
 
-    float min1= 0;
-    float min2 =0;
-    chain sol1;
-    chain sol2;
-
-    int i=0;
-    while(i<100){
-        g = generate_complete_graph('v', n);
-        sol1 = NearestNeighbor(g);
-        sol2 = ClosestPair(g);
-        if(lighter(sol1, sol2))
-            min1 ++;
-        else if(lighter(sol2, sol1))
-            min2 ++;
-        ++i;
-    }
-
-    return min2/min1 ;
-}
 
     chain 
 OptimalTSP(Graph_L g)
@@ -862,6 +839,38 @@ OptimalTSP(Graph_L g)
     return minimum_acyclic_chain(generate_acyclic_chains(g));
 }
 
+
+void
+test(int n)
+{
+
+    Graph_L g;
+    chain optimal;
+
+    chain sol1, sol2;
+
+    int min1, min2, min_weight;
+    min1= min2 = 0;
+
+    int i=0;
+
+    while(i<100){
+        g = generate_complete_graph('v', n);
+        optimal = OptimalTSP(g);
+        min_weight = sum_weight_chain(optimal);
+        sol1 = NearestNeighbor(g);
+        sol2 = ClosestPair(g);
+        if(sum_weight_chain(sol1) == min_weight)
+            min1 ++;
+        if(sum_weight_chain(sol2) == min_weight)
+            min2 ++;
+        ++i;
+    }
+
+    printf("The nearest neighbor heuristic on %d vertices produced a minimal weight, maximal vertex cyclic subgraph %d percent of the time.\n", n, min1);
+
+    printf("The closest pair heuristic on %d vertices produced a minimal weight, maximal vertex cyclic subgraph %d percent of the time.\n", n, min2);
+}
 
 
 
