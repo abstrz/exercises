@@ -79,7 +79,7 @@ chain minimum_acyclic_chain(chain *cs);
 chain NearestNeighbor(Graph_L g);
 chain ClosestPair(Graph_L g);
 chain OptimalTSP(Graph_L g);
-void test(int n);
+void test(int n, int num_trials);
 
 
 
