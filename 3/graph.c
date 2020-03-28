@@ -706,7 +706,7 @@ acyclic_chains_starting_with(char *v, Graph_L g)
                         new = next_vertex(new, g);
                 for(k=n2*j; k<(n2*(j+1)); k++){
                     if(!*(sol+k)){
-                        chain c = malloc(sizeof(Node*)*n);
+                        chain c = malloc(sizeof(Node*)*(n+1));
                         add_vertex(new, 0, c);
                         *(sol+k)= c;
                     }else{

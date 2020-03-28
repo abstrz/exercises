@@ -5,7 +5,7 @@
 
 int main()
 {
-    Graph_L g = generate_complete_graph('v', 4);
+    Graph_L g = generate_complete_graph('v', 10);
     printc(g);
 
     chain *cs = acyclic_chains_starting_with((*g)->vertex, g);
