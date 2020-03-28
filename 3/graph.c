@@ -14,6 +14,24 @@ rand_init()
 }
 
 int
+factorial(int n)
+{
+    int product = n;
+
+    if (n==0){
+        return 1;
+    }else if (n>0){
+        while((--n)>0)
+            product *= n;
+
+        return product;
+    }else{
+        return -1;
+    }
+}
+
+
+    int
 count_numbers(int n)
 {
     int i=0;
@@ -24,8 +42,9 @@ count_numbers(int n)
     return i;
 }
 
-char *
-numbered_vertex(char v, int n){
+    char *
+numbered_vertex(char v, int n)
+{
     char *vertex = malloc(sizeof(char *)* (((int) count_numbers(n)) + 2));
 
     *vertex = v;
@@ -35,7 +54,7 @@ numbered_vertex(char v, int n){
     return vertex;
 }
 
-void 
+    void 
 print_solution(Node *sol)
 {
     int i=0;
@@ -48,7 +67,7 @@ print_solution(Node *sol)
 }
 
 
-int 
+    int 
 total_distance(Node *sol)
 {
     int i=0;
@@ -62,7 +81,7 @@ total_distance(Node *sol)
     return total;
 }
 
-void
+    void
 addtostartstring(char c, char *s)
 {
     char *p = s;
@@ -76,17 +95,30 @@ addtostartstring(char c, char *s)
     *s = c;
 }
 
-int
+void
+print_string_arr(char **arr)
+{
+    printf("*************************************\n");
+    printf("[");
+    while(*arr){
+        printf("%s,", *arr);
+        arr++;
+    }
+    printf("]\n");
+    printf("*************************************\n");
+}
+    int
 in_string_arr(char *s, char **arr)
 {
     while (*arr){
-        if (strcmp(*arr, s) == 0)
+        if (strcmp(*arr, s) == 0){
             return 1;
+        }
         ++arr;
     }
     return 0;
 }
-int
+    int
 len_string_arr(char **s)
 {
     int size = 0;
@@ -96,7 +128,7 @@ len_string_arr(char **s)
 
     return size;
 }
-void
+    void
 add_string(char *s, char **arr)
 {
     if(in_string_arr(s, arr) == 0){
@@ -206,6 +238,21 @@ add_vertex(char *v, int w, Graph_L g)
         *g = nd;
     }
 }
+    char *
+next_vertex(char *vertex, Graph_L g)
+{
+    Graph_L ptr = g;
+    while(*ptr){
+        if(strcmp((*ptr)->vertex, vertex)==0){
+            if(*(ptr+1))
+                return (*(ptr+1))->vertex;
+            else
+                return (*g)->vertex;
+        }
+        ptr++;
+    }
+    return NULL;
+}
 
     int
 has_edge(char *v1, char *v2, Graph_L g)
@@ -285,7 +332,6 @@ delete_edge(char *v1, char *v2, Graph_L g)
         }
     }
 }
-
 int
 num_vertices(Graph_L g){
     int size=0;
@@ -336,7 +382,6 @@ generate_chain(char variable, int n)
 
     return nc;
 }
-
     void
 printc(chain c)
 {
@@ -354,7 +399,6 @@ printc(chain c)
     }
     printf("\n%s\n", "*****************************");
 }
-
     void
 add_front_chain(char *v, int w, chain c)
 {
@@ -374,7 +418,6 @@ add_front_chain(char *v, int w, chain c)
 
     add_edge_undirected(v, (*(c+1))->vertex, w, c);
 }
-
     void
 add_back_chain(char *v, int w, chain c)
 {
@@ -383,8 +426,7 @@ add_back_chain(char *v, int w, chain c)
         c++;
     add_edge_undirected(v, (*c)->vertex, w, c);
 }
-
-void
+    void
 reverse_chain(chain c)
 {
     chain p = c;
@@ -402,13 +444,12 @@ reverse_chain(chain c)
     }
 }
 
-
-char 
+    char 
 *get_front_chain(chain c)
 {
     return (*c)->vertex;
 }
-char 
+    char 
 *get_back_chain(chain c)
 {
     while(*(c+1))
@@ -427,7 +468,7 @@ sum_weight_chain(chain c){
     }
     sum += get_weight(get_front_chain(c), get_back_chain(c), c);
     return sum;
-    
+
     free(ptr);
 }
 
@@ -436,7 +477,7 @@ sum_weight_chain(chain c){
 //pi = 0 means merge i by its starting node.
 //   = 1 means merge i by its ending node.
 //contents of c2 appended to end of c1.
-void
+    void
 merge_chains(chain c1, chain c2, int w, int p1, int p2)
 {
 
@@ -468,7 +509,7 @@ merge_chains(chain c1, chain c2, int w, int p1, int p2)
         printf("%s", "Error! You must enter two chains and two values of either 0 or 1!");
 }
 
-void
+    void
 delete_chain(char *v, chain *cs)
 {
     chain *p = cs;
@@ -494,20 +535,20 @@ visit(chain c, char **visited_vertices, Graph_L g){
     if(*visited_vertices){
         char *s, *t;
         if (len_string_arr(visited_vertices) < num_vertices(g)){
-                   s = get_back_chain(c);
-                   while(*g){
-                       if(!in_string_arr((*g)->vertex, visited_vertices)){
-                           w= get_weight((*g)->vertex, s, g);
-                           if(w<min_weight){
-                               min_weight = w;
-                               t = (*g)->vertex;
-                           }
-                       }
-                       g++;
-                   }
-                   add_vertex(t, 0, c);
-                   add_edge_undirected(s, t, min_weight, c);
-                   add_string(t, visited_vertices);
+            s = get_back_chain(c);
+            while(*g){
+                if(!in_string_arr((*g)->vertex, visited_vertices)){
+                    w= get_weight((*g)->vertex, s, g);
+                    if(w<min_weight){
+                        min_weight = w;
+                        t = (*g)->vertex;
+                    }
+                }
+                g++;
+            }
+            add_vertex(t, 0, c);
+            add_edge_undirected(s, t, min_weight, c);
+            add_string(t, visited_vertices);
         }
     }else
         if(*g){
@@ -515,7 +556,7 @@ visit(chain c, char **visited_vertices, Graph_L g){
             add_string((*g)->vertex, visited_vertices);
         }
 }
-void
+    void
 merge_and_delete(chain *cs, Graph_L g)
 {
     chain c1, c2;
@@ -634,37 +675,85 @@ merge_and_delete(chain *cs, Graph_L g)
         cs++;
     *cs = NULL;
 }
-int
+    int
 lighter(chain sol1,chain sol2)
 {
     return sum_weight_chain(sol1)<sum_weight_chain(sol2) ? 1 : 0;
 }
 
-//generates array of all acyclic chains of n vertices.
-chain *
-generate_max_acyclic_chains(Graph_L g){
-    int n = num_vertices(g);
-    //neighbors, 
+    chain *
+acyclic_chains_starting_with(char *v, Graph_L g)
+{
+    if(has_vertex(v, g)){
+        int i,j,k, n1, n2;
+        char *new;
+
+        int n = num_vertices(g);
+        int num_chains = factorial(n-1);
+        char **ptr;
+
+        char **neighbours = malloc(sizeof(char*)*num_chains);
+        chain *sol = malloc(sizeof(chain)*(num_chains+1));
+
+        new=v;
+
+        for(i=0; i<n; i++){
+            n2 = factorial(n-1-i);
+            n1 = factorial(n-1)/n2;
+            for(j=0; j<n1; j++){
+                for(k=n2*j; k<(n2*(j+1)); k++){
+                    if(!*(sol+k)){
+                        chain c = malloc(sizeof(Node*)*n);
+                        add_vertex(new, 0, c);
+                        *(sol+k)= c;
+                    }else if(!has_vertex(new, *(sol+k)) && !in_string_arr(new, neighbours)){
+                        char *back = get_back_chain(*(sol+k));
+                        add_vertex(new, 0, *(sol+k));
+                        add_edge_undirected(back, new, get_weight(back, new, g), *(sol+k));
+                    }
+                }
+                if(num_vertices(*(sol+j*n2)) == n)
+                    break;
+                while(has_vertex(new, *(sol+j*n2)) || in_string_arr(new, neighbours)){
+                    printc(*(sol+j*n2));
+                    new = next_vertex(new, g);
+                }
+            }
+            ptr = neighbours;
+            *ptr = v;
+            while(*(++ptr))
+                *ptr = NULL;
+        }
+        return sol;
+    }else
+        return NULL;
 }
 
-chain
-minimum_acyclic_chain(chain *cs){
-    if(*cs){
-        chain solution;
-        int min_weight = num_vertices(*cs)+2; //all chains in cs are assumed to have the same number of vertices.
-        int w;
-        while(*cs){
-            if(w=sum_weight_chain(*cs)<min_weight){
-                min_weight = w;
-                solution = *cs;
-            }
-            cs++;
-        }
-    }
-    return solution;
+//generates array of all acyclic chains of n vertices.
+    chain *
+generate_acyclic_chains(Graph_L g)
+{
+
 }
+
+//chain
+//minimum_acyclic_chain(chain *cs){
+//    if(*cs){
+//        chain solution;
+//        int min_weight = num_vertices(*cs)+2; //all chains in cs are assumed to have the same number of vertices.
+//        int w;
+//        while(*cs){
+//            if(w=sum_weight_chain(*cs)<min_weight){
+//                min_weight = w;
+//                solution = *cs;
+//            }
+//            cs++;
+//        }
+//    }
+//    return solution;
+//}
 /*********** Algorithms ***********/
-chain
+    chain
 NearestNeighbor(Graph_L g)
 {
     int n = num_vertices(g);

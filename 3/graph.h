@@ -26,6 +26,7 @@ typedef Graph_L chain;
 /*********** STRING,ARRAY, MATH PROCEDURES *********/
 void rand_init();
 int count_numbers(int n);
+int factorial(int n);
 char *numbered_vertex(char v, int n);
 void print_solution(Node *sol);
 int total_distance(Node *sol);
@@ -69,7 +70,8 @@ void delete_chain(char *v, chain *cs);
 void visit(chain s, char **visited_vertices, Graph_L g);
 void merge_and_delete(chain *cs, Graph_L g); 
 int lighter(chain sol1, chain sol2);
-chain *generate_acyclic_chains(int n, Graph_L g); //generates array of all acyclic chains of n vertices.
+chain *acyclic_chains_starting_with(char *v, Graph_L g);
+chain *generate_acyclic_chains(Graph_L g); //generates array of all acyclic chains of n vertices.
 chain minimum_acyclic_chain(chain *cs);
 
 
