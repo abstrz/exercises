@@ -845,26 +845,29 @@ test(int n, int num_trials)
 {
 
     Graph_L g;
+
     chain optimal;
 
     chain sol1, sol2;
 
-    int min1, min2, min_weight;
-    min1= min2 = 0;
+    int i, min1, min2, min_weight;
+    i = min1= min2 = 0;
 
-    int i=0;
-
-    while(i<num_trials){
+    for(;i<num_trials;i++){
         g = generate_complete_graph('v', n);
+
         optimal = OptimalTSP(g);
-        min_weight = sum_weight_chain(optimal);
+
         sol1 = NearestNeighbor(g);
         sol2 = ClosestPair(g);
+
+        min_weight = sum_weight_chain(optimal);
+
         if(sum_weight_chain(sol1) == min_weight)
             min1 ++;
         if(sum_weight_chain(sol2) == min_weight)
             min2 ++;
-        ++i;
+
     }
 
     printf("The nearest neighbor heuristic on %d vertices produced a minimal weight, maximal vertex cyclic subgraph %f percent of the time.\n", n, 100*(((float) min1)/num_trials));
