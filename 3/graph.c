@@ -699,11 +699,11 @@ acyclic_chains_starting_with(char *v, Graph_L g)
             n2 = factorial(n-1-i);
             n1 = factorial(n-1)/n2;
             for(j=0; j<n1; j++){
-                if(*(sol+j))
+                if(!*(sol+j))
+                    new=v;
+                else
                     while(has_vertex(new, *(sol+j)))
                         new = next_vertex(new, g);
-                else
-                    new = v;
                 for(k=n2*j; k<(n2*(j+1)); k++){
                     if(!*(sol+k)){
                         chain c = malloc(sizeof(Node*)*n);
