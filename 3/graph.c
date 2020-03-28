@@ -681,48 +681,42 @@ lighter(chain sol1,chain sol2)
     return sum_weight_chain(sol1)<sum_weight_chain(sol2) ? 1 : 0;
 }
 
-    chain *
+chain *
 acyclic_chains_starting_with(char *v, Graph_L g)
 {
     if(has_vertex(v, g)){
         int i,j,k, n1, n2;
-        char *new;
+        char *new, *back;
 
         int n = num_vertices(g);
         int num_chains = factorial(n-1);
         char **ptr;
 
-        char **neighbours = malloc(sizeof(char*)*num_chains);
         chain *sol = malloc(sizeof(chain)*(num_chains+1));
 
-        new=v;
 
         for(i=0; i<n; i++){
             n2 = factorial(n-1-i);
             n1 = factorial(n-1)/n2;
             for(j=0; j<n1; j++){
+                if(*(sol+j))
+                    while(has_vertex(new, *(sol+j)))
+                        new = next_vertex(new, g);
+                else
+                    new = v;
                 for(k=n2*j; k<(n2*(j+1)); k++){
                     if(!*(sol+k)){
                         chain c = malloc(sizeof(Node*)*n);
                         add_vertex(new, 0, c);
                         *(sol+k)= c;
-                    }else if(!has_vertex(new, *(sol+k)) && !in_string_arr(new, neighbours)){
-                        char *back = get_back_chain(*(sol+k));
+                    }else{
+                        back = get_back_chain(*(sol+k));
                         add_vertex(new, 0, *(sol+k));
                         add_edge_undirected(back, new, get_weight(back, new, g), *(sol+k));
                     }
                 }
-                if(num_vertices(*(sol+j*n2)) == n)
-                    break;
-                while(has_vertex(new, *(sol+j*n2)) || in_string_arr(new, neighbours)){
-                    printc(*(sol+j*n2));
-                    new = next_vertex(new, g);
-                }
+                new = next_vertex(new, g);
             }
-            ptr = neighbours;
-            *ptr = v;
-            while(*(++ptr))
-                *ptr = NULL;
         }
         return sol;
     }else
