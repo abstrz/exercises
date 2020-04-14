@@ -23,3 +23,11 @@ int in_interval(int n, interval *I);
 int contained(interval *I, interval *J);
 
 interval *intersection(interval *I1, interval *I2);
+
+
+/*********** intervals **********/
+interval **generate_intervals(int n);
+void delete_interval(interval *I, interval **Is);
+
+/*********** algorithms **********/
+interval **EarliestJobFirst(interval **I);
