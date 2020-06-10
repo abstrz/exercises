@@ -95,10 +95,27 @@ generate_graph_m(int n){
 
 
 void
-insert_edge(int i, int j, graph_m g){}
+insert_edge(int i, int j, graph_m g){
+  int n = dim(g);
+  if((i>=0 && i<n) && (j>=0 && j<n))
+    g[i][j] = 1;
+  else{
+    int m = (i>=j) ? i:j;
+    printf("%d", m);
+    while(n<m+1){
+      insert_vertex(g);
+      n=dim(g);
+    }
+    g[i][j]=1;
+  }
+}
 
 void
-delete_edge(int i, int j, graph_m g){}
+delete_edge(int i, int j, graph_m g){
+  int n = dim(g);
+  if((i>=0 && i<n) && (j>=0 && j<n))
+    g[i][j]=0;
+}
   
 
   
