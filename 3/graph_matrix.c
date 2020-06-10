@@ -5,7 +5,7 @@
 int
 dim(graph_m g){
   int n=0;
-  while(!(g[0][n] == 'e'))
+  while(g[0][n] != -1)
     n++;
   return n;
 }
@@ -44,11 +44,11 @@ insert_vertex(graph_m g){ //add a row and column of zeros.
   for(i=0;i<n;i++){
     g[i] = (int *) realloc(g[i], size);
     g[i][n]=0;
-    g[i][n+1]='e';
+    g[i][n+1]=-1;
   }
   //add one final row of zeroes
   g[n] = (int *) malloc(size);
-  g[n][n+1] = 'e';
+  g[n][n+1] = -1;
   for(i=0;i<n+1;i++)
     g[n][i] = 0;
 }
@@ -59,7 +59,7 @@ delete_vertex(int a, graph_m g){
 
   if(a>=0 && a<n){
     if(n==1){
-      g[0][0] = 'e';
+      g[0][0] = -1;
     }else{
 
       int i,j;
@@ -74,7 +74,7 @@ delete_vertex(int a, graph_m g){
       for(i=0;i<n-1;i++){
 	for(j=a;j<(n-1);j++)
 	  g[i][j] = g[i][j+1]; 
-	g[i][n-1] = 'e';
+	g[i][n-1] = -1;
       }
     }
   }
@@ -85,7 +85,7 @@ graph_m
 generate_graph_m(int n){
   graph_m g = (int **) malloc(sizeof(int *));
   g[0] = (int *) malloc(sizeof(int));
-  g[0][0] = 'e';
+  g[0][0] = -1;
 
   while((n--)>0)
     insert_vertex(g);
