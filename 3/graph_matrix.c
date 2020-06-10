@@ -57,24 +57,29 @@ void
 delete_vertex(int a, graph_m g){
   int n = dim(g);
 
-  if(a<0 || a>=n)
-    exit(EXIT_FAILURE);
+  if(a>=0 && a<n){
+    if(n==1){
+      g[0][0] = 'e';
+    }else{
 
-  int i,j;
+      int i,j;
 
-  free(g[a]);
+      free(g[a]);
 
-  for(i=a; i<n-1; i++)
-    g[i] = g[i+1];
+      for(i=a; i<n-1; i++)
+	g[i] = g[i+1];
 
-  g[n-1]=NULL;
+      g[n-1]=NULL;
 
-  for(i=0;i<n-1;i++){
-    for(j=a;j<(n-1);j++)
-      g[i][j] = g[i][j+1]; 
-    g[i][n-1] = 'e';
+      for(i=0;i<n-1;i++){
+	for(j=a;j<(n-1);j++)
+	  g[i][j] = g[i][j+1]; 
+	g[i][n-1] = 'e';
+      }
+    }
   }
 }
+
 
 graph_m
 generate_graph_m(int n){
@@ -85,9 +90,6 @@ generate_graph_m(int n){
   while((n--)>0)
     insert_vertex(g);
 
-  printgraph_m(g);
-  delete_vertex(99, g);
-  printgraph_m(g);
   return g;
 }
 
