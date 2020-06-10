@@ -54,7 +54,27 @@ insert_vertex(graph_m g){ //add a row and column of zeros.
 }
 
 void
-delete_vertex(int i, graph_m g);
+delete_vertex(int a, graph_m g){
+  int n = dim(g);
+
+  if(a<0 || a>=n)
+    exit(EXIT_FAILURE);
+
+  int i,j;
+
+  free(g[a]);
+
+  for(i=a; i<n-1; i++)
+    g[i] = g[i+1];
+
+  g[n-1]=NULL;
+
+  for(i=0;i<n-1;i++){
+    for(j=a;j<(n-1);j++)
+      g[i][j] = g[i][j+1]; 
+    g[i][n-1] = 'e';
+  }
+}
 
 graph_m
 generate_graph_m(int n){
@@ -62,20 +82,21 @@ generate_graph_m(int n){
   g[0] = (int *) malloc(sizeof(int));
   g[0][0] = 'e';
 
-  while((n--)>=0){
+  while((n--)>0)
     insert_vertex(g);
-  }
-  printgraph_m(g);
 
+  printgraph_m(g);
+  delete_vertex(99, g);
+  printgraph_m(g);
   return g;
 }
 
 
 void
-insert_edge(int i, int j, graph_m g){};
+insert_edge(int i, int j, graph_m g){}
 
 void
-delete_edge(int i, int j, graph_m g){};
+delete_edge(int i, int j, graph_m g){}
   
 
   
