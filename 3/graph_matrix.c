@@ -1,6 +1,15 @@
 #include "graph_matrix.h"
-#include <stdlib.h>
-#include <stdio.h>
+
+void
+rand_init()
+{
+  static int init_identifier=0;
+
+  if(init_identifier == 0){
+    srand(time(NULL));
+    init_identifier++;
+  }
+}
 
 int
 dim(graph_m g){
@@ -80,7 +89,6 @@ delete_vertex(int a, graph_m g){
   }
 }
 
-
 graph_m
 generate_graph_m(int n){
   graph_m g = (int **) malloc(sizeof(int *));
@@ -93,21 +101,40 @@ generate_graph_m(int n){
   return g;
 }
 
+int has_edge(int i, int j, graph_m g){
+  if (dim(g)<=(i>=j ? i : j))
+    return 0;
+  else if(g[i][j] == 0)
+    return 0;
+  else
+    return 1;
+}
+    
 
 void
-insert_edge(int i, int j, graph_m g){
+insert_edge(int i, int j, int w, graph_m g){
   int n = dim(g);
-  if((i>=0 && i<n) && (j>=0 && j<n))
-    g[i][j] = 1;
+
+  if(w<0)
+    w = 0;
+
+  if((i>=0 && i<n) && (j>=0 && j<n)){
+    g[i][j] = w;
+  }
   else{
     int m = (i>=j) ? i:j;
-    printf("%d", m);
-    while(n<m+1){
+    while(n<=m){
       insert_vertex(g);
       n=dim(g);
     }
-    g[i][j]=1;
+    g[i][j]=w;
   }
+}
+
+void
+insert_edge_bothways(int i, int j, int w, graph_m g){
+  insert_edge(i, j, w, g);
+  insert_edge(j, i, w, g);
 }
 
 void
@@ -116,8 +143,28 @@ delete_edge(int i, int j, graph_m g){
   if((i>=0 && i<n) && (j>=0 && j<n))
     g[i][j]=0;
 }
-  
 
+void
+delete_edge_bothways(int i, int j, graph_m g){
+  delete_edge(i, j, g);
+  delete_edge(j, i, g);
+} 
+
+graph_m
+generate_complete_graph_m(int n)
+{
+  rand_init();
+
+  graph_m g = generate_graph_m(n);
+
+  int i,j;
+
+  for(i = 0; i<n; i++)
+    for(j=i+1; j<n; j++)
+      insert_edge_bothways(i, j, (rand() % (n+1))+1, g);
+    
+  return g;
+}
   
   
 
