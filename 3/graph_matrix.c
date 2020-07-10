@@ -47,16 +47,22 @@ void
 insert_vertex(graph_m g){ //add a row and column of zeros.
   int n = dim(g);
   int i;
-  size_t size = (sizeof(int) * (n+2));
+  size_t size1;
+  size_t size2 = sizeof(int)*(n+2);
 
-  //resize existing rows, and set last entry to zero in each.
-  for(i=0;i<n;i++){
-    g[i] = (int *) realloc(g[i], size);
-    g[i][n]=0;
-    g[i][n+1]=-1;
+  if(n>0){
+    size1 = sizeof(int*)*(n+1);
+    g = realloc(g, size1);
+
+    for(i=0;i<n;i++){
+      g[i] = realloc(g[i], size2);
+      g[i][n]=0;
+      g[i][n+1]=-1;
+    }
   }
+
   //add one final row of zeroes
-  g[n] = (int *) malloc(size);
+  g[n] = (int *) malloc(size2);
   g[n][n+1] = -1;
   for(i=0;i<n+1;i++)
     g[n][i] = 0;
@@ -89,17 +95,7 @@ delete_vertex(int a, graph_m g){
   }
 }
 
-graph_m
-generate_graph_m(int n){
-  graph_m g = (int **) malloc(sizeof(int *));
-  g[0] = (int *) malloc(sizeof(int));
-  g[0][0] = -1;
 
-  while((n--)>0)
-    insert_vertex(g);
-
-  return g;
-}
 
 int has_edge(int i, int j, graph_m g){
   if (dim(g)<=(i>=j ? i : j))
@@ -150,6 +146,40 @@ delete_edge_bothways(int i, int j, graph_m g){
   delete_edge(j, i, g);
 } 
 
+int
+num_adjacent(int i, graph_m g)
+{
+  int a = 0;
+  int n = dim(g);
+
+  int j;
+  for(j=0; j<n; j++)
+    if(g[i][j] != 0)
+      a++;
+
+  return a;
+}
+
+graph_m
+empty_graph_m(){
+  graph_m g = (int **) malloc(sizeof(int *));
+  g[0] = (int *) malloc(sizeof(int));
+  g[0][0] = -1;
+
+  return g;
+}
+
+
+graph_m
+generate_graph_m(int n){
+  graph_m g = empty_graph_m();
+  
+  while((n--)>0)
+    insert_vertex(g);
+  
+  return g;
+}
+
 graph_m
 generate_complete_graph_m(int n)
 {
@@ -165,7 +195,58 @@ generate_complete_graph_m(int n)
     
   return g;
 }
+
+int
+check_cycle(graph_m soln)
+{
+  int n = dim(soln);
+
+  int i;
+  for(i=0; i<n; i++)
+    if(num_adjacent(i, soln) != 2)
+      return 0;
+
+  return 1;
+}
+    
   
-  
+graph_m
+nearest_neighbor(graph_m g)
+{
+  int n = dim(g);
+  graph_m soln = generate_graph_m(n);
+  int *visited = malloc(sizeof(int) * n);
+
+  //  int i, j,row, col, w;
+  //
+  //
+  //  //find minimum neighbor,
+  //  //go to it
+  //  //repeat
+  //  row=0;
+  //  col=0;
+  //  for(i=0; i<n; i++){
+  //    add_int(row+1, visited);
+  //    if(len_int_arr(visited) == n){
+  //      insert_edge_bothways(row, 0, g[row][0], soln);
+  //      break;
+  //    }
+  //    w = n+2;
+  //    //scan row for minimal weight edge, not in graph, preserving cycle.
+  //    for(j=0; j<n; j++){
+  //      if(g[row][j] > 0 && g[row][j] < w && in_int_arr(j+1, visited) == 0){
+  //	col = j;
+  //	w = g[row][col];
+  //      }
+  //    }
+  //
+  //    if(row<n)
+  //      insert_edge_bothways(row, col, w, soln);
+  //
+  //    row = col;
+  //  }
+  //
+  //  return soln;
+}
 
 
