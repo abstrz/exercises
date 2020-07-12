@@ -1,5 +1,8 @@
 #include "graph_matrix.h"
 
+//todo,
+//formalize method naming.
+
 void
 rand_init()
 {
@@ -15,8 +18,11 @@ int
 dim(graph_m g)
 {
   int n=0;
-  while(*(g+n))
-    n++;
+  if(g[0])
+    while(g[0][n] != -1)
+      n++;
+  else
+    return 0;
   return n;
 }
 
@@ -71,20 +77,41 @@ generate_blacklist(graph_m g)
 
 //depth first search?    
 //Note: If you pop x from current_path, then you have to filter out all vertices blacklisted by x.
-int connected(int i, int j, graph_m g)
+int connected(int s, int e, graph_m g)
+
 {
   int n = dim(g);
-  int_arr *blacklist = generate_blacklist(g);
 
+  if(s >= n)
+    return 0;
+
+  int_arr *blacklist = generate_blacklist(g);
   int_arr current_path = malloc(sizeof(int) * (n+2));
-  int current = i;
+  int i, j, dummy;
+
+  int_arr_push((i=s)+1, current_path);
+
   while(1){
-    if(has_edge(current, j, g))
+    if(has_edge(i, e, g))
       return 1;
-    for(i=0;i<n;i++){
-      if(has_edge(current, i, g)){
-	if(int_arr_in(i, current_path)){}
+    if(int_arr_len(blacklist[s]) == num_adjacent(s, g))
+      return 0;
+
+    dummy = 0;
+
+    for(j=0;j<n;j++){
+      if(has_edge(i, j, g) && !int_arr_in(j+1, current_path) && !int_arr_in(j+1, blacklist[i])){
+  	dummy = 1;
+  	i = j;
+  	int_arr_push(j+1, current_path);
+  	break;
       }
+    }
+    if(!dummy){
+      i = int_arr_pop(current_path) - 1;
+      int_arrp_remove_at_index(i,  blacklist);
+      int_arr_push(i+1, blacklist[int_arr_last(current_path)-1]); //if eval is left to right, might be able to do assignment on same line
+      i = int_arr_last(current_path)-1;
     }
   }
 }
@@ -143,10 +170,12 @@ generate_graph_m(int n)
   graph_m g = (graph_m) malloc(sizeof(int *) * n);
   int i,j;
   for(i=0;i<n;i++){
-    g[i] = (int_arr) malloc(sizeof(int) * n);
+    g[i] = (int_arr) malloc(sizeof(int) * (n+1));
     for(j=0;j<n;j++)
       g[i][j]=0;
   }
+  for(i=0;i<n;i++)
+    g[i][n] = -1;
 
   return g;
 }
@@ -179,7 +208,21 @@ check_cycle(graph_m soln)
 
   return 1;
 }
-    
+
+int
+weight(graph_m g)
+{
+  int n = dim(g);
+  //sum the edge weights in upper (or lower) diagonal.
+  int i,j, w;
+
+  w=0;
+  for(i=0;i<n-1;i++)
+    for(j=i+1; j<n; j++)
+      w += g[i][j];
+
+  return w;
+}
   
 graph_m
 nearest_neighbor(graph_m g)
@@ -242,8 +285,8 @@ closest_pair(graph_m g)
 	    row = j;
 	  else
 	    col = j;
+      w = g[row][col];
       insert_edge_bothways(row, col, w, soln);
-      printf("i: %d, row: %d, col: %d, g[%d][%d] = %d\n ", i, row, col, row, col, g[row][col]);
     }
     else{
       for(j=0;j<n;j++)
@@ -253,7 +296,8 @@ closest_pair(graph_m g)
 	     g[j][k] > 0 && 
 	     g[j][k] < w && //less than minimal
 	     num_adjacent(j, soln) < 2 && //is either an isolated vertex or the endpoint of a chain
-	     num_adjacent(k, soln) < 2 //same 
+	     num_adjacent(k, soln) < 2 && //same
+	     !connected(j,k, soln)
 	     ){
 	    //check if the two are connected by a path. 
 	    row = j;
@@ -261,8 +305,6 @@ closest_pair(graph_m g)
 	    w = g[row][col];
 	  }
       insert_edge_bothways(row, col, w, soln);
-      printf("i: %d, row: %d, col: %d, g[%d][%d] = %d\n ", i, row, col, row, col, g[row][col]);
-      printgraph_m(soln);
     }
   }
 

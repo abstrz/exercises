@@ -16,28 +16,20 @@ void int_arr_print(int_arr arr)
 {
   printf("*************************************\n");
   printf("[");
-  while(*arr){
+  while(*(arr+1)){
     printf("%d, ", *arr);
     arr++;
   }
-  printf("]\n", *arr);
+  printf("%d]\n", *arr);
   printf("*************************************\n");
-}
-
-void int_arrp_print(int_arr *arrp)
-{
-  while(*arrp){
-    int_arr_print(*arrp);
-    arrp++;
-  }
 }
 
 
 int
-string_arr_in(string s, string_arr arr)
+string_arr_in(char *s, string_arr arr)
 {
   while (*arr){
-    if (string_cmp(*arr, s) == 0){
+    if (strcmp(*arr, s) == 0){
       return 1;
     }
     ++arr;
@@ -86,7 +78,7 @@ int_arr_len(int_arr arr)
 
 }
 int
-int_arrp_len(int_arr *arr)
+intp_arr_len(int_arr *arr)
 {
   int size = 0;
   while(*arr){
@@ -126,19 +118,8 @@ int_arr_pop(int_arr arr)
   int a;
   while(*(arr+1))
     arr++;
-
   a = *arr;
-  *arr = 0;
 
-  return a;
-}
-
-int
-int_arr_last(int_arr arr)
-{
-  while(*arr)
-    arr++;
-  return *(--arr);
 }
 
 void
@@ -147,9 +128,13 @@ int_arrp_remove_at_index(int i, int_arr *arr)
   int n = int_arrp_len(arr);
 
   if(i>=0 && i<n){
-    int m = int_arr_len(arr[i]);
-    free(arr[i]);
-    arr[i]= (int_arr) malloc(sizeof(int) * m);
+    if(i==n-1)
+      arr[i] = NULL;
+    else{
+      for(;i<n-1;i++)
+	arr[i] = arr[i+1];
+      arr[i] = NULL;
+    }
   }
 }
 
@@ -191,7 +176,7 @@ int
 string_arrp_in(string_arr s, string_arr *arr)
 {
   while (*arr){
-    if ((string_cmp(**arr, *s) == 0) && (string_cmp(*(*arr+1), *(s+1)) == 0))
+    if ((strcmp(**arr, *s) == 0) && (strcmp(*(*arr+1), *(s+1)) == 0))
       return 1;
     ++arr;
   }

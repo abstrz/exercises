@@ -9,7 +9,6 @@ typedef string *string_arr;
 
 void string_arr_print(string_arr arr);
 void int_arr_print(int_arr arr);
-void int_arrp_print(int_arr *arrp);
 
 int string_arr_len(string_arr s);
 int int_arr_len(int_arr arr);
@@ -20,10 +19,6 @@ int int_arr_equal(int_arr arr1, int_arr arr2);
 
 int string_arr_in(string s, string_arr arr);
 int int_arr_in(int i, int_arr arr);
-
-int int_arr_last(int_arr arr);
-
-
 
 void string_arr_push(string s, string_arr arr);
 void int_arr_push(int i, int_arr arr);

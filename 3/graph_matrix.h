@@ -17,6 +17,9 @@ void insert_edge_bothways(int i, int j, int w, graph_m g); //add a row and colum
 void delete_edge(int i, int j, graph_m g); 
 void delete_edge_bothways(int i, int j, graph_m g); //add a row and column of zeros.
 
+int num_adjacent(int i, graph_m g);
+
+int weight(graph_m g);
 int_arr *generate_blacklist(graph_m g);
 graph_m generate_graph_m(int n);
 graph_m generate_complete_graph_m(int n);
