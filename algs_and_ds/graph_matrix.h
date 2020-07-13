@@ -1,6 +1,6 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
+#include "stdlib.h"
+#include "stdio.h"
+#include <time.h> //find a better way to implement rand_init
 #include "arr.h"
 
 typedef int_arr *graph_m; 
