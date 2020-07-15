@@ -68,9 +68,6 @@ malloc(size_t size)
   return block+1; //we want to return a pointer to the region after block_meta. Remember, we sbrk allocates META_SIZE + size space, and we used up that first META_SIZE on the heap for block_meta.
                     //Since block is of type block_meta, + 1 increments the address by sizeof(block_meta).
 }
-    
-
-
       
 }
 

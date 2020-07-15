@@ -6,7 +6,6 @@
 typedef int *int_arr; 
 typedef string *string_arr; 
 
-
 void string_arr_print(string_arr arr);
 void int_arr_print(int_arr arr);
 void int_arrp_print(int_arr *arrp);

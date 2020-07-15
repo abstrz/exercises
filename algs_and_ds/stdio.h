@@ -1,3 +1,3 @@
 #include <stdarg.h>
 
-void printf(char *s, ...);
+void prtf(char *s, ...);
