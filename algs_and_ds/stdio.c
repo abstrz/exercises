@@ -1,5 +1,6 @@
 #include "stdio.h"
 #include "math.h"
+#include "ctype.h"
 
 int putchar(int c);
 
@@ -13,10 +14,41 @@ int putchar(int c);
 
 //general format: %[parameter][flags][width][.precision][length]type
 
-//parameter:
+//parameter: //the argument first, second, third, whatever.
 //n$: 
 
+//flags:
+//-: left-align the output of this placeholder
+//+: prepends a plus for positive signed-numeric types. positive = +, negative = -
+// : prepends a space for positive signed-numeric types. positive = , negative = -. This flag is ignored if the + flag exists.
+//0: When the 'width' option is specific, prepends zeros for numeric types.
+//': The integer or exponent of a decimal has the thousands grouping separator applied.
+//#: Alternate form: For g and G types, trailing zeros are not removed. For f,F,eE,g,G types, the output always contains a decimal point.
+//   For o,x,X types, the text 0, 0x, 0X, respectively, is prepended to non-zero numbers.
+
+//width:
+//The width field specifies a minimum number of characters to output, and is typically used to pad fixed-width fields in tabulated output, where the fields would otherwise be smaller, although it does not cause truncation of oversized fields.
+//The width field may be omitted, or a numeric integer value, or a dynamic value when passed as another argument when indicated by an asterisk *,
+//for example printf("%*d", 5, 10) will result in 10 being printed, with a total width of 5 characters.
+
+//precision:
+//The Precision field usually specifies a maximum limit on the output, depending on the particular formatting type. For floating poiunt numeric types, it specifies the number of digits to the right of the decimal point that the output should be rounded. For the string type, it limits the number of characters that should be output, after which the string is truncated
+//The precision field may be omitted, or a numeric integer value, or a dynamic value when passed as another argument when indicated by an asterisk *.
+//For example, printf("%.*s", 3, "abcdef") will result in abc being printed.
+
+//length:
+//can be omitted or be any of the following:
+//hh: For integer types, causes printf to expect an int-sized integer argument wihch was promoted from a char
+//h: For int tyes, causes printf to expect an int-sized integer argument which was promoted from a short
+//l: For integer types, causes printf to expect a long-sized integer argument. For floating point types, this has no effect.
+//ll: For integer types, causes printf to expect a long long-sized integer argument.
+//L: For floating point types, causes printf to expect a long double argument.
+//z: For integer types, causes printf to expect a size_t-sized integer argument.
+//j: For integer types, causes printf to expect a intmax_t-sized integer argument.
+//t: For integer types, causes printf to expect a ptrdiff_t-sized integer argument.
+
 //type:
+//%: Prints a literal % character (this type doesnt accept any flags, width, precision, length fields.
 //c: character
 //s: string
 //d or i: converts a signed integer to decimal representation
@@ -34,19 +66,56 @@ int putchar(int c);
 
 //float is promoted to double, when passed into ...
 //char is promoted to int, when passed into ...
-
+// "%2424$0.23d"
 //For starters will make it just print of the form %specifier.
 void prtf(char *s, ...)
 {
   va_list args;
+  va_list bargs;
+  va_list temp;
+  int n, parameter, width, precision, length;
+  char flag;
+
   va_start(args, s);
+  va_start(bargs, s);
+
   while (*s != '\0'){
-    if( *s == '%' )
-      switch(*(s+1)){
+    if( *(s++) == '%' ){
+
+      n=0;
+      while(isdigit(*s))
+	n += n*10 + (int)(*(s++) - '0'); //523 = 5*10^2 + 2*10 + 3, info missing is the position of this num;
+      if(*s == '$'){
+	parameter = 1;
+	s++;
+      }
+
+      if(*s == '-')
+	flag = *(s++);
+      else if(s* == '+')
+	flag = *(s++);
+      else if(s* == ' ')
+	flag = *(s++);
+      else if(s* == '0')
+	flag = *(s++);
+      else if(s* == '\'')
+	flag = *(s++);
+      else if(s* == '#')
+	flag = *(s++);
+      else
+	flag = *(s++) * 0;
+
+      width = 0;
+      while(isdigit(*s))
+	width += n*10 + (int)(*(s++) - '0');
+      if(*s == '.'){
+	precision = 1;
+      
+      switch(*s){
       case 'c': ;
 	char c = va_arg(args, int);
 	putchar(c);
-	s = s + 2;
+	s++
 	break;
       case 's': ;
 	char *str = va_arg(args, char*);
@@ -54,67 +123,68 @@ void prtf(char *s, ...)
 	  putchar(*str);
 	  str++;
 	}
-	s = s + 2;
+	s++;
 	break;
       case 'i':
       case 'd': ;
 	int d = va_arg(args, int);
 	putchar('0' + d);
-	s = s + 2;
+	s++;
 	break;
       case 'o': ;
 	unsigned int o = va_arg(args, unsigned int);
 	putchar('0' + o);
-	s = s + 2;
+	s = s++;
 	break;
       case 'x': 
       case 'X': ;
 	unsigned int x = va_arg(args, unsigned int);
 	putchar('0' + x);
-	s = s + 2;
+	s++;
 	break;
       case 'u': ;
 	unsigned int u = va_arg(args, unsigned int);
 	putchar('0' + u);
-	s = s + 2;
+	s++;
 	break;
       case 'f': 
       case 'F': ;
 	float f = va_arg(args, double);
 	putchar('0' + f);
-	s = s + 2;
+	s = s++;
 	break;
       case 'e':
       case 'E': ;
 	float e = va_arg(args, double);
 	putchar('0' + e);
-	s = s + 2;
+	s++;
 	break;
       case 'a':
       case 'A': ;	
 	float a = va_arg(args, double);
 	putchar('0' + a);
-	s = s + 2;
+	s++;
 	break;
       case 'g':
       case 'G': ;
 	float g = va_arg(args, double);
 	putchar('0' + g);
-	s = s + 2;
+	s++;
 	break;
       case 'n': ;
 	float n = va_arg(args, int);
 	putchar('0' + n);
-	s = s + 2;
+	s++;
 	break;
       case 'p': ;
 	char *p = va_arg(args, char *);
-	s = s + 2;
+	 s++;
 	break;
-      default:
-	s++;
+      default: //if you hit some other %type, then just skip over %type.
+	s++ 
 	break;
       }
+    }
     else{
       putchar(*s);
       s++;
