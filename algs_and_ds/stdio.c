@@ -90,17 +90,7 @@ void prtf(char *s, ...)
 	s++;
       }
 
-      if(*s == '-')
-	flag = *(s++);
-      else if(s* == '+')
-	flag = *(s++);
-      else if(s* == ' ')
-	flag = *(s++);
-      else if(s* == '0')
-	flag = *(s++);
-      else if(s* == '\'')
-	flag = *(s++);
-      else if(s* == '#')
+      if(*s == '-' || s* == '+' s* == ' ' || s* == '0' || s* == '\'' || s* == '#')
 	flag = *(s++);
       else
 	flag = *(s++) * 0;
