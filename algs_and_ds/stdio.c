@@ -90,10 +90,10 @@ void prtf(char *s, ...)
 	s++;
       }
 
-      if(*s == '-' || s* == '+' s* == ' ' || s* == '0' || s* == '\'' || s* == '#')
-	flag = *(s++);
+      if(*s == '-' || *s == '+' *s == ' ' || *s == '0' || *s == '\'' || *(s++) == '#')
+	flag = *s;
       else
-	flag = *(s++) * 0;
+	flag = 0;
 
       width = 0;
       while(isdigit(*s))
