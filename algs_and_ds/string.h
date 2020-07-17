@@ -11,6 +11,7 @@ void stradd(char c, string s);
 
 long unsigned int strlen(string s);
 int strmp(string s1, string s2);
+string strcpy(string dest, const string src);
 
 //either I write these here, and then important this library to stdio,
 //or write the functionality directly into the print function...

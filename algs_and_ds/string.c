@@ -41,8 +41,6 @@ string_len(string s)
   return len;
 }
 
-
-
 int
 string_cmp(string s1, string s2)
 {

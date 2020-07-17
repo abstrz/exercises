@@ -10,22 +10,6 @@ int putchar(int c);
 //va_end: free a va_list
 //va_copy copy contents of one va_list to another
 
-
-
-//general format: %[parameter][flags][width][.precision][length]type
-
-//parameter: //the argument first, second, third, whatever.
-//n$: 
-
-//flags:
-//-: left-align the output of this placeholder
-//+: prepends a plus for positive signed-numeric types. positive = +, negative = -
-// : prepends a space for positive signed-numeric types. positive = , negative = -. This flag is ignored if the + flag exists.
-//0: When the 'width' option is specific, prepends zeros for numeric types.
-//': The integer or exponent of a decimal has the thousands grouping separator applied.
-//#: Alternate form: For g and G types, trailing zeros are not removed. For f,F,eE,g,G types, the output always contains a decimal point.
-//   For o,x,X types, the text 0, 0x, 0X, respectively, is prepended to non-zero numbers.
-
 //width:
 //The width field specifies a minimum number of characters to output, and is typically used to pad fixed-width fields in tabulated output, where the fields would otherwise be smaller, although it does not cause truncation of oversized fields.
 //The width field may be omitted, or a numeric integer value, or a dynamic value when passed as another argument when indicated by an asterisk *,
@@ -64,6 +48,7 @@ int putchar(int c);
 
 
 
+
 //float is promoted to double, when passed into ...
 //char is promoted to int, when passed into ...
 // "%2424$0.23d"
@@ -73,8 +58,8 @@ void prtf(char *s, ...)
   va_list args;
   va_list bargs;
   va_list temp;
-  int n, parameter, width, precision, length;
-  char flag;
+  int n, parameter, width, precision;
+  char flag, length;
 
   va_start(args, s);
   va_start(bargs, s);
@@ -94,81 +79,194 @@ void prtf(char *s, ...)
 	flag = *s;
       else
 	flag = 0;
-
       width = 0;
       while(isdigit(*s))
-	width += n*10 + (int)(*(s++) - '0');
-      if(*s == '.'){
-	precision = 1;
-      
+	width += width*10 + (int)(*(s++) - '0');
+      if(*s == '.')
+	while(isdigit(*s))
+	  precision += precision*10 + (int)(*(s++) - '0');
+      if(*s == 'h' && *(s+1) == 'h') //map hh->b and ll->k just to have it fit in a char.
+	length = 'b';
+      if(*s == 'l' && *(s+1) == 'l')
+	length = 'k';
+      if(*s == h || *s == l || *s == L ||*s == z || *s == j || *s == t)
+	length = *s;
+
+
+//flags:
+//-: left-align the output of this placeholder
+//+: prepends a plus for positive signed-numeric types. positive = +, negative = -
+// : prepends a space for positive signed-numeric types. positive = , negative = -. This flag is ignored if the + flag exists.
+//0: When the 'width' option is specific, prepends zeros for numeric types.
+//': The integer or exponent of a decimal has the thousands grouping separator applied.
+//#: Alternate form: For g and G types, trailing zeros are not removed. For f,F,eE,g,G types, the output always contains a decimal point.
+//   For o,x,X types, the text 0, 0x, 0X, respectively, is prepended to non-zero numbers.
+//general format: %[parameter][flags][width][.precision][length]type
+
       switch(*s){
-      case 'c': ;
-	char c = va_arg(args, int);
+      case 'c':
+	s++;
+	char c;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, char);
+	  c = va_arg(temp, char);
+	}
+	else
+	  c = va_arg(args, char);
 	putchar(c);
-	s++
 	break;
-      case 's': ;
-	char *str = va_arg(args, char*);
+      case 's':
+	s++;
+	char *;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, char *);
+	  str = va_arg(temp, char *);
+	}
+	else
+	  str = va_arg(args, char*);
 	while(*str != '\0'){
 	  putchar(*str);
 	  str++;
 	}
-	s++;
 	break;
       case 'i':
-      case 'd': ;
-	int d = va_arg(args, int);
-	putchar('0' + d);
+      case 'd':
 	s++;
+	int d;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, int);
+	  d = va_arg(temp, int);
+	}
+	else
+	  d = va_arg(args, int);
+	putchar('0' + d);
 	break;
-      case 'o': ;
-	unsigned int o = va_arg(args, unsigned int);
+      case 'o':
+	s++;
+	unsigned int o;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, unsigned int);
+	  o = va_arg(temp, unsigned);
+	}
+	else
+	  o = va_arg(args, unsigned int);
 	putchar('0' + o);
-	s = s++;
 	break;
       case 'x': 
-      case 'X': ;
-	unsigned int x = va_arg(args, unsigned int);
+      case 'X':
+	s++;
+	unsigned int x;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, unsigned int);
+	  x = va_arg(temp, unsigned int);
+	}
+	else
+	  x = va_arg(args, unsigned int);
 	putchar('0' + x);
-	s++;
 	break;
-      case 'u': ;
-	unsigned int u = va_arg(args, unsigned int);
-	putchar('0' + u);
+      case 'u':
 	s++;
+	unsigned int u;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, unsigned int);
+	  u = va_arg(temp, unsigned int);
+	}
+	else
+	  u = va_arg(args, unsigned int);
+	putchar('0' + u);
 	break;
       case 'f': 
-      case 'F': ;
-	float f = va_arg(args, double);
+      case 'F':
+	s++;
+	float f;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, double);
+	  f = va_arg(temp, double);
+	}
+	else
+	  f = va_arg(args, double);
 	putchar('0' + f);
-	s = s++;
 	break;
       case 'e':
-      case 'E': ;
-	float e = va_arg(args, double);
-	putchar('0' + e);
+      case 'E':
 	s++;
+	float e;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, double);
+	  e = va_arg(temp, double);
+	}
+	else
+	  e = va_arg(args, double);
+	putchar('0' + e);
 	break;
       case 'a':
-      case 'A': ;	
-	float a = va_arg(args, double);
+      case 'A':
+	s++;	
+	float a;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, double);
+	  a = va_arg(temp, double);
+	}
+	else
+	  a = va_arg(args, double);
 	putchar('0' + a);
-	s++;
 	break;
       case 'g':
-      case 'G': ;
-	float g = va_arg(args, double);
+      case 'G':
+	s++;
+	float g;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, double);
+	  g = va_arg(temp, double);
+	}
+	else
+	  g = va_arg(args, double);
 	putchar('0' + g);
-	s++;
 	break;
-      case 'n': ;
-	float n = va_arg(args, int);
-	putchar('0' + n);
+      case 'n':
 	s++;
+	float na;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, int);
+	  na = va_arg(temp, int);
+	}
+	else
+	  na = va_arg(args, int);
+	putchar('0' + na);
 	break;
-      case 'p': ;
-	char *p = va_arg(args, char *);
-	 s++;
+      case 'p':
+	s++;
+	char *p;
+	if(parameter){
+	  temp = va_copy(temp, bargs);
+	  while((n--)>0)
+	    va_arg(temp, char *);
+	  p = va_arg(temp, char *);
+	}
+	else
+	  p = va_arg(args, char *);
 	break;
       default: //if you hit some other %type, then just skip over %type.
 	s++ 
